@@ -13,6 +13,7 @@ GTF =  'Reference/dmel-all-r5.32_transcripts.gtf'
 idxfile = 'Reference/dmel-all-r5.23'
 interest = 'GenesOfInterest.txt'
 FBtoName = 'Reference/dmelfbgns.txt'
+notificationEmail = 'peter.combs@berkeley.edu'
 
 ########################################################################
 
@@ -60,8 +61,8 @@ for rf in reads:
               'idxfile': idxfile,
               'rf': rf})
     if res:
-        system('echo "Oh no!" | mail -s "Failed on Tophatting %s" pcombs@gmail.com'
-               % (rf))
+        system('echo "Oh no!" | mail -s "Failed on Tophatting %s" %s'
+               % (rf, notificationEmail))
 
     print 'Cufflinksing...', '\n', '='*30
     sys.stdout.flush()
@@ -70,8 +71,8 @@ for rf in reads:
               'hits': join(od, 'accepted_hits.bam')})
 
     if res:
-        system('echo "Oh no!" | mail -s "Failed on Cufflinksing %s" pcombs@gmail.com'
-               % (rf))
+        system('echo "Oh no!" | mail -s "Failed on Cufflinksing %s" %s'
+               % (rf, notificationEmail))
     print '='*30
     pipe = popen('samtools flagstat ' + join(od, 'accepted_hits.bam'), 'r',
                  1024)
@@ -97,7 +98,7 @@ email = open('to_email.tmp', 'w')
 email.write("%dh:%dm:%ds\n"%(hours, minutes, seconds))
 golink = "http://go.princeton.edu/cgi-bin/GOTermFinder" \
         +"?geneAsscFile=gene_association.fb"\
-        +"&email1=peter.combs@berkeley.edu&email2=peter.combs@berkeley.edu"
+        +"&email1=%(email)s&email2=%(email)s" % {"email": notificationEmail}
 email.write(golink+"&aspect=F\n")
 email.write(golink+"&aspect=P\n")
 email.write(golink+"&aspect=C\n")
@@ -125,7 +126,7 @@ for line in file(join(analysis_dir,'gene_exp.diff')):
     
 
 email.close()
-system('cat to_email.tmp | mail -s "Done" pcombs@gmail.com' )
+system('cat to_email.tmp | mail -s "Done" ' + notificationEmail )
 
 
 try:
@@ -164,7 +165,7 @@ try:
     ax.set_xlabel('Ant. Expr (RPKM)')
     ax.set_ylabel('Pos. Expr (RPKM)')
     mpl.savefig('LogLog.pdf')
-    system('mutt -s "LogLog" pcombs@gmail.com -a LogLog.pdf < to_email.tmp')
+    system('mutt -s "LogLog" %s -a LogLog.pdf < to_email.tmp'% notificationEmail)
 
 except ImportError:
     print "Could not import Matplotlib.  You are using Python version",
