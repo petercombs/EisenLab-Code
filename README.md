@@ -21,6 +21,7 @@ calls below the second line of #'s. Some day I'll use optparse or argparse to
 make these configurable options, but that day is not today.
 
 Other than those lines, it expects the following:
+
  * Two FASTQ files corresponding to the reads (any name should work)
 
  * A number of files with names matching  Genes*.txt, containing lists of genes
