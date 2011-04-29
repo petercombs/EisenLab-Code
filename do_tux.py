@@ -6,7 +6,6 @@ from glob import glob
 from os import system, popen
 from os.path import join
 from time import time
-from numpy import array
 
 analysis_dir = 'analysis'
 GTF =  'Reference/dmel-all-r5.32_transcripts.gtf'
@@ -24,7 +23,8 @@ cuffdiff_base = ('cufflinks.cuffdiff -p 8 -v --FDR .001 -o %(ad)s %(gtf)s '
 
 ########################################################################
 
-reads = ['s_5_1_sequence.txt s_5_2_sequence.txt', 's_6_1_sequence.txt s_6_2_sequence.txt']
+reads = ['s_5_1_sequence.txt s_5_2_sequence.txt', 
+         's_6_1_sequence.txt s_6_2_sequence.txt']
 numreads = {}
 mappedreads = {}
 
@@ -140,6 +140,7 @@ system('cat to_email.tmp | mail -s "Done" ' + notificationEmail )
 
 
 try:
+    from numpy import array
     from matplotlib import pyplot as mpl
 
     s1, s2, gene, idx = zip(*[(float(line.split()[6]), float(line.split()[7]),
