@@ -26,3 +26,14 @@ Other than those lines, it expects the following:
 
  * A number of files with names matching  Genes*.txt, containing lists of genes
    to plot on the loglog graph.
+
+FB2name.py
+----------
+
+This is a tool to convert FlyBase gene identifiers (e.g. FBgn0000166 to bcd).
+It generally assumes that data will have a columnar format, so you give it the
+column (0 indexed)  that the FlyBase identifier is in with the -i flag, then
+the other columns you want to output as well with individual -k flags.  For
+example, to convert everything in gene_exp.diff, then take columns 6 and 7:
+
+	python FB2name.py -r Reference/dmelfbgns.txt -i 0 -k 6 -k 7 gene_exp.diff

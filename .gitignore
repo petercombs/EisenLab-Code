@@ -3,4 +3,10 @@
 *.out
 *.log
 *.tmp
-
+*.ebwt
+*.fa
+*.bam
+*.sam
+*.tsv
+*.gtf
+*.fai
