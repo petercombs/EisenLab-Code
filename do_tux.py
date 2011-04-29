@@ -17,14 +17,14 @@ notificationEmail = 'peter.combs@berkeley.edu'
 
 ########################################################################
 
-tophat_base = 'tophat -p4 --no-novel-juncs '
-cufflinks_base = 'cufflinks -p 4 -q '
-cuffdiff_base = ('cufflinks.cuffdiff -p 4 -v --FDR .001 -o %(ad)s %(gtf)s '
+tophat_base = 'tophat -p8 -r 200 --no-novel-juncs '
+cufflinks_base = 'cufflinks -p 8 -q '
+cuffdiff_base = ('cufflinks.cuffdiff -p 8 -v --FDR .001 -o %(ad)s %(gtf)s '
                  % {'gtf':GTF, 'ad': analysis_dir})
 
 ########################################################################
 
-reads = glob('*.fq')
+reads = ['s_5_1_sequence.txt s_5_2_sequence.txt', 's_6_1_sequence.txt s_6_2_sequence.txt']
 numreads = {}
 mappedreads = {}
 
@@ -43,11 +43,21 @@ for rf in reads:
     print rf
     print '-'*72
 
-    numreads[rf] = int(popen('wc ' +rf, 'r', 1024).readline().split()[0])
-    assert numreads[rf]%4 == 0
-    numreads[rf] /= 4
+    rf2 = rf.split()[0]
+
+    wcout = popen('wc -l ' + rf2, 'r', 1024).readline()
+    print wcout
+
+    #wc =0
+    #for line in file(rf):
+    #    wc+=1
+
+    #print wc
+    numreads[rf2] = int(wcout.split()[0])
+    assert numreads[rf2]%4 == 0
+    numreads[rf2] /= 4
     
-    od = join(analysis_dir, rf.split('.fq')[0])
+    od = join(analysis_dir, rf2.split('.')[0])
     print 'Tophatting...', '\n', '='*30
     print (tophat_base + '-G %(GTF)s -o %(od)s %(idxfile)s %(rf)s'
            % {'GTF':GTF,
@@ -79,7 +89,7 @@ for rf in reads:
 
     for line in pipe:
         if "mapped" in line:
-            mappedreads[rf] = int(line.split()[0])
+            mappedreads[rf2] = int(line.split()[0])
             break
 
 all_bams = map(lambda s: join('analysis', s, 'accepted_hits.bam'), 
@@ -112,7 +122,7 @@ try:
 except:
     print "the pickling still doesn't work... skipping"
 
-for rf in reads:
+for rf in numreads:
     print rf, numreads[rf], 100.0*mappedreads[rf]/numreads[rf]
 
 genediff = {}
@@ -158,7 +168,7 @@ try:
                 print g, genediff[NameKey[g.strip()]]
 
     mpl.legend(numpoints=1, loc='lower right')
-    mpl.loglog([1e-2,1e4], [1e-2,1e4], 'r:')
+    mpl.loglog([1e-2,2e4], [1e-2,2e4], 'r:')
     ax = mpl.gca()
     ax.set_xlim(1e-2,1e+4)
     ax.set_ylim(1e-2,1e+4)
