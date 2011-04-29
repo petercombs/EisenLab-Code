@@ -37,3 +37,5 @@ the other columns you want to output as well with individual -k flags.  For
 example, to convert everything in gene_exp.diff, then take columns 6 and 7:
 
 	python FB2name.py -r Reference/dmelfbgns.txt -i 0 -k 6 -k 7 gene_exp.diff
+
+Use `python FB2name.py -h` for full options
