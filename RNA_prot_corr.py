@@ -33,11 +33,20 @@ for gene in geneset:
         if gene in prot:
             print(prot, end='\t')
     print('')
+    rn = 0
     for r, rna in enumerate(rnas):
         if gene in rna:
             print(rna, end='\t')
+            bestr = 0
+            pn = 0
             for p, prot in enumerate(prots):
                 if gene in prot:
-                    print('%0.3f' %np.corrcoef(protdata[p], rnadata[r])[0,1], 
+                    r2 = np.corrcoef(protdata[p], rnadata[r])[0,1]
+                    pn += 1
+                    print('%0.3f' % r2,
                           end='\t')
-            print('')
+                    if r2 > bestr:
+                        bestdiff = pn - rn - 1
+                        bestr = r2
+            print(bestdiff)
+            rn += 1

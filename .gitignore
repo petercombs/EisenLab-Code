@@ -9,4 +9,5 @@
 *.sam
 *.tsv
 *.gtf
+__pycache__
 *.fai
