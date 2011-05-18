@@ -7,6 +7,26 @@ the CRAPL v0 license.  Please contact me direclty (peter.combs@berkeley.edu)
 for any data I've generated, as it's most likely too large to fit on github
 anyways.
 
+PointClouds.py
+--------------
+
+This is a utility class for reading Point Cloud files from the Berkeley
+Drosophila Transcription Network
+(http://bdtnp.lbl.gov/Fly-Net/bioimaging.jsp?w=vpcFormat). Thus far, it's only
+been tested on VirtualEmbryo files, but it should also work on single embryo
+point clouds.  Metadata is loaded into the PointCloudReader object as
+variables.  Example usage:
+
+    from PointClouds import PointCloudReader
+    pcr = PointCloudReader(open('D_mel.vpc'))
+    bcddata = []
+    for line in pcr:
+        bcddata.append(line[pcr.column.index('bcd__1')])
+
+which loads all of the data from the first timepoint with Bicoid into the
+bcddata list.
+    
+
 do_tux.py
 ---------
 
