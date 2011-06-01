@@ -11,3 +11,15 @@
 *.gtf
 __pycache__
 *.fai
+*.pdf
+*.pyc
+*.fb
+*dump*
+
+analysis
+MemeOutput
+MemeOutput2
+NonFlyNonHum*
+blaststuff
+*.xml
+
