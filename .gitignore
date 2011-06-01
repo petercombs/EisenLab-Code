@@ -10,3 +10,15 @@
 *.tsv
 *.gtf
 *.fai
+*.pdf
+*.pyc
+*.fb
+*dump*
+
+analysis
+MemeOutput
+MemeOutput2
+NonFlyNonHum*
+blaststuff
+*.xml
+
