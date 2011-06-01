@@ -18,7 +18,7 @@ notificationEmail = 'peter.combs@berkeley.edu'
 
 tophat_base = 'tophat -p8 -r 200 --no-novel-juncs '
 cufflinks_base = 'cufflinks -p 8 -q '
-cuffdiff_base = ('cufflinks.cuffdiff -p 8 -v --FDR .001 -o %(ad)s %(gtf)s '
+cuffdiff_base = ('cuffdiff -p 8 -v --FDR .001 -o %(ad)s %(gtf)s '
                  % {'gtf':GTF, 'ad': analysis_dir})
 
 
