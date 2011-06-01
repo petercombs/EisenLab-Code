@@ -21,6 +21,7 @@ cufflinks_base = 'cufflinks -p 8 -q '
 cuffdiff_base = ('cufflinks.cuffdiff -p 8 -v --FDR .001 -o %(ad)s %(gtf)s '
                  % {'gtf':GTF, 'ad': analysis_dir})
 
+
 ########################################################################
 
 reads = ['s_5_1_sequence.txt s_5_2_sequence.txt', 
