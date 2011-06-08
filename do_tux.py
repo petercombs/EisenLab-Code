@@ -26,11 +26,18 @@ cuffdiff_base = ('cufflinks.cuffdiff -p 8 -v --FDR .001 -o %(ad)s %(gtf)s '
 
 reads = ['s_5_1_sequence.txt s_5_2_sequence.txt', 
          's_6_1_sequence.txt s_6_2_sequence.txt']
+
+# Dictionary with the number of reads in each file
 numreads = {}
+
+# Dictionary with the number of mapped reads.
 mappedreads = {}
 
+
+# Interconversion from FlyBase IDs to Gene Names
 FBKey = {}
 NameKey = {}
+
 for line in file(FBtoName):
     line = line.split()
     FBKey[line[0]] = line[1]
@@ -40,40 +47,42 @@ for line in file(FBtoName):
 start = time()
 
 for rf in reads:
+    # Print the name of the files we're going through, as a rough progress bar
     print '-'*72
     print rf
     print '-'*72
 
+    # Just grab the first file name (paired ends have the same number in both)
     rf2 = rf.split()[0]
 
     wcout = popen('wc -l ' + rf2, 'r', 1024).readline()
     print wcout
 
-    #wc =0
-    #for line in file(rf):
-    #    wc+=1
-
-    #print wc
+    # Store the number of reads in the file
     numreads[rf2] = int(wcout.split()[0])
     assert numreads[rf2]%4 == 0
     numreads[rf2] /= 4
     
     od = join(analysis_dir, rf2.split('.')[0])
+
+
+    # Do tophat
     print 'Tophatting...', '\n', '='*30
-    print (tophat_base + '-G %(GTF)s -o %(od)s %(idxfile)s %(rf)s'
+    commandstr =  (tophat_base + '-G %(GTF)s -o %(od)s %(idxfile)s %(rf)s'
            % {'GTF':GTF,
               'od': od,
               'idxfile': idxfile,
               'rf': rf})
+    print commandstr
     sys.stdout.flush()
-    res = system(tophat_base + '-G %(GTF)s -o %(od)s %(idxfile)s %(rf)s'
-           % {'GTF':GTF,
-              'od': od,
-              'idxfile': idxfile,
-              'rf': rf})
+    res = system(commandstr)
+
+
     if res:
         system('echo "Oh no!" | mail -s "Failed on Tophatting %s" %s'
                % (rf, notificationEmail))
+
+    # Do cufflinks
 
     print 'Cufflinksing...', '\n', '='*30
     sys.stdout.flush()
@@ -84,6 +93,9 @@ for rf in reads:
     if res:
         system('echo "Oh no!" | mail -s "Failed on Cufflinksing %s" %s'
                % (rf, notificationEmail))
+
+
+    # Figure out how well everything mapped
     print '='*30
     pipe = popen('samtools flagstat ' + join(od, 'accepted_hits.bam'), 'r',
                  1024)
@@ -97,14 +109,17 @@ all_bams = map(lambda s: join('analysis', s, 'accepted_hits.bam'),
                (s.split('.fq')[0] for s in reads))
 
 
+# Do Cuffdiff
 system(cuffdiff_base + " ".join(all_bams))
-end = time()
 
+# Stop the timing
+end = time()
 hours = int((end - start)/3600)
 minutes = int((end - start) / 60 - hours * 60)
 seconds = int((end - start) - minutes * 60 - hours * 3600)
-
 print hours, "h", minutes, "m", seconds, "s"
+
+# GOTerm Finder stuff
 email = open('to_email.tmp', 'w')
 email.write("%dh:%dm:%ds\n"%(hours, minutes, seconds))
 golink = "http://go.princeton.edu/cgi-bin/GOTermFinder" \
@@ -115,6 +130,9 @@ email.write(golink+"&aspect=P\n")
 email.write(golink+"&aspect=C\n")
 
 email.write("\n\n")
+
+
+# Dump everything out to a file, so we can play with it later, maybe
 try:
     pickle.dump(dict([(k,v) for k,v in locals().copy().iteritems() 
                   if ((type(v) is not type(sys))
@@ -123,8 +141,14 @@ try:
 except:
     print "the pickling still doesn't work... skipping"
 
+
+# Print out the actual read mapping percentages
+
 for rf in numreads:
     print rf, numreads[rf], 100.0*mappedreads[rf]/numreads[rf]
+
+
+# Write out to the email the list of significant genes
 
 genediff = {}
 for line in file(join(analysis_dir,'gene_exp.diff')):
@@ -132,13 +156,13 @@ for line in file(join(analysis_dir,'gene_exp.diff')):
     if "yes" in line:
         email.write(line.split()[0] + "\n")
 
-#for gene in file(interest):
-    #print gene, genediff[NameKey[gene.strip()]]
-    
 
+# Send an email to the user
 email.close()
 system('cat to_email.tmp | mail -s "Done" ' + notificationEmail )
 
+
+# If we're on a system that supports it, do the plotting
 
 try:
     from numpy import array
@@ -170,13 +194,18 @@ try:
                 print g, genediff[NameKey[g.strip()]]
 
     mpl.legend(numpoints=1, loc='lower right')
-    mpl.loglog([1e-2,2e4], [1e-2,2e4], 'r:')
+    mpl.loglog([1e-2,2e4], [1e-2,2e4], 'r:') # Diagonal line to guide eye
+
+
+    # Clean up and label the axes
     ax = mpl.gca()
     ax.set_xlim(1e-2,1e+4)
     ax.set_ylim(1e-2,1e+4)
     ax.set_xlabel('Ant. Expr (RPKM)')
     ax.set_ylabel('Pos. Expr (RPKM)')
     mpl.savefig('LogLog.pdf')
+
+    # If we have mutt, attach file to an email and send it off
     system('mutt -s "LogLog" %s -a LogLog.pdf < to_email.tmp'% notificationEmail)
 
 except ImportError:
