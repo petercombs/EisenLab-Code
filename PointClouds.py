@@ -8,7 +8,7 @@ way.
 """
 
 
-class PointCloudReader:
+class PointCloudReader(object):
     def __init__(self, fh):
         self.__filehandle__ = fh
         pos = fh.tell()
@@ -31,15 +31,13 @@ class PointCloudReader:
                 assert dataval[-1] == ']'
 
                 datarows = dataval[1:-1].split(';')
-                datarowscols = list(map(lambda s: s.split(','), datarows))
-                dataval = map(lambda r: list(map(strip_to_number, r)), datarowscols)
-                dataval = list(dataval)
+                datarowscols = list([s.split(',') for s in datarows])
+                dataval = [[strip_to_number(s) for s in r] for r in datarowscols]
 
             elif dataval[0] == '[' and dataval[-1] == ']':
                 # 1D array
-                dataval = map(strip_to_number,
-                              dataval[1:-1].split(','))
-                dataval = list(dataval)
+                dataval = [strip_to_number(v) for v in 
+                              dataval[1:-1].split(',')]
 
             else:
                 # It's a scalar.
@@ -58,7 +56,9 @@ class PointCloudReader:
             raise StopIteration
         return list(map(strip_to_number,
                         line.split(',')))
-    
+    def next(self):
+        return self.__next__()
+
     def __iter__(self):
         return self
 
