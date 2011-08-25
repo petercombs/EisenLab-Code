@@ -31,6 +31,19 @@ def parse_args():
     argparser.add_argument('-t', '--translation-table', type=open,
                            default=False, help="A table of FBgn to real name "
                            'correspondences')
+    argparser.add_argument('--sum', dest='reduce_fcn', default=np.sum,
+                           action='store_const', const=np.sum,
+                           help="Use Sum for virtual slicing (default)")
+    argparser.add_argument('--mean', dest='reduce_fcn', action='store_const',
+                           const=np.mean, help="Use Mean for virtual slicing")
+
+    argparser.add_argument('--spearman', dest='comp_fcn', action='store_const',
+                           default=stats.spearmanr, const=stats.spearmanr,
+                           help="Use Spearman correlation for comparison "
+                           "(default)")
+    argparser.add_argument('--pearson', dest='comp_fcn', action='store_const',
+                           const=stats.pearsonr,
+                           help='Use Pearson correlation for comparison')
 
     args = argparser.parse_args()
     print(args)
@@ -65,7 +78,8 @@ def data_to_arrays(all_data, columns, genes):
 
     return exparray, posarray
 
-def virtual_slice(exparray, posarray, axis='x', width=50.0, resolution=1.0):
+def virtual_slice(exparray, posarray, axis='x', width=50.0, resolution=1.0,
+                  reduce_fcn = np.sum):
     # Convert axis specification to a usable value.
     axischooser = {'x':0, 0:0, 'y':1, 1:1, 'z':2, 2:2}
     axis = axischooser[axis]
@@ -91,7 +105,7 @@ def virtual_slice(exparray, posarray, axis='x', width=50.0, resolution=1.0):
         next_print = 0
         sys.stdout.flush()
         for i, pos in enumerate(slicestarts):
-            expr = np.sum(exparray[(pos <= posarray[:,axis,k])
+            expr = reduce_fcn(exparray[(pos <= posarray[:,axis,k])
                                    * (posarray[:,axis,k] < pos + width)],
                           axis=0)
             allslices[i,:] = expr
@@ -149,7 +163,8 @@ if __name__ == "__main__":
 
         print("Doing virtual slicing")
         starts, slices = virtual_slice(exparray, posarray, axis=args.axis,
-                                       width=args.slice_width)
+                                       width=args.slice_width,
+                                       reduce_fcn=args.reduce_fcn)
     nslices, ngenes, ntimes = np.shape(slices)
 
     for expr_file in args.expr_file:
