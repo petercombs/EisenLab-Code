@@ -46,7 +46,6 @@ def parse_args():
                            help='Use Pearson correlation for comparison')
 
     args = argparser.parse_args()
-    print(args)
     return args
 
 
@@ -194,6 +193,6 @@ if __name__ == "__main__":
                 if corr > bestcorr:
                     bestcorr = corr
                     bestslice = slice
-            print("At time %f, best at #%d (%f), r=%f"
+            print("At time %2d, best at #%3d (%+8f), r=%f"
                   % (time, bestslice, starts[bestslice], bestcorr))
 
