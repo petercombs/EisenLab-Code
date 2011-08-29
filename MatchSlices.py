@@ -1,3 +1,9 @@
+"""
+Takes RNAseq data from fly slices and matches those slices to virtual slices
+taken from a specified axis of data from a Virtual Embryo file (e.g. from the
+BDTN project, http://bdtnp.lbl.gov/).  Will report the best match for each time
+point.
+"""
 from __future__ import print_function, division
 import PointClouds as pc
 import sys
@@ -6,6 +12,7 @@ from argparse import ArgumentParser
 from scipy import stats
 
 def parse_args():
+    """Parse command line arguments"""
     argparser = ArgumentParser(description='Match gene expression data from a'
                                'single slice to the corresponding slice from '
                                'the BDTNP data')
@@ -17,7 +24,8 @@ def parse_args():
                            '(default: 50um)')
     argparser.add_argument('-x', dest='axis', action='store_const', const='x',
                            default='x',
-                          help='Slices along the x axis in BDTNP data (DEFAULT)')
+                          help='Slices along the x axis in BDTNP data '
+                           '(DEFAULT)')
     argparser.add_argument('-y', dest='axis', action='store_const', const='y',
                           help='Slices along the y axis in BDTNP data')
     argparser.add_argument('-z', dest='axis', action='store_const', const='z',
@@ -45,17 +53,22 @@ def parse_args():
                            const=stats.pearsonr,
                            help='Use Pearson correlation for comparison')
 
-    args = argparser.parse_args()
-    return args
+    return argparser.parse_args()
 
 
 def get_gene_names(vpc_reader):
+    """ Returns a set of the gene names in the VPC file"""
     defined_names = ('id', 'x', 'y', 'z', 'Nx', 'Ny', 'Nz')
     names = set(name.split('_')[0] for name in vpc_reader.column
                 if not name.startswith(defined_names))
     return names
 
 def data_to_arrays(all_data, columns, genes):
+    """Turn raw data from virtual embryo to arrays
+
+    Primarily, this separates out the times into its own axis, and puts the
+    columns into a consistent order
+    """
     times = set(name.split('_')[-1] for name in columns if name != 'id')
     exparray = np.zeros((len(all_data), len(genes), len(times)))
     for j, gene in enumerate(genes):
@@ -73,52 +86,101 @@ def data_to_arrays(all_data, columns, genes):
         for j, dim in enumerate(['x', 'y', 'z']):
             colnum = columns.index(dim + '__' + time)
             for i, row in enumerate(all_data):
-                posarray[i,j,k] = row[colnum]
+                posarray[i, j, k] = row[colnum]
 
     return exparray, posarray
 
-def virtual_slice(exparray, posarray, axis='x', width=50.0, resolution=1.0,
-                  reduce_fcn = np.sum):
-    # Convert axis specification to a usable value.
+def choose_axis(axis):
+    """Converts x,y,z (as strings) to appropriate axis number"""
     axischooser = {'x':0, 0:0, 'y':1, 1:1, 'z':2, 2:2}
-    axis = axischooser[axis]
+    return axischooser[axis]
 
+def get_slicestarts(posarray, axis, resolution, width):
+    "Returns the desired starts of virtual slices"
     # Start and stop of slices
-    start = posarray[:,axis,:].min() - width
-    stop = posarray[:,axis,:].max() + width
+    start = posarray[:, axis, :].min() - width
+    stop = posarray[:, axis, :].max() + width
 
-    slicestarts = np.arange(start, stop, resolution)
-    nslices = len(slicestarts)
+    return np.arange(start, stop, resolution)
+
+def get_datasize(exparray):
+    """Returns the number of genes and timepoints.
+
+    Like shape(exparray), but with exactly 2 outputs"""
+
     datasize = np.shape(exparray)
     ngenes = datasize[1]
 
     if len(datasize) < 3:
-        exparray = np.reshape(exparray, (datasize[0], ngenes, 1))
         ntimes = 1
     else:
         ntimes = datasize[2]
 
+    return ngenes, ntimes
+
+
+
+def virtual_slice(exparray, posarray, axis='x', width=50.0, resolution=1.0,
+                  reduce_fcn = np.sum):
+    """ Calculate possible slices along an axis.
+
+    Returns an array of slice start positions and an nslices * ngenes * ntimes
+    array containing the slice data.
+
+    width is the width of each slice, resolution is the spacing between virtual
+    slices.
+
+    If exparray is only a 2-dimensional array (i.e. only from a single time
+    point), this will automatically reshape it to be a 3 dimensional array, with
+    a singleton dimension.
+
+    """
+    # Convert axis specification to a usable value.
+    axis = choose_axis(axis)
+
+
+    slicestarts = get_slicestarts(posarray, axis, resolution, width)
+
+    nslices = len(slicestarts)
+    ngenes, ntimes = get_datasize(exparray)
+
+    # Expand into 3D if only 1 time point
+    if ntimes == 1:
+        exparray = np.reshape(exparray, (-1, ngenes, 1))
+
     allslices = np.zeros((nslices, ngenes, ntimes))
     for k in range(ntimes):
+        # Poor man's progress bar
         print("\nTime %d: " % k, end='')
         next_print = 0
         sys.stdout.flush()
-        for i, pos in enumerate(slicestarts):
-            expr = reduce_fcn(exparray[(pos <= posarray[:,axis,k])
-                                   * (posarray[:,axis,k] < pos + width)],
-                          axis=0)
-            allslices[i,:] = expr
+
+        # Actually do the slicing:
+        for i, slicepos in enumerate(slicestarts):
+            allslices[i, :] = reduce_fcn(exparray[
+                                  (slicepos <= posarray[:, axis, k])
+                                * (posarray[:, axis, k] < slicepos + width)],
+                              axis=0)
+
+            # More progress bar
             if i / nslices > next_print:
                 print('.', end='')
                 sys.stdout.flush()
                 next_print += .05
-    print ()
+
+    print()
+
     return slicestarts, allslices
 
 
 def parse_translation_table(translation_table):
+    """ Turns a translation table into a pair of dictionaries
+
+    Will automatically determine which column has the FBgn id numbers.
+    """
     fbgn2name = {}
     name2fbgn = {}
+    line = "Failed before reading!"
     try:
         for line in translation_table:
             fbgn, name = line.split()
@@ -158,7 +220,8 @@ if __name__ == "__main__":
     else:
         sys.stdout.flush()
         all_data = [row for row in bdtnp_parser]
-        exparray, posarray = data_to_arrays(all_data, bdtnp_parser.column, gn_list)
+        exparray, posarray = data_to_arrays(all_data, bdtnp_parser.column, 
+                                            gn_list)
 
         print("Doing virtual slicing")
         starts, slices = virtual_slice(exparray, posarray, axis=args.axis,
