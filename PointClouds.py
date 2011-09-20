@@ -62,6 +62,48 @@ class PointCloudReader(object):
     def __iter__(self):
         return self
 
+    def get_gene_names(self):
+        """ Returns a set of the gene names in the VPC file"""
+        defined_names = ('id', 'x', 'y', 'z', 'Nx', 'Ny', 'Nz')
+        names = set(name.split('_')[0] for name in self.column
+                    if not name.startswith(defined_names))
+        return names
+
+
+    def data_to_arrays(self):
+        """Turn raw data from virtual embryo to arrays
+
+        Primarily, this separates out the times into its own axis, and puts the
+        columns into a consistent order
+        """
+        filepos = self.__filehandle__.tell()
+        alldata = [row for row in self]
+        self.__filehandle__.seek(filepos)
+
+        times = set(name.split('_')[-1] for name in self.columns if name != 'id')
+        genes = self.get_gene_names()
+
+        exparray = np.zeros((len(all_data), len(genes), len(times)))
+        for j, gene in enumerate(genes):
+            for k, time in enumerate(times):
+                try:
+                    colnum = columns.index(gene + "__" + time)
+                    for i, row in enumerate(all_data):
+                        exparray[i, j, k] = row[colnum]
+                except ValueError:
+                    # No data for this gene at this time!
+                    pass
+
+        posarray = np.zeros([len(all_data), 3, len(times)])
+        for k, time in enumerate(times):
+            for j, dim in enumerate(['x', 'y', 'z']):
+                colnum = columns.index(dim + '__' + time)
+                for i, row in enumerate(all_data):
+                    posarray[i, j, k] = row[colnum]
+
+        return exparray, posarray
+
+
 
 def strip_to_number(dataval, chars = '\'" \t #'):
     return to_number(dataval.strip(chars))

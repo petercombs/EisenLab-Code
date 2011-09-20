@@ -56,40 +56,6 @@ def parse_args():
     return argparser.parse_args()
 
 
-def get_gene_names(vpc_reader):
-    """ Returns a set of the gene names in the VPC file"""
-    defined_names = ('id', 'x', 'y', 'z', 'Nx', 'Ny', 'Nz')
-    names = set(name.split('_')[0] for name in vpc_reader.column
-                if not name.startswith(defined_names))
-    return names
-
-def data_to_arrays(all_data, columns, genes):
-    """Turn raw data from virtual embryo to arrays
-
-    Primarily, this separates out the times into its own axis, and puts the
-    columns into a consistent order
-    """
-    times = set(name.split('_')[-1] for name in columns if name != 'id')
-    exparray = np.zeros((len(all_data), len(genes), len(times)))
-    for j, gene in enumerate(genes):
-        for k, time in enumerate(times):
-            try:
-                colnum = columns.index(gene + "__" + time)
-                for i, row in enumerate(all_data):
-                    exparray[i, j, k] = row[colnum]
-            except ValueError:
-                # No data for this gene at this time!
-                pass
-
-    posarray = np.zeros([len(all_data), 3, len(times)])
-    for k, time in enumerate(times):
-        for j, dim in enumerate(['x', 'y', 'z']):
-            colnum = columns.index(dim + '__' + time)
-            for i, row in enumerate(all_data):
-                posarray[i, j, k] = row[colnum]
-
-    return exparray, posarray
-
 def choose_axis(axis):
     """Converts x,y,z (as strings) to appropriate axis number"""
     axischooser = {'x':0, 0:0, 'y':1, 1:1, 'z':2, 2:2}
@@ -203,7 +169,7 @@ if __name__ == "__main__":
     args = parse_args()
     bdtnp_parser = pc.PointCloudReader(args.pointcloud)
 
-    gene_names = get_gene_names(bdtnp_parser)
+    gene_names = bdtnp_parser.get_gene_names()
     gn_list = list(gene_names)
 
     fbgn2name = {}
@@ -220,8 +186,7 @@ if __name__ == "__main__":
     else:
         sys.stdout.flush()
         all_data = [row for row in bdtnp_parser]
-        exparray, posarray = data_to_arrays(all_data, bdtnp_parser.column, 
-                                            gn_list)
+        exparray, posarray = bdtnp_parser.data_to_arrays()
 
         print("Doing virtual slicing")
         starts, slices = virtual_slice(exparray, posarray, axis=args.axis,
