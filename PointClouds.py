@@ -76,6 +76,12 @@ class PointCloudReader(object):
         Primarily, this separates out the times into its own axis, and puts the
         columns into a consistent order
         """
+        try:
+            import numpy as np
+            has_numpy = True
+        except ImportError:
+            has_numpy = False
+
         filepos = self.__filehandle__.tell()
         alldata = [row for row in self]
         self.__filehandle__.seek(filepos)
@@ -83,7 +89,13 @@ class PointCloudReader(object):
         times = set(name.split('_')[-1] for name in self.columns if name != 'id')
         genes = self.get_gene_names()
 
-        exparray = np.zeros((len(all_data), len(genes), len(times)))
+        if has_numpy:
+            exparray = np.zeros((len(all_data), len(genes), len(times)))
+        else:
+            exparray = [[[0 for k in times] 
+                         for j in genes]
+                        for i in all_data]
+
         for j, gene in enumerate(genes):
             for k, time in enumerate(times):
                 try:
@@ -94,7 +106,12 @@ class PointCloudReader(object):
                     # No data for this gene at this time!
                     pass
 
-        posarray = np.zeros([len(all_data), 3, len(times)])
+        if has_numpy:
+            posarray = np.zeros([len(all_data), 3, len(times)])
+        else:
+            posarray = [[[0 for k in times]
+                         for j in range(3)]
+                        for i in enumerate(all_data)]
         for k, time in enumerate(times):
             for j, dim in enumerate(['x', 'y', 'z']):
                 colnum = columns.index(dim + '__' + time)
