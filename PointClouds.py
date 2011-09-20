@@ -7,6 +7,12 @@ preserve as much of the header information as possible in an easily interactible
 way.
 """
 
+try:
+    import numpy as np
+    HAS_NUMPY = True
+except ImportError:
+    HAS_NUMPY = False
+
 
 class PointCloudReader(object):
     def __init__(self, fh):
@@ -20,7 +26,7 @@ class PointCloudReader(object):
                 pos = fh.tell()
                 line = fh.readline()
                 continue
-            
+
             metadata = line.split('=')
             dataname = metadata[0].strip(' \t#')
             dataval = metadata[1].strip()
@@ -32,11 +38,12 @@ class PointCloudReader(object):
 
                 datarows = dataval[1:-1].split(';')
                 datarowscols = list([s.split(',') for s in datarows])
-                dataval = [[strip_to_number(s) for s in r] for r in datarowscols]
+                dataval = [[strip_to_number(s) for s in r]
+                           for r in datarowscols]
 
             elif dataval[0] == '[' and dataval[-1] == ']':
                 # 1D array
-                dataval = [strip_to_number(v) for v in 
+                dataval = [strip_to_number(v) for v in
                               dataval[1:-1].split(',')]
 
             else:
@@ -76,37 +83,31 @@ class PointCloudReader(object):
         Primarily, this separates out the times into its own axis, and puts the
         columns into a consistent order
         """
-        try:
-            import numpy as np
-            has_numpy = True
-        except ImportError:
-            has_numpy = False
-
         filepos = self.__filehandle__.tell()
-        alldata = [row for row in self]
+        all_data = [row for row in self]
         self.__filehandle__.seek(filepos)
 
-        times = set(name.split('_')[-1] for name in self.columns if name != 'id')
+        times = set(name.split('_')[-1] for name in self.column if name != 'id')
         genes = self.get_gene_names()
 
-        if has_numpy:
+        if HAS_NUMPY:
             exparray = np.zeros((len(all_data), len(genes), len(times)))
         else:
-            exparray = [[[0 for k in times] 
+            exparray = [[[0 for k in times]
                          for j in genes]
                         for i in all_data]
 
         for j, gene in enumerate(genes):
             for k, time in enumerate(times):
                 try:
-                    colnum = columns.index(gene + "__" + time)
+                    colnum = self.column.index(gene + "__" + time)
                     for i, row in enumerate(all_data):
                         exparray[i, j, k] = row[colnum]
                 except ValueError:
                     # No data for this gene at this time!
                     pass
 
-        if has_numpy:
+        if HAS_NUMPY:
             posarray = np.zeros([len(all_data), 3, len(times)])
         else:
             posarray = [[[0 for k in times]
@@ -114,7 +115,7 @@ class PointCloudReader(object):
                         for i in enumerate(all_data)]
         for k, time in enumerate(times):
             for j, dim in enumerate(['x', 'y', 'z']):
-                colnum = columns.index(dim + '__' + time)
+                colnum = self.column.index(dim + '__' + time)
                 for i, row in enumerate(all_data):
                     posarray[i, j, k] = row[colnum]
 
