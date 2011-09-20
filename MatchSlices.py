@@ -210,7 +210,10 @@ if __name__ == "__main__":
 
             expr[fbgn2name[name] if name in fbgn2name else name] = fpkm
 
+        # Turn expression matrix into a list
         expr_l = [(expr[gene] if gene in expr else 0) for gene in gn_list]
+        corrmat = np.empty((ntimes, nslices))
+
         for time in range(ntimes):
             bestcorr = 0
             bestslice = -1
@@ -218,6 +221,7 @@ if __name__ == "__main__":
                 #corr = np.abs(np.corrcoef(expr_l, slices[slice, :, time]))[1,0]
                 #corr = stats.pearsonr(expr_l, slices[slice, :, time])[0]
                 corr = stats.spearmanr(expr_l, slices[slice, :, time])[0]
+                corrmat[time, slice] = corr
                 if corr > bestcorr:
                     bestcorr = corr
                     bestslice = slice
