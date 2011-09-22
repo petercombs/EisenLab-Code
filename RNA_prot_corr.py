@@ -7,8 +7,11 @@ import time
 
 pcr = PointCloudReader(open('../Data/D_mel_wt_atlas_r2.vpc'))
 
+# use proteins to get the list of mRNAs.
 protidxs, prots= zip(*[(i, c) for i, c in enumerate(pcr.column) if 'P' in c])
+
 rnas = [p.replace('P', '') for p in prots]
+# Some RNAs aren't measured at certain time points
 rnas = [r for r in rnas if r in pcr.column]
 rnaidxs = [pcr.column.index(r) for r in rnas]
 
