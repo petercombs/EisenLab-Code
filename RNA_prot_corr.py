@@ -36,14 +36,56 @@ for i in range(times):
 stop_dist = time.time()
 print("Took %fs to calculate distances" % (stop_dist - start_dist))
 
+print("Loading expression data old-school")
 for line in pcr:
     for i, p in enumerate(protidxs):
         protdata[i].append(line[p])
     for i, r in enumerate(rnaidxs):
         rnadata[i].append(line[r])
+print("Done with that loading as well")
 
-for time in range(times-1):
-    rna_diffused = []
+gene_names = pcr.get_gene_names()
+gene_name_list = list(gene_names)
+diffused = {}
+S = 10 # 4 D t
+for S in [1,3,5,15,20,40,80]:
+    print("Caculating diffusion")
+    print("-"*70)
+    print(S)
+    print("-"*70)
+    try:
+        f = open('diffused%03d.pkl'%S)
+        import pickle
+        diffused = pickle.load(f)
+        print("Sweet, grabbed it from a file")
+    except IOError:
+        for gene in gene_names:
+            if gene+"P" not in gene_names:
+                continue
+            coord = gene_name_list.index(gene)
+            print("Working on gene: " + gene)
+            rna_diffused = np.zeros((nuclei, times))
+            for t in range(times):
+                print("Timepoint %d" % t)
+                for n in range(nuclei):
+                    rna_diffused[n, t] = sum(1 / np.sqrt(np.pi * S)
+                                             * np.exp(-dists[n,:,t] / S)
+                                             * expr[:,coord, t])
+            diffused[gene] = rna_diffused
+
+    print("Sweet, diffusion is done")
+    for gene in diffused:
+        print("-"*50)
+        print(gene)
+        print("-"*50)
+        prot = gene_name_list.index(gene+"P")
+        for rna_time in range(times):
+            for prot_time in range(times):
+                if sum(expr[:, prot, prot_time]) and sum(diffused[gene][:,rna_time]):
+                    print(np.corrcoef(expr[:,prot, prot_time],
+                                      diffused[gene][:,rna_time])[0,1],
+                          end='\t')
+            print()
 
 for gene in geneset:
     print('', end='\t')
