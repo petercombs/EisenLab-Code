@@ -37,7 +37,7 @@ def calc_diffusion(S):
         pickle.dump(diffused, f)
 
     print("Sweet, diffusion is done")
-    genecorrs = {}
+    gene_corrs = {}
     for gene in diffused:
         print("-"*50)
         print(gene)
@@ -98,12 +98,11 @@ print("Done with that loading as well")
 
 gene_names = pcr.get_gene_names()
 gene_name_list = list(gene_names)
-S = 10 # 4 D t
-S = [1, 3, 5, 10, 15, 20, 40, 80]
+#S = 10 # 4 D t
+Ss = [1, 3, 5, 10, 15, 20, 40, 80]
 
-curry = lambda var: calc_diffusion(gene_name_list, var, expr, dists)
 p = mp.Pool(3)
-p.map(calc_diffusion, S)
+p.map(calc_diffusion, Ss)
 
 for gene in geneset:
     print('', end='\t')
