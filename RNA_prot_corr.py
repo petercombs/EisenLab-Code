@@ -4,6 +4,56 @@ from __future__ import print_function
 import numpy as np
 from PointClouds import PointCloudReader
 import time
+import pickle
+
+def calc_diffusion(gene_name_list, S, expr, dists):
+    print("Caculating diffusion")
+    print("-"*70)
+    print(S)
+    print("-"*70)
+
+
+    try:
+        f = open('diffused%03d.pkl'%S)
+        diffused = pickle.load(f)
+        print("Sweet, grabbed it from a file")
+    except IOError:
+        f = open('diffused%03d.pkl'%S, 'w')
+        for gene in gene_names:
+            if gene+"P" not in gene_names:
+                continue
+            coord = gene_name_list.index(gene)
+            print("Working on gene: " + gene)
+            rna_diffused = np.zeros((nuclei, times))
+            for t in range(times):
+                print("Timepoint %d" % t)
+                for n in range(nuclei):
+                    rna_diffused[n, t] = sum(1 / np.sqrt(np.pi * S)
+                                             * np.exp(-dists[n,:,t] / S)
+                                             * expr[:,coord, t])
+            diffused[gene] = rna_diffused
+        pickle.dump(diffused, f)
+
+    print("Sweet, diffusion is done")
+    genecorrs = {}
+    for gene in diffused:
+        print("-"*50)
+        print(gene)
+        print("-"*50)
+        prot = gene_name_list.index(gene+"P")
+        corrs = []
+        for rna_time in range(times):
+            corrs.append([])
+            for prot_time in range(times):
+                if sum(expr[:, prot, prot_time]) and sum(diffused[gene][:,rna_time]):
+                    corr = np.corrcoef(expr[:,prot, prot_time], diffused[gene][:,rna_time])[0,1]
+                    corrs[-1].append(corr)
+                    print(corr, end='\t')
+            print()
+        gene_corrs[gene] = corrs
+    return gene_corrs
+
+
 
 pcr = PointCloudReader(open('../Data/D_mel_wt_atlas_r2.vpc'))
 
@@ -26,7 +76,7 @@ nuclei, genes, times = np.shape(expr)
 
 start_dist = time.time()
 print("Ready")
-dists = np.empty((nuclei, nuclei, times), dtype=np.float16)
+dists = np.empty((nuclei, nuclei, times), dtype=np.float32)
 pos.resize((nuclei, 1, 3, times))
 posT = pos.reshape((1, nuclei, 3, times))
 print("Steady")
@@ -48,44 +98,11 @@ gene_names = pcr.get_gene_names()
 gene_name_list = list(gene_names)
 diffused = {}
 S = 10 # 4 D t
-for S in [1,3,5,15,20,40,80]:
-    print("Caculating diffusion")
-    print("-"*70)
-    print(S)
-    print("-"*70)
-    try:
-        f = open('diffused%03d.pkl'%S)
-        import pickle
-        diffused = pickle.load(f)
-        print("Sweet, grabbed it from a file")
-    except IOError:
-        for gene in gene_names:
-            if gene+"P" not in gene_names:
-                continue
-            coord = gene_name_list.index(gene)
-            print("Working on gene: " + gene)
-            rna_diffused = np.zeros((nuclei, times))
-            for t in range(times):
-                print("Timepoint %d" % t)
-                for n in range(nuclei):
-                    rna_diffused[n, t] = sum(1 / np.sqrt(np.pi * S)
-                                             * np.exp(-dists[n,:,t] / S)
-                                             * expr[:,coord, t])
-            diffused[gene] = rna_diffused
+S = [1, 3, 5, 10, 15, 20, 40, 80]
 
-    print("Sweet, diffusion is done")
-    for gene in diffused:
-        print("-"*50)
-        print(gene)
-        print("-"*50)
-        prot = gene_name_list.index(gene+"P")
-        for rna_time in range(times):
-            for prot_time in range(times):
-                if sum(expr[:, prot, prot_time]) and sum(diffused[gene][:,rna_time]):
-                    print(np.corrcoef(expr[:,prot, prot_time],
-                                      diffused[gene][:,rna_time])[0,1],
-                          end='\t')
-            print()
+curry = lambda var: calc_diffusion(gene_name_list, var, expr, dists)
+p = multiprocessing.Pool(3)
+p.map(curry, S)
 
 for gene in geneset:
     print('', end='\t')
