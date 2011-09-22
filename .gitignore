@@ -13,6 +13,7 @@ __pycache__
 *.fai
 *.pdf
 *.pyc
+*.pkl
 *.fb
 *dump*
 
