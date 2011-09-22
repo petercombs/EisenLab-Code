@@ -5,8 +5,9 @@ import numpy as np
 from PointClouds import PointCloudReader
 import time
 import pickle
+import multiprocessing as mp
 
-def calc_diffusion(gene_name_list, S, expr, dists):
+def calc_diffusion(S):
     print("Caculating diffusion")
     print("-"*70)
     print(S)
@@ -18,6 +19,7 @@ def calc_diffusion(gene_name_list, S, expr, dists):
         diffused = pickle.load(f)
         print("Sweet, grabbed it from a file")
     except IOError:
+        diffused = {}
         f = open('diffused%03d.pkl'%S, 'w')
         for gene in gene_names:
             if gene+"P" not in gene_names:
@@ -96,13 +98,12 @@ print("Done with that loading as well")
 
 gene_names = pcr.get_gene_names()
 gene_name_list = list(gene_names)
-diffused = {}
 S = 10 # 4 D t
 S = [1, 3, 5, 10, 15, 20, 40, 80]
 
 curry = lambda var: calc_diffusion(gene_name_list, var, expr, dists)
-p = multiprocessing.Pool(3)
-p.map(curry, S)
+p = mp.Pool(3)
+p.map(calc_diffusion, S)
 
 for gene in geneset:
     print('', end='\t')
