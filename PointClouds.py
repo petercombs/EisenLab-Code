@@ -108,7 +108,8 @@ class PointCloudReader(object):
                     pass
 
         if HAS_NUMPY:
-            posarray = np.zeros([len(all_data), 3, len(times)])
+            posarray = np.zeros([len(all_data), 3, len(times)],
+                                dtype=np.float32)
         else:
             posarray = [[[0 for k in times]
                          for j in range(3)]

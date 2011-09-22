@@ -2,11 +2,8 @@ from __future__ import print_function
 #python3 compatibility
 
 import numpy as np
-import csv
 from PointClouds import PointCloudReader
-
-
-
+import time
 
 pcr = PointCloudReader(open('../Data/D_mel_wt_atlas_r2.vpc'))
 
@@ -20,12 +17,30 @@ geneset = set([r.split('_')[0] for r in rnas])
 protdata = [[] for p in prots]
 rnadata = [[] for r in rnas]
 
+expr, pos = pcr.data_to_arrays()
+
+nuclei, genes, times = np.shape(expr)
+
+start_dist = time.time()
+print("Ready")
+dists = np.empty((nuclei, nuclei, times), dtype=np.float16)
+pos.resize((nuclei, 1, 3, times))
+posT = pos.reshape((1, nuclei, 3, times))
+print("Steady")
+for i in range(times):
+    print(i)
+    dists[:,:,i] = np.sum((pos[:,:,:,i] - posT[:,:,:,i])**2, axis=2)
+stop_dist = time.time()
+print("Took %fs to calculate distances" % (stop_dist - start_dist))
+
 for line in pcr:
     for i, p in enumerate(protidxs):
         protdata[i].append(line[p])
     for i, r in enumerate(rnaidxs):
         rnadata[i].append(line[r])
 
+for time in range(times-1):
+    rna_diffused = []
 
 for gene in geneset:
     print('', end='\t')
