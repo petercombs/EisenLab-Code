@@ -2,10 +2,12 @@ Eisen Lab Code
 ==============
 
 This is a collection of code that I've written to do various tasks in lab.  I
-make no claims to suitability for any purpose, and all code is released under
-the CRAPL v0 license.  Please contact me direclty (peter.combs@berkeley.edu)
-for any data I've generated, as it's most likely too large to fit on github
-anyways.
+make no claims to suitability for any purpose, and all code (unless otherwise
+noted) is released under the CRAPL v0 license.  Please contact me direclty
+(peter.combs@berkeley.edu) for any data I've generated, as it's most likely too
+large to fit on github anyways.
+
+[TOC]
 
 PointClouds.py
 --------------
@@ -25,9 +27,23 @@ variables.  Example usage:
 
 which loads all of the data from the first timepoint with Bicoid into the
 bcddata list.
-    
 
-do_tux.py
+RNA\_prot\_corr.py
+------------------
+Calculates the correlation coefficient between RNA and protein expression
+levels for different time points in the BDTNP virtual embryos.  As of
+09/23/2011, this contains attempts to see whether taking account for diffusion
+improves the corerlation at all (hint: it doesn't, but it doesn't make it much
+worse, either).
+
+MatchSlices.py
+--------------
+This takes RNA-seq data from slices of drosophila embryos and attempts to find
+the location in a BDTNP virtual embryo that has the best (Speaman) correlation
+to that slice.
+
+
+do\_tux.py
 ---------
 
 This is an automated script I first wrote to run the Tuxedo suite (tophat,
