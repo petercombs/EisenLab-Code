@@ -20,7 +20,6 @@ def calc_diffusion(S):
         print("Sweet, grabbed it from a file")
     except IOError:
         diffused = {}
-        f = open('diffused%03d.pkl'%S, 'w')
         for gene in gene_names:
             if gene+"P" not in gene_names:
                 continue
@@ -34,7 +33,9 @@ def calc_diffusion(S):
                                              * np.exp(-dists[n,:,t] / S)
                                              * expr[:,coord, t])
             diffused[gene] = rna_diffused
+        f = open('diffused%03d.pkl'%S, 'w')
         pickle.dump(diffused, f)
+        f.close()
 
     print("Sweet, diffusion is done")
     gene_corrs = {}
@@ -101,6 +102,8 @@ gene_name_list = list(gene_names)
 #S = 10 # 4 D t
 Ss = [1, 3, 5, 10, 15, 20, 40, 80]
 
+#for s in Ss:
+#    calc_diffusion(s)
 p = mp.Pool(3)
 p.map(calc_diffusion, Ss)
 
