@@ -17,6 +17,7 @@ def calc_diffusion(S):
     try:
         f = open('diffused%03d.pkl'%S)
         diffused = pickle.load(f)
+        f.close()
         print("Sweet, grabbed it from a file")
     except IOError:
         diffused = {}
@@ -79,13 +80,21 @@ nuclei, genes, times = np.shape(expr)
 
 start_dist = time.time()
 print("Ready")
-dists = np.empty((nuclei, nuclei, times), dtype=np.float32)
-pos.resize((nuclei, 1, 3, times))
-posT = pos.reshape((1, nuclei, 3, times))
-print("Steady")
-for i in range(times):
-    print(i)
-    dists[:,:,i] = np.sum((pos[:,:,:,i] - posT[:,:,:,i])**2, axis=2)
+try:
+    f = open('dists.pkl')
+    dists = pickle.load(f)
+    f.close()
+except IOError:
+    dists = np.empty((nuclei, nuclei, times), dtype=np.float32)
+    pos.resize((nuclei, 1, 3, times))
+    posT = pos.reshape((1, nuclei, 3, times))
+    print("Steady")
+    for i in range(times):
+        print(i)
+        dists[:,:,i] = np.sum((pos[:,:,:,i] - posT[:,:,:,i])**2, axis=2)
+    f = open('dists.pkl', 'w')
+    pickle.dump(dists, f)
+    f.close()
 stop_dist = time.time()
 print("Took %fs to calculate distances" % (stop_dist - start_dist))
 
