@@ -109,12 +109,12 @@ print("Done with that loading as well")
 gene_names = pcr.get_gene_names()
 gene_name_list = list(gene_names)
 #S = 10 # 4 D t
-Ss = [1, 3, 5, 10, 15, 20, 40, 80]
+Ss = [0.001, 1, 3, 5, 10, 15, 20, 40, 80]
 
 #for s in Ss:
-#    calc_diffusion(s)
+#    res.append(calc_diffusion(s))
 p = mp.Pool(3)
-p.map(calc_diffusion, Ss)
+res = p.map(calc_diffusion, Ss)
 
 for gene in geneset:
     print('', end='\t')
