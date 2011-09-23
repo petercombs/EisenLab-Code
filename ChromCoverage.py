@@ -3,8 +3,8 @@ import svgfig
 import sys
 import numpy as np
 
-step = 1000000
-widthscale = 1500000
+step = 10000
+widthscale = 10000
 
 for fname in sys.argv[1:]:
     print('Working on ' + fname)
