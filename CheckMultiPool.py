@@ -8,18 +8,33 @@ from glob import glob
 from collections import defaultdict
 
 
-def has_difference(aln, pos, row1, row2, length=40):
-    return row1[pos : pos+length] != row2[pos : pos+length]
-
 def is_different(aln, species1, species2, length=40):
     strings1 = [str(aln[r].seq).replace('-', 'X') for r in species1]
     strings2 = [str(aln[r].seq).replace('-', 'Y') for r in species2]
     for pos in range(aln.get_alignment_length() - length):
         for row1 in strings1:
             for row2 in strings2:
-                if not has_difference(aln, pos, row1, row2, length):
-                    return pos, row1, row2
+                if row1[pos:pos + length] == row2[pos:pos+length]:
+                    return False
     return True
+
+def count_ambiguous_stretches(aln, species1, species2, length=40):
+    stretches = 0
+    strings1 = [str(aln[r].seq).replace('?', 'X') for r in species1]
+    strings2 = [str(aln[r].seq).replace('?', 'Y') for r in species2]
+    for pos in range(aln.get_alignment_length() - length):
+        for row1 in strings1:
+            for row2 in strings2:
+                if row1[pos:pos+length] == row2[pos:pos+length] and \
+                   row1[pos:pos+length].count('-') != length:
+                    stretches += 1
+                    break
+            else:
+                continue
+            # If there was an ambiguous base at this position, break out of both
+            # loops
+            break
+    return stretches
 
 def find_ambiguous_stretches(aln, species1, species2, length=40):
     stretches = []
@@ -28,7 +43,7 @@ def find_ambiguous_stretches(aln, species1, species2, length=40):
     for pos in range(aln.get_alignment_length() - length):
         for row1 in strings1:
             for row2 in strings2:
-                if not has_difference(aln, pos, row1, row2, length):
+                if row1[pos:pos+length] == row2[pos:pos+length]:
                     stretches.append((pos, row1, row2))
                     break
             else:
@@ -39,7 +54,7 @@ def find_ambiguous_stretches(aln, species1, species2, length=40):
     return stretches
 
 if __name__ == "__main__":
-    data_dir = '/Users/pacombs/data/Orthologs/aligned/'
+    data_dir = '/Users/pacombs/data/Orthologs/testdir/'
     comp_length = 40
 
     total_species = defaultdict(int)
@@ -72,12 +87,12 @@ if __name__ == "__main__":
                 total_species[s2] += min(len(
                     str(aln[s].seq).replace('-','')) for s in species_rows[s2])
 
-                ambiguous = find_ambiguous_stretches(aln, species_rows[s1],
+                ambiguous = count_ambiguous_stretches(aln, species_rows[s1],
                                                      species_rows[s2],
                                                      comp_length)
 
-                ambiguous_species[s1][s2] += len(ambiguous)
-                ambiguous_species[s2][s1] += len(ambiguous)
+                ambiguous_species[s1][s2] += ambiguous
+                ambiguous_species[s2][s1] += ambiguous
 
     print('\t', end='')
     for c in total_species:
