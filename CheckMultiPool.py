@@ -6,6 +6,7 @@ from Bio import AlignIO
 from os import path
 from glob import glob
 from collections import defaultdict
+from numpy import mean
 import pickle
 
 
@@ -21,8 +22,8 @@ def is_different(aln, species1, species2, length=40):
 
 def count_ambiguous_stretches(aln, species1, species2, length=40):
     stretches = 0
-    strings1 = [str(aln[r].seq).replace('?', 'X') for r in species1]
-    strings2 = [str(aln[r].seq).replace('?', 'Y') for r in species2]
+    strings1 = [str(aln[r].seq) for r in species1]
+    strings2 = [str(aln[r].seq) for r in species2]
     for pos in range(aln.get_alignment_length() - length):
         for row1 in strings1:
             for row2 in strings2:
@@ -39,8 +40,8 @@ def count_ambiguous_stretches(aln, species1, species2, length=40):
 
 def find_ambiguous_stretches(aln, species1, species2, length=40):
     stretches = []
-    strings1 = [str(aln[r].seq).replace('-', 'X') for r in species1]
-    strings2 = [str(aln[r].seq).replace('-', 'Y') for r in species2]
+    strings1 = [str(aln[r].seq) for r in species1]
+    strings2 = [str(aln[r].seq) for r in species2]
     for pos in range(aln.get_alignment_length() - length):
         for row1 in strings1:
             for row2 in strings2:
@@ -57,15 +58,16 @@ def find_ambiguous_stretches(aln, species1, species2, length=40):
 if __name__ == "__main__":
     data_dir = '/Users/pacombs/data/Orthologs/aligned/'
     expr_dict_file = '/Users/pacombs/data/susanexprdict.pkl'
-    expr_dict = pickle.load(expr_dict_file)
+    expr_dict = pickle.load(open(expr_dict_file))
     comp_length = 40
 
     total_species = defaultdict(int)
     ambiguous_species = defaultdict(lambda: defaultdict(int))
 
     for alignment in glob(path.join(data_dir, '*.fasta')):
-        melname = alignment.replace('-aligned.fasta', '')
-        expr = expr_dict[expr] if expr in expr_dict else 1
+        melname = path.basename(alignment.replace('-aligned.fasta', ''))
+        expr = mean(expr_dict[melname]) if melname in expr_dict else 1
+        expr = expr or 1
         print((melname, expr), file=sys.stderr)
         try:
             aln = AlignIO.read(alignment, 'fasta')
