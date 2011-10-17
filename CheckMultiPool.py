@@ -6,6 +6,7 @@ from Bio import AlignIO
 from os import path
 from glob import glob
 from collections import defaultdict
+import pickle
 
 
 def is_different(aln, species1, species2, length=40):
@@ -55,13 +56,17 @@ def find_ambiguous_stretches(aln, species1, species2, length=40):
 
 if __name__ == "__main__":
     data_dir = '/Users/pacombs/data/Orthologs/aligned/'
+    expr_dict_file = '/Users/pacombs/data/susanexprdict.pkl'
+    expr_dict = pickle.load(expr_dict_file)
     comp_length = 40
 
     total_species = defaultdict(int)
     ambiguous_species = defaultdict(lambda: defaultdict(int))
 
     for alignment in glob(path.join(data_dir, '*.fasta')):
-        print(alignment, file=sys.stderr)
+        melname = alignment.replace('-aligned.fasta', '')
+        expr = expr_dict[expr] if expr in expr_dict else 1
+        print((melname, expr), file=sys.stderr)
         try:
             aln = AlignIO.read(alignment, 'fasta')
         except ValueError:
@@ -87,12 +92,13 @@ if __name__ == "__main__":
                 total_species[s2] += min(len(
                     str(aln[s].seq).replace('-','')) for s in species_rows[s2])
 
+
                 ambiguous = count_ambiguous_stretches(aln, species_rows[s1],
                                                      species_rows[s2],
-                                                     comp_length)
+                                                     comp_length) * expr
 
-                ambiguous_species[s1][s2] += ambiguous
-                ambiguous_species[s2][s1] += ambiguous
+                ambiguous_species[s1][s2] += ambiguous * expr
+                ambiguous_species[s2][s1] += ambiguous * expr
 
     print('\t', end='')
     for c in total_species:
