@@ -54,7 +54,7 @@ def find_ambiguous_stretches(aln, species1, species2, length=40):
     return stretches
 
 if __name__ == "__main__":
-    data_dir = '/Users/pacombs/data/Orthologs/testdir/'
+    data_dir = '/Users/pacombs/data/Orthologs/aligned/'
     comp_length = 40
 
     total_species = defaultdict(int)
