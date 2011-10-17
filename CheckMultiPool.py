@@ -89,15 +89,15 @@ if __name__ == "__main__":
 
 
                 # Use minimum of lengths to be conservative
-                total_species[s1] += min(len(
+                total_species[s1] += expr * min(len(
                     str(aln[s].seq).replace('-','')) for s in species_rows[s1])
-                total_species[s2] += min(len(
+                total_species[s2] += expr * min(len(
                     str(aln[s].seq).replace('-','')) for s in species_rows[s2])
 
 
                 ambiguous = count_ambiguous_stretches(aln, species_rows[s1],
                                                      species_rows[s2],
-                                                     comp_length) * expr
+                                                     comp_length)
 
                 ambiguous_species[s1][s2] += ambiguous * expr
                 ambiguous_species[s2][s1] += ambiguous * expr
