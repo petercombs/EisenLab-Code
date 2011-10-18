@@ -8,6 +8,8 @@ from glob import glob
 from collections import defaultdict
 from numpy import mean
 from jellyfish import hamming_distance as distance
+
+import multiprocessing
 import pickle
 
 
@@ -28,8 +30,8 @@ def count_ambiguous_stretches(aln, species1, species2, length=40):
     for pos in range(aln.get_alignment_length() - length):
         for row1 in strings1:
             for row2 in strings2:
-                if distance(row1[pos:pos+length], row2[pos:pos+length]) < 4 and \
-                   row1[pos:pos+length].count('-') != length:
+                if ((distance(row1[pos:pos+length], row2[pos:pos+length]) < 4)
+                    and row1[pos:pos+length].count('-') != length):
                     stretches += 1
                     break
             else:
@@ -56,70 +58,87 @@ def find_ambiguous_stretches(aln, species1, species2, length=40):
             break
     return stretches
 
+def count_stretches_in_file(fname, expr_dict):
+    melname = path.basename(fname.replace('-aligned.fasta', ''))
+    expr = mean(expr_dict[melname]) if melname in expr_dict else 1
+    expr = expr or 1
+    print((melname, expr), file=sys.stderr)
+
+    ambiguous = defaultdict(lambda: defaultdict(int))
+    total = defaultdict(int)
+
+    try:
+        aln = AlignIO.read(fname, 'fasta')
+    except ValueError:
+        # At least one "alignment" is empty because it only had mel sequence
+        return ambiguous, total
+
+    species_rows = defaultdict(list)
+    for i, transcript in enumerate(aln):
+        species_rows[transcript.name[:4]].append(i)
+
+    for spec1 in species_rows:
+        for spec2 in species_rows:
+            if spec1 is spec2:
+                # Assuming species_rows is in the same order both times
+                # through (I think this is safe), then this prevents both
+                # duplicates and self-comparison.
+                break
+
+
+            # Use minimum of lengths to be conservative
+            total[spec1] += expr * min(len(
+                str(aln[s].seq).replace('-','')) for s in species_rows[spec1])
+            total[spec2] += expr * min(len(
+                str(aln[s].seq).replace('-','')) for s in species_rows[spec2])
+
+
+            ambiguous_pair = count_ambiguous_stretches(aln, species_rows[spec1],
+                                                 species_rows[spec2],
+                                                 comp_length)
+
+            ambiguous[spec1][spec2] += ambiguous_pair * expr
+            ambiguous[spec2][spec1] += ambiguous_pair * expr
+
+    return ambiguous, total
+
+def print_summary(ambiguous, total):
+    print("Percent Ambiguous")
+    print('\t', end='')
+    for c in total:
+        print(c, end='\t')
+
+    #print()
+    #for r in total:
+    #    print(r, end='\t')
+    #    for c in total:
+    #        print(ambiguous[r][c], end='\t')
+    #    print()
+    #
+    for r in total:
+        print(r, end='\t')
+        for c in total:
+            print('%.3f' % (100 * ambiguous[r][c]/total[r]), end='\t')
+        print()
+
+
+
+
 if __name__ == "__main__":
     data_dir = '/Users/pacombs/data/Orthologs/aligned/'
     expr_dict_file = '/Users/pacombs/data/susanexprdict.pkl'
     expr_dict = pickle.load(open(expr_dict_file))
     comp_length = 90
 
-    total_species = defaultdict(int)
-    ambiguous_species = defaultdict(lambda: defaultdict(int))
+    total = defaultdict(int)
+    ambiguous = defaultdict(lambda: defaultdict(int))
 
     for alignment in glob(path.join(data_dir, '*.fasta')):
-        melname = path.basename(alignment.replace('-aligned.fasta', ''))
-        expr = mean(expr_dict[melname]) if melname in expr_dict else 1
-        expr = expr or 1
-        print((melname, expr), file=sys.stderr)
-        try:
-            aln = AlignIO.read(alignment, 'fasta')
-        except ValueError:
-            # At least one "alignment" is empty because it only had mel sequence
-            continue
+        ambig, lens = count_stretches_in_file(alignment, expr_dict)
+        for key1 in ambig:
+            total[key1] += lens[key1]
 
-        species_rows = defaultdict(list)
-        for i, r in enumerate(aln):
-            species_rows[r.name[:4]].append(i)
+            for key2 in ambig[key1]:
+                ambiguous[key1][key2] += ambig[key1][key2]
 
-        for s1 in species_rows:
-            for s2 in species_rows:
-                if s1 is s2:
-                    # Assuming species_rows is in the same order both times
-                    # through (I think this is safe), then this prevents both
-                    # duplicates and self-comparison.
-                    break
-
-
-                # Use minimum of lengths to be conservative
-                total_species[s1] += expr * min(len(
-                    str(aln[s].seq).replace('-','')) for s in species_rows[s1])
-                total_species[s2] += expr * min(len(
-                    str(aln[s].seq).replace('-','')) for s in species_rows[s2])
-
-
-                ambiguous = count_ambiguous_stretches(aln, species_rows[s1],
-                                                     species_rows[s2],
-                                                     comp_length)
-
-                ambiguous_species[s1][s2] += ambiguous * expr
-                ambiguous_species[s2][s1] += ambiguous * expr
-
-    print('\t', end='')
-    for c in total_species:
-        print(c, end='\t')
-
-    print()
-    for r in total_species:
-        print(r, end='\t')
-        for c in total_species:
-            print(ambiguous_species[r][c], end='\t')
-        print()
-
-    print("Percent Ambiguous")
-    for r in total_species:
-        print(r, end='\t')
-        for c in total_species:
-            print('%.3f' % (100 * ambiguous_species[r][c]/total_species[r]), end='\t')
-        print()
-
-
-
+    print_summary(ambiguous, total)
