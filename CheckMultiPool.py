@@ -7,7 +7,7 @@ from os import path
 from glob import glob
 from collections import defaultdict
 from numpy import mean
-from editdist import distance
+from jellyfish import hamming_distance as distance
 import pickle
 
 
@@ -28,7 +28,7 @@ def count_ambiguous_stretches(aln, species1, species2, length=40):
     for pos in range(aln.get_alignment_length() - length):
         for row1 in strings1:
             for row2 in strings2:
-                if distance(row1[pos:pos+length], row2[pos:pos+length]) < 2 and \
+                if distance(row1[pos:pos+length], row2[pos:pos+length]) < 4 and \
                    row1[pos:pos+length].count('-') != length:
                     stretches += 1
                     break
@@ -60,7 +60,7 @@ if __name__ == "__main__":
     data_dir = '/Users/pacombs/data/Orthologs/aligned/'
     expr_dict_file = '/Users/pacombs/data/susanexprdict.pkl'
     expr_dict = pickle.load(open(expr_dict_file))
-    comp_length = 40
+    comp_length = 90
 
     total_species = defaultdict(int)
     ambiguous_species = defaultdict(lambda: defaultdict(int))
