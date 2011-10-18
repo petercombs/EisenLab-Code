@@ -7,6 +7,7 @@ from os import path
 from glob import glob
 from collections import defaultdict
 from numpy import mean
+from editdist import distance
 import pickle
 
 
@@ -27,7 +28,7 @@ def count_ambiguous_stretches(aln, species1, species2, length=40):
     for pos in range(aln.get_alignment_length() - length):
         for row1 in strings1:
             for row2 in strings2:
-                if row1[pos:pos+length] == row2[pos:pos+length] and \
+                if distance(row1[pos:pos+length], row2[pos:pos+length]) < 2 and \
                    row1[pos:pos+length].count('-') != length:
                     stretches += 1
                     break
