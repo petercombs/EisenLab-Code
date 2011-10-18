@@ -105,8 +105,8 @@ def count_stretches_in_file(fname, expr_dict):
 def print_summary(ambiguous, total):
     print("Percent Ambiguous")
     print('\t', end='')
-    for c in total:
-        print(c, end='\t')
+    for col in total:
+        print(col, end='\t')
 
     #print()
     #for r in total:
@@ -115,10 +115,10 @@ def print_summary(ambiguous, total):
     #        print(ambiguous[r][c], end='\t')
     #    print()
     #
-    for r in total:
-        print(r, end='\t')
-        for c in total:
-            print('%.3f' % (100 * ambiguous[r][c]/total[r]), end='\t')
+    for row in total:
+        print(row, end='\t')
+        for col in total:
+            print('%.3f' % (100 * ambiguous[row][col]/total[row]), end='\t')
         print()
 
 
