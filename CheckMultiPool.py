@@ -9,7 +9,7 @@ from collections import defaultdict
 from numpy import mean
 from jellyfish import hamming_distance as distance
 
-import multiprocessing
+import multiprocessing as mp
 import pickle
 
 
@@ -133,8 +133,10 @@ if __name__ == "__main__":
     total = defaultdict(int)
     ambiguous = defaultdict(lambda: defaultdict(int))
 
-    for alignment in glob(path.join(data_dir, '*.fasta')):
-        ambig, lens = count_stretches_in_file(alignment, expr_dict)
+    pool = mp.Pool(6)
+    files = glob(path.join(data_dir, '*.fasta'))
+    res = pool.imap(count_stretches_in_file, zip(files, [expr_dict]*len(files)))
+    for ambig, lens in res:
         for key1 in ambig:
             total[key1] += lens[key1]
 
