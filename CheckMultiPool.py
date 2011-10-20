@@ -23,14 +23,16 @@ def is_different(aln, species1, species2, length=40):
                     return False
     return True
 
-def count_ambiguous_stretches(aln, species1, species2, length=40):
+def count_ambiguous_stretches(aln, species1, species2, length=40,
+                              max_distance=4):
     stretches = 0
     strings1 = [str(aln[r].seq) for r in species1]
     strings2 = [str(aln[r].seq) for r in species2]
     for pos in range(aln.get_alignment_length() - length):
         for row1 in strings1:
             for row2 in strings2:
-                if ((distance(row1[pos:pos+length], row2[pos:pos+length]) < 4)
+                if ((distance(row1[pos:pos+length], row2[pos:pos+length]) 
+                     <= max_distance)
                     and row1[pos:pos+length].count('-') != length):
                     stretches += 1
                     break
@@ -58,7 +60,8 @@ def find_ambiguous_stretches(aln, species1, species2, length=40):
             break
     return stretches
 
-def count_stretches_in_file(fname, expr_dict):
+def count_stretches_in_file(args):
+    fname, expr_dict, length, max_distance = args
     melname = path.basename(fname.replace('-aligned.fasta', ''))
     expr = mean(expr_dict[melname]) if melname in expr_dict else 1
     expr = expr or 1
@@ -95,7 +98,7 @@ def count_stretches_in_file(fname, expr_dict):
 
             ambiguous_pair = count_ambiguous_stretches(aln, species_rows[spec1],
                                                  species_rows[spec2],
-                                                 comp_length)
+                                                 length, max_distance)
 
             ambiguous[spec1][spec2] += ambiguous_pair * expr
             ambiguous[spec2][spec1] += ambiguous_pair * expr
@@ -108,7 +111,7 @@ def print_summary(ambiguous, total):
     for c in total:
         print(c, end='\t')
 
-    #print()
+    print()
     #for r in total:
     #    print(r, end='\t')
     #    for c in total:
@@ -122,19 +125,27 @@ def print_summary(ambiguous, total):
         print()
 
 
+def get_args():
+    from argparse import ArgumentParser
+    parser = ArgumentParser()
+    parser.add_argument('-l', '--comparison-length', type=int, default=40)
+    parser.add_argument('-d', '--max-distance', type=int, default=3)
+    return parser.parse_args()
 
 
 if __name__ == "__main__":
     data_dir = '/Users/pacombs/data/Orthologs/aligned/'
     expr_dict_file = '/Users/pacombs/data/susanexprdict.pkl'
     expr_dict = pickle.load(open(expr_dict_file))
-    comp_length = 90
+    opts = get_args()
 
     total = defaultdict(int)
     ambiguous = defaultdict(lambda: defaultdict(int))
 
     for alignment in glob(path.join(data_dir, '*.fasta')):
-        ambig, lens = count_stretches_in_file(alignment, expr_dict)
+        ambig, lens = count_stretches_in_file((alignment, expr_dict,
+                                              opts.comparison_length,
+                                              opts.max_distance))
         for key1 in ambig:
             total[key1] += lens[key1]
 
