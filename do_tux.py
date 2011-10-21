@@ -27,6 +27,9 @@ cuffdiff_base = ('cufflinks.cuffdiff -p 8 -v --FDR .001 -o %(ad)s %(gtf)s '
 reads = ['s_5_1_sequence.txt s_5_2_sequence.txt', 
          's_6_1_sequence.txt s_6_2_sequence.txt']
 
+libraries = {'s_5_1_sequence.txt' : 'PAC03',
+             's_6_1_sequence.txt' : 'PAC02'}
+
 # Dictionary with the number of reads in each file
 numreads = {}
 
@@ -65,14 +68,26 @@ for rf in reads:
     
     od = join(analysis_dir, rf2.split('.')[0])
 
+    # Figure out Read Group ID
+    f = open(rf.split()[0])
+    l = f.readline()
+    f.close()
+    rgid = l.split(":")[0][1:]
+    lane = l.split(":)[1]
+
 
     # Do tophat
     print 'Tophatting...', '\n', '='*30
-    commandstr =  (tophat_base + '-G %(GTF)s -o %(od)s %(idxfile)s %(rf)s'
-           % {'GTF':GTF,
+    commandstr =  (tophat_base + '-G %(GTF)s -o %(od)s --rg-library %(library)s'
+                   ' --rg-center VCGSL --rg-sample %(library)s --rg-platform'
+                   ' ILLUMINA --rg-id %(rgid)s  --rg-platform-unit %(lane)s --%(idxfile)s %(rf)s'
+           % {'GTF': GTF,
               'od': od,
               'idxfile': idxfile,
-              'rf': rf})
+              'rf': rf,
+              'library': libraries[rf.split()[0]],
+              'rgid': rgid,
+              'lane': lane})
     print commandstr
     sys.stdout.flush()
     res = system(commandstr)
