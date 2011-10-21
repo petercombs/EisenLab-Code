@@ -73,14 +73,14 @@ for rf in reads:
     l = f.readline()
     f.close()
     rgid = l.split(":")[0][1:]
-    lane = l.split(":)[1]
+    lane = l.split(":")[1]
 
 
     # Do tophat
     print 'Tophatting...', '\n', '='*30
     commandstr =  (tophat_base + '-G %(GTF)s -o %(od)s --rg-library %(library)s'
                    ' --rg-center VCGSL --rg-sample %(library)s --rg-platform'
-                   ' ILLUMINA --rg-id %(rgid)s  --rg-platform-unit %(lane)s --%(idxfile)s %(rf)s'
+                   ' ILLUMINA --rg-id %(rgid)s  --rg-platform-unit %(lane)s %(idxfile)s %(rf)s'
            % {'GTF': GTF,
               'od': od,
               'idxfile': idxfile,
