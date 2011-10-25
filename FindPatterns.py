@@ -128,9 +128,10 @@ def test_case_7():
 
 
 if __name__ == "__main__":
-    test_case_1()
-    test_case_2()
-    test_case_3()
-    test_case_4()
-    test_case_5()
+    locs = locals()
+    for thing in sorted(locs.keys()):
+        # need to iterate over keys because locals changes when we include thing
+        if thing.startswith('test_case'):
+            print thing
+            locs[thing]()
 
