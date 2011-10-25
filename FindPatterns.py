@@ -1,6 +1,6 @@
 from collections import defaultdict
 
-def AfterBreak(expr, sigs):
+def find_after_break(expr, sigs):
     breakpoints = []
     # Pad by 1 so end caes don't automatically pass
     for break_sample in range(1, len(expr) - 1):
@@ -18,7 +18,7 @@ def AfterBreak(expr, sigs):
             breakpoints.append(break_sample)
     return breakpoints
 
-def FindPeak(expr, sigs):
+def find_peak(expr, sigs):
     peak_points = []
 
     for peak_point in range(1, len(expr) - 1):
@@ -49,7 +49,7 @@ def test_case_1():
     expr = [0, 1, 2, 3, 4, 5]
     sigs = defaultdict(lambda: defaultdict(lambda: True))
 
-    print "Case 1", AfterBreak(expr, sigs), FindPeak(expr, sigs)
+    print "Case 1", find_after_break(expr, sigs), find_peak(expr, sigs)
 
 def test_case_2():
     "A single, obvious breakpoint"
@@ -63,7 +63,7 @@ def test_case_2():
     sigs[3][3] = sigs[3][4] = sigs[3][5] = False
     sigs[4] = sigs[5] = sigs[3]
 
-    print "Case 2:", AfterBreak(expr, sigs), FindPeak(expr, sigs)
+    print "Case 2:", find_after_break(expr, sigs), find_peak(expr, sigs)
 
 
 def test_case_3():
@@ -72,7 +72,7 @@ def test_case_3():
     expr = [0, 1, 2, 3, 4, 5]
     sigs = defaultdict(lambda: defaultdict(lambda: False))
 
-    print "Case 3:", AfterBreak(expr, sigs), FindPeak(expr, sigs)
+    print "Case 3:", find_after_break(expr, sigs), find_peak(expr, sigs)
 
 
 def test_case_4():
@@ -87,7 +87,7 @@ def test_case_4():
     sigs[3][3] = sigs[3][4] = sigs[3][5] = False
     sigs[4] = sigs[5] = sigs[3]
 
-    print "Case 4:", AfterBreak(expr, sigs), FindPeak(expr, sigs)
+    print "Case 4:", find_after_break(expr, sigs), find_peak(expr, sigs)
 
 def test_case_5():
     "A rising peak in the middle, difference with neighbors not significant"
