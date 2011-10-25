@@ -98,9 +98,34 @@ def test_case_5():
     sigs[2] = {0:True, 1:False, 2:False, 3:False, 4:True,}
     sigs[3] = sigs[1]
     sigs[4] = sigs[0]
+    print "Case 5:", find_after_break(expr, sigs), find_peak(expr, sigs)
 
-    print "Case 5:", AfterBreak(expr, sigs), FindPeak(expr, sigs)
-    
+
+def test_case_6():
+    "A falling peak in the middle, difference with neighbors not significant"
+    expr = [5,4,3,4,5]
+    sigs = {}
+    sigs[0] = {0:False, 1:False, 2:True, 3:False, 4:False}
+    sigs[1] = {0:False, 1:False, 2:False, 3:False, 4:False}
+    sigs[2] = {0:True, 1:False, 2:False, 3:False, 4:True,}
+    sigs[3] = sigs[1]
+    sigs[4] = sigs[0]
+    print "Case 6:", find_after_break(expr, sigs), find_peak(expr, sigs)
+
+def test_case_7():
+    "A falling peak in the middle, difference with neighbors not significant"
+    expr = [5,4,3,4,5,6,7]
+    sigs = {}
+    sigs[0] = {0:False, 1:False, 2:True, 3:False, 4:False, 5: False, 6: True}
+    sigs[1] = {0:False, 1:False, 2:False, 3:False, 4:False, 5: True, 6: True}
+    sigs[2] = {0:True, 1:False, 2:False, 3:False, 4:True, 5: True, 6:True}
+    sigs[3] = sigs[1]
+    sigs[4] = sigs[0]
+    sigs[5] = {0:False, 1:True, 2:True, 3:True, 4:False, 5: False, 6: False}
+    sigs[6] = defaultdict(lambda:True)
+    sigs[6][5] = sigs[6][6] = False
+    print "Case 7:", find_after_break(expr, sigs), find_peak(expr, sigs)
+
 
 if __name__ == "__main__":
     test_case_1()
