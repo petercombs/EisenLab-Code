@@ -121,7 +121,7 @@ for rf in reads:
             break
 
 all_bams = map(lambda s: join('analysis', s, 'accepted_hits.bam'), 
-               (s.split('.fq')[0] for s in reads))
+               (s.split('.txt')[0] for s in reads))
 
 
 # Do Cuffdiff
