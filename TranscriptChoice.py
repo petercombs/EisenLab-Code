@@ -10,7 +10,7 @@ last_sig_line = ""
 last_sig_fold = 0
 for line in infile:
     data = line.split()
-    fold = float(data[8])
+    fold = float(data[9])
     if data[-1] == "yes":
         if last_sig_locus == data[2] and (last_sig_fold * fold) < 0:
             print(last_sig_line, end="")
