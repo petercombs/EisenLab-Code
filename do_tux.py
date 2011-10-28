@@ -8,7 +8,7 @@ from os.path import join
 from time import time
 
 analysis_dir = 'analysis'
-GTF =  'Reference/dmel-all-r5.32_transcripts.gtf'
+GTF =  'Reference/dmel-all-r5.32_transcripts_fixed.gtf'
 idxfile = 'Reference/dmel-all-r5.23'
 interest = 'GenesOfInterest.txt'
 FBtoName = 'Reference/dmelfbgns.txt'
