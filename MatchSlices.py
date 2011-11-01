@@ -205,7 +205,7 @@ if __name__ == "__main__":
             if ((name not in gene_names) and
                 (name not in fbgn2name or (fbgn2name[name] not in gene_names))):
                 continue
-            fpkm = float(linedat[7])
+            fpkm = float(linedat[5])
 
 
             expr[fbgn2name[name] if name in fbgn2name else name] = fpkm
