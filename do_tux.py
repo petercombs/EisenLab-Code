@@ -137,7 +137,9 @@ all_bams = map(lambda s: join('analysis', s, 'accepted_hits.bam'),
 
 # Do Cuffdiff
 #system(cuffdiff_base + " ".join(all_bams))
-cuffdiff_proc = Popen(cuffdiff_base.split()+all_bams)
+cuffdiff_proc = Popen(cuffdiff_base.split() +
+                      ['-L', ','.join(libraries[rf.split()[0] for rf in reads)]
+                      + all_bams)
 
 # Stop the timing
 end = time()
