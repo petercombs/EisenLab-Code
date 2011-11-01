@@ -1,6 +1,6 @@
 from collections import defaultdict
 
-def AfterBreak(expr, sigs):
+def find_after_break(expr, sigs):
     breakpoints = []
     # Pad by 1 so end caes don't automatically pass
     for break_sample in range(1, len(expr) - 1):
@@ -18,7 +18,7 @@ def AfterBreak(expr, sigs):
             breakpoints.append(break_sample)
     return breakpoints
 
-def FindPeak(expr, sigs):
+def find_peak(expr, sigs):
     peak_points = []
 
     for peak_point in range(1, len(expr) - 1):
@@ -49,7 +49,7 @@ def test_case_1():
     expr = [0, 1, 2, 3, 4, 5]
     sigs = defaultdict(lambda: defaultdict(lambda: True))
 
-    print "Case 1", AfterBreak(expr, sigs), FindPeak(expr, sigs)
+    print "Case 1", find_after_break(expr, sigs), find_peak(expr, sigs)
 
 def test_case_2():
     "A single, obvious breakpoint"
@@ -63,7 +63,7 @@ def test_case_2():
     sigs[3][3] = sigs[3][4] = sigs[3][5] = False
     sigs[4] = sigs[5] = sigs[3]
 
-    print "Case 2:", AfterBreak(expr, sigs), FindPeak(expr, sigs)
+    print "Case 2:", find_after_break(expr, sigs), find_peak(expr, sigs)
 
 
 def test_case_3():
@@ -72,7 +72,7 @@ def test_case_3():
     expr = [0, 1, 2, 3, 4, 5]
     sigs = defaultdict(lambda: defaultdict(lambda: False))
 
-    print "Case 3:", AfterBreak(expr, sigs), FindPeak(expr, sigs)
+    print "Case 3:", find_after_break(expr, sigs), find_peak(expr, sigs)
 
 
 def test_case_4():
@@ -87,7 +87,7 @@ def test_case_4():
     sigs[3][3] = sigs[3][4] = sigs[3][5] = False
     sigs[4] = sigs[5] = sigs[3]
 
-    print "Case 4:", AfterBreak(expr, sigs), FindPeak(expr, sigs)
+    print "Case 4:", find_after_break(expr, sigs), find_peak(expr, sigs)
 
 def test_case_5():
     "A rising peak in the middle, difference with neighbors not significant"
@@ -98,14 +98,40 @@ def test_case_5():
     sigs[2] = {0:True, 1:False, 2:False, 3:False, 4:True,}
     sigs[3] = sigs[1]
     sigs[4] = sigs[0]
+    print "Case 5:", find_after_break(expr, sigs), find_peak(expr, sigs)
 
-    print "Case 5:", AfterBreak(expr, sigs), FindPeak(expr, sigs)
-    
+
+def test_case_6():
+    "A falling peak in the middle, difference with neighbors not significant"
+    expr = [5,4,3,4,5]
+    sigs = {}
+    sigs[0] = {0:False, 1:False, 2:True, 3:False, 4:False}
+    sigs[1] = {0:False, 1:False, 2:False, 3:False, 4:False}
+    sigs[2] = {0:True, 1:False, 2:False, 3:False, 4:True,}
+    sigs[3] = sigs[1]
+    sigs[4] = sigs[0]
+    print "Case 6:", find_after_break(expr, sigs), find_peak(expr, sigs)
+
+def test_case_7():
+    "A falling peak in the middle, difference with neighbors not significant"
+    expr = [5,4,3,4,5,6,7]
+    sigs = {}
+    sigs[0] = {0:False, 1:False, 2:True, 3:False, 4:False, 5: False, 6: True}
+    sigs[1] = {0:False, 1:False, 2:False, 3:False, 4:False, 5: True, 6: True}
+    sigs[2] = {0:True, 1:False, 2:False, 3:False, 4:True, 5: True, 6:True}
+    sigs[3] = sigs[1]
+    sigs[4] = sigs[0]
+    sigs[5] = {0:False, 1:True, 2:True, 3:True, 4:False, 5: False, 6: False}
+    sigs[6] = defaultdict(lambda:True)
+    sigs[6][5] = sigs[6][6] = False
+    print "Case 7:", find_after_break(expr, sigs), find_peak(expr, sigs)
+
 
 if __name__ == "__main__":
-    test_case_1()
-    test_case_2()
-    test_case_3()
-    test_case_4()
-    test_case_5()
+    locs = locals()
+    for thing in sorted(locs.keys()):
+        # need to iterate over keys because locals changes when we include thing
+        if thing.startswith('test_case'):
+            print thing
+            locs[thing]()
 
