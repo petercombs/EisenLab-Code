@@ -11,10 +11,10 @@ print(time.time() - start_lib, file=sys.stderr)
 printlines = 0
 
 for line in file(sys.argv[2]):
-    id = line.split()[0][1:-2]
-    if id not in ids:
-        printlines = 2
-
-    if printlines:
+    if printlines == 0:
+        id = line.split()[0][1:-2]
+        if id not in ids:
+            printlines = 4
+    else:
         print(line.strip())
         printlines -= 1
