@@ -24,7 +24,7 @@ cuffdiff_base = ('cufflinks.cuffdiff -p 8 -v --FDR .001 -o %(ad)s %(gtf)s '
 
 ########################################################################
 
-reads = ['s_5_1_sequence.txt s_5_2_sequence.txt', 
+reads = ['s_5_1_sequence.txt s_5_2_sequence.txt',
          's_6_1_sequence.txt s_6_2_sequence.txt']
 
 # Dictionary with the number of reads in each file
@@ -86,7 +86,7 @@ for rf in reads:
 
     print 'Cufflinksing...', '\n', '='*30
     sys.stdout.flush()
-    res = system(cufflinks_base + '-G %(GTF)s -o %(od)s %(hits)s' 
+    res = system(cufflinks_base + '-G %(GTF)s -o %(od)s %(hits)s'
            % {'GTF': GTF, 'od': od,
               'hits': join(od, 'accepted_hits.bam')})
 
@@ -109,7 +109,7 @@ for rf in reads:
                stdout=file(join(od, 'hit_filtering.log'), 'w'))
     p2.wait()
 
-all_bams = map(lambda s: join('analysis', s, 'accepted_hits.bam'), 
+all_bams = map(lambda s: join('analysis', s, 'accepted_hits.bam'),
                (s.split('.fq')[0] for s in reads))
 
 
@@ -138,9 +138,9 @@ email.write("\n\n")
 
 # Dump everything out to a file, so we can play with it later, maybe
 try:
-    pickle.dump(dict([(k,v) for k,v in locals().copy().iteritems() 
+    pickle.dump(dict([(k,v) for k,v in locals().copy().iteritems()
                   if ((type(v) is not type(sys))
-                     and (type(v) is not file))]), 
+                     and (type(v) is not file))]),
                 file('tuxedo_dump', 'w'))
 except:
     print "the pickling still doesn't work... skipping"
@@ -173,8 +173,8 @@ try:
     from matplotlib import pyplot as mpl
 
     s1, s2, gene, idx = zip(*[(float(line.split()[6]), float(line.split()[7]),
-                              line.split()[0], lnum) 
-                              for lnum, line 
+                              line.split()[0], lnum)
+                              for lnum, line
                               in enumerate(file(join(analysis_dir, 'gene_exp.diff')))
                              if 'FBgn' in line])
 
