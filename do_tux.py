@@ -1,11 +1,10 @@
 import sys
-import string
 import cPickle as pickle
 
 from glob import glob
-from os import system, popen
 from os.path import join
 from time import time
+from subprocess import Popen, PIPE
 
 analysis_dir = 'analysis'
 GTF =  'Reference/dmel-all-r5.32_transcripts.gtf'
@@ -58,14 +57,15 @@ for rf in reads:
     # Just grab the first file name (paired ends have the same number in both)
     rf2 = rf.split()[0]
 
-    wcout = popen('wc -l ' + rf2, 'r', 1024).readline()
+    wc_proc = Popen(['wc', '-l', rf2], stdout=PIPE)
+    wcout, wcerr = wc_proc.communicate()
     print wcout
 
     # Store the number of reads in the file
     numreads[rf2] = int(wcout.split()[0])
-    assert numreads[rf2]%4 == 0
+    assert numreads[rf2] % 4 == 0
     numreads[rf2] /= 4
-    
+
     od = join(analysis_dir, rf2.split('.')[0])
 
     # Figure out Read Group ID
@@ -90,32 +90,39 @@ for rf in reads:
               'lane': lane})
     print commandstr
     sys.stdout.flush()
-    res = system(commandstr)
+    tophat_proc = Popen(commandstr.split())
+    tophat_proc.wait()
 
 
-    if res:
-        system('echo "Oh no!" | mail -s "Failed on Tophatting %s" %s'
-               % (rf, notificationEmail))
+    if tophat_proc.returncode:
+        errormail_proc = Popen(['mail', '-s', "Failed on tophatting %s" % rf,
+                                notificationEmail], stdin=PIPE)
+        errormail_proc.communicate('Oh no!')
 
     # Do cufflinks
 
     print 'Cufflinksing...', '\n', '='*30
     sys.stdout.flush()
-    res = system(cufflinks_base + '-G %(GTF)s -o %(od)s %(hits)s'
+    commandstr = (cufflinks_base + '-G %(GTF)s -o %(od)s %(hits)s'
            % {'GTF': GTF, 'od': od,
               'hits': join(od, 'accepted_hits.bam')})
+    print commandstr
+    cufflinks_proc = Popen(commandstr.split())
 
-    if res:
-        system('echo "Oh no!" | mail -s "Failed on Cufflinksing %s" %s'
-               % (rf, notificationEmail))
+    cufflinks_proc.wait()
+    if cufflinks_proc.returncode:
+        errormail_proc = Popen(['mail', '-s', "Failed on cufflinksing %s" % rf,
+                                notificationEmail], stdin=PIPE)
+        errormail_proc.communicate('Oh no!')
 
 
     # Figure out how well everything mapped
     print '='*30
-    pipe = popen('samtools flagstat ' + join(od, 'accepted_hits.bam'), 'r',
-                 1024)
+    commandstr = ['samtools', 'flagstat', join(od, 'accepted_hits.bam')]
+    samtools_proc = Popen(commandstr, stdout=PIPE)
+    samout, samerr = samtools_proc.communicate()
 
-    for line in pipe:
+    for line in samout.splitlines():
         if "mapped" in line:
             mappedreads[rf2] = int(line.split()[0])
             break
@@ -129,7 +136,8 @@ all_bams = map(lambda s: join('analysis', s, 'accepted_hits.bam'),
 
 
 # Do Cuffdiff
-system(cuffdiff_base + " ".join(all_bams))
+#system(cuffdiff_base + " ".join(all_bams))
+cuffdiff_proc = Popen(cuffdiff_base.split()+all_bams)
 
 # Stop the timing
 end = time()
@@ -178,7 +186,8 @@ for line in file(join(analysis_dir,'gene_exp.diff')):
 
 # Send an email to the user
 email.close()
-system('cat to_email.tmp | mail -s "Done" ' + notificationEmail )
+errormail_proc = Popen(['mail', '-s', "Done", notificationEmail],
+                       stdin=open('to_email.tmp'))
 
 
 # If we're on a system that supports it, do the plotting
@@ -225,7 +234,8 @@ try:
     mpl.savefig('LogLog.pdf')
 
     # If we have mutt, attach file to an email and send it off
-    system('mutt -s "LogLog" %s -a LogLog.pdf < to_email.tmp'% notificationEmail)
+    graphmail_proc = Popen(['mutt', '-s', 'LogLog', notificationEmail, '-a',
+                            'LogLog.pdf'], stdin=open('to_email.tmp'))
 
 except ImportError:
     print "Could not import Matplotlib.  You are using Python version",
