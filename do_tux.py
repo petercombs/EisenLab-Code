@@ -104,6 +104,10 @@ for rf in reads:
         if "mapped" in line:
             mappedreads[rf2] = int(line.split()[0])
             break
+    p2 = Popen(['samtools', 'rmdup', join(od, 'accepted_hits.bam'),
+                join(od, 'filtered_hits.bam'),],
+               stdout=file(join(od, 'hit_filtering.log'), 'w'))
+    p2.wait()
 
 all_bams = map(lambda s: join('analysis', s, 'accepted_hits.bam'), 
                (s.split('.fq')[0] for s in reads))
