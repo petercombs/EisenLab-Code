@@ -24,16 +24,16 @@ cuffdiff_base = ('cufflinks.cuffdiff -p 8 -v --FDR .001 -o %(ad)s %(gtf)s '
 
 ########################################################################
 
-reads = [','.join(glob(join(seqdir, '*index2*'))),
-         ','.join(glob(join(seqdir, '*index4*'))),
-         ','.join(glob(join(seqdir, '*index5*'))),
-         ','.join(glob(join(seqdir, '*index6*')))
+reads = [','.join(glob(join(seq_dir, '*index2*'))),
+         ','.join(glob(join(seq_dir, '*index4*'))),
+         ','.join(glob(join(seq_dir, '*index5*'))),
+         ','.join(glob(join(seq_dir, '*index6*')))
         ]
 
-readnames = {'index2' : ','.join(glob(join(seqdir, '*index2*'))),
-             'index4' : ','.join(glob(join(seqdir, '*index4*'))),
-             'index5' : ','.join(glob(join(seqdir, '*index5*'))),
-             'index6' : ','.join(glob(join(seqdir, '*index6*')))
+readnames = {'index2' : ','.join(glob(join(seq_dir, '*index2*'))),
+             'index4' : ','.join(glob(join(seq_dir, '*index4*'))),
+             'index5' : ','.join(glob(join(seq_dir, '*index5*'))),
+             'index6' : ','.join(glob(join(seq_dir, '*index6*')))
             }
         
 
