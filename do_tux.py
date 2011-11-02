@@ -184,7 +184,8 @@ try:
                   if ((type(v) is not type(sys))
                      and (type(v) is not file))]),
                 file('tuxedo_dump', 'w'))
-except:
+except Exception as exc:
+    print exc
     print "the pickling still doesn't work... skipping"
 
 
