@@ -41,7 +41,7 @@ libraries = {
             'index2' : 'A',
             'index4' : 'B',
             'index5' : 'C',
-            'index6' : 'A',
+            'index6' : 'D',
             }
 
 # Dictionary with the number of reads in each file
