@@ -72,6 +72,9 @@ for readname, rf in readnames.iteritems():
     # Just grab the first file name (paired ends have the same number in both)
     rf2 = rf.split(',')
 
+    # This section will probably need to be fixed if/when I do paired-end reads.
+    # Just splitting on commas will have a non-existant file with the last file
+    # of the first end and the first file of the second end
     wc_proc = Popen(['wc', '-l']+ rf2, stdout=PIPE)
     wcout, wcerr = wc_proc.communicate()
     print wcout
@@ -84,7 +87,7 @@ for readname, rf in readnames.iteritems():
     od = join(analysis_dir, readname)
 
     # Figure out Read Group ID
-    f = open(rf.split()[0])
+    f = open(rf.split(',')[0])
     l = f.readline()
     f.close()
     rgid = l.split(":")[0][1:]
