@@ -12,6 +12,7 @@ idxfile = 'Reference/dmel-all-r5.23'
 interest = 'GenesOfInterest.txt'
 FBtoName = 'Reference/dmelfbgns.txt'
 notificationEmail = 'peter.combs@berkeley.edu'
+seq_dir = 'sequence'
 
 ########################################################################
 
@@ -23,11 +24,25 @@ cuffdiff_base = ('cufflinks.cuffdiff -p 8 -v --FDR .001 -o %(ad)s %(gtf)s '
 
 ########################################################################
 
-reads = ['s_5_1_sequence.txt s_5_2_sequence.txt',
-         's_6_1_sequence.txt s_6_2_sequence.txt']
+reads = [','.join(glob(join(seqdir, '*index2*'))),
+         ','.join(glob(join(seqdir, '*index4*'))),
+         ','.join(glob(join(seqdir, '*index5*'))),
+         ','.join(glob(join(seqdir, '*index6*')))
+        ]
 
-libraries = {'s_5_1_sequence.txt' : 'PAC03',
-             's_6_1_sequence.txt' : 'PAC02'}
+readnames = {'index2' : ','.join(glob(join(seqdir, '*index2*'))),
+             'index4' : ','.join(glob(join(seqdir, '*index4*'))),
+             'index5' : ','.join(glob(join(seqdir, '*index5*'))),
+             'index6' : ','.join(glob(join(seqdir, '*index6*')))
+            }
+        
+
+libraries = {
+            'index2' : 'A',
+            'index4' : 'B',
+            'index5' : 'C',
+            'index6' : 'A',
+            }
 
 # Dictionary with the number of reads in each file
 numreads = {}
@@ -48,25 +63,25 @@ for line in file(FBtoName):
 
 start = time()
 
-for rf in reads:
+for readname, rf in readnames.iteritems():
     # Print the name of the files we're going through, as a rough progress bar
     print '-'*72
     print rf
     print '-'*72
 
     # Just grab the first file name (paired ends have the same number in both)
-    rf2 = rf.split()[0]
+    rf2 = rf.split(',')
 
-    wc_proc = Popen(['wc', '-l', rf2], stdout=PIPE)
+    wc_proc = Popen(['wc', '-l']+ rf2, stdout=PIPE)
     wcout, wcerr = wc_proc.communicate()
     print wcout
 
     # Store the number of reads in the file
-    numreads[rf2] = int(wcout.split()[0])
-    assert numreads[rf2] % 4 == 0
-    numreads[rf2] /= 4
+    numreads[readname] = int(wcout.splitlines()[-1].split()[0])
+    assert numreads[readname] % 4 == 0
+    numreads[readname] /= 4
 
-    od = join(analysis_dir, rf2.split('.')[0])
+    od = join(analysis_dir, readname)
 
     # Figure out Read Group ID
     f = open(rf.split()[0])
@@ -85,7 +100,7 @@ for rf in reads:
               'od': od,
               'idxfile': idxfile,
               'rf': rf,
-              'library': libraries[rf.split()[0]],
+              'library': readname,
               'rgid': rgid,
               'lane': lane})
     print commandstr
@@ -95,7 +110,8 @@ for rf in reads:
 
 
     if tophat_proc.returncode:
-        errormail_proc = Popen(['mail', '-s', "Failed on tophatting %s" % rf,
+        errormail_proc = Popen(['mail', '-s', "Failed on tophatting %s" %
+                                readname,
                                 notificationEmail], stdin=PIPE)
         errormail_proc.communicate('Oh no!')
 
@@ -111,7 +127,8 @@ for rf in reads:
 
     cufflinks_proc.wait()
     if cufflinks_proc.returncode:
-        errormail_proc = Popen(['mail', '-s', "Failed on cufflinksing %s" % rf,
+        errormail_proc = Popen(['mail', '-s', "Failed on cufflinksing %s" %
+                                readname,
                                 notificationEmail], stdin=PIPE)
         errormail_proc.communicate('Oh no!')
 
@@ -124,7 +141,7 @@ for rf in reads:
 
     for line in samout.splitlines():
         if "mapped" in line:
-            mappedreads[rf2] = int(line.split()[0])
+            mappedreads[readname] = int(line.split()[0])
             break
     p2 = Popen(['samtools', 'rmdup', join(od, 'accepted_hits.bam'),
                 join(od, 'filtered_hits.bam'),],
@@ -132,13 +149,13 @@ for rf in reads:
     p2.wait()
 
 all_bams = map(lambda s: join('analysis', s, 'accepted_hits.bam'),
-               (s.split('.fq')[0] for s in reads))
+               (s for s in readnames))
 
 
 # Do Cuffdiff
 #system(cuffdiff_base + " ".join(all_bams))
 cuffdiff_proc = Popen(cuffdiff_base.split() +
-                      ['-L', ','.join(libraries[rf.split()[0] for rf in reads)]
+                      ['-L', ','.join(libraries[rf] for rf in readnames)]
                       + all_bams)
 
 # Stop the timing
