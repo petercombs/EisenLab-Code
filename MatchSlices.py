@@ -52,6 +52,10 @@ def parse_args():
     argparser.add_argument('--pearson', dest='comp_fcn', action='store_const',
                            const=stats.pearsonr,
                            help='Use Pearson correlation for comparison')
+    argparser.add_argument('--name-col', '-n', default=0, type=int,
+                           help="0-indexed Column with the gene name")
+    argparser.add_argument('--expr-col', '-e', default=5, type=int,
+                           help="0-indexed Column with the expresion")
 
     return argparser.parse_args()
 
@@ -201,11 +205,11 @@ if __name__ == "__main__":
         expr = {}
         for line in expr_file:
             linedat = line.split()
-            name = linedat[0]
+            name = linedat[args.name_col]
             if ((name not in gene_names) and
                 (name not in fbgn2name or (fbgn2name[name] not in gene_names))):
                 continue
-            fpkm = float(linedat[5])
+            fpkm = float(linedat[args.expr_col])
 
 
             expr[fbgn2name[name] if name in fbgn2name else name] = fpkm
