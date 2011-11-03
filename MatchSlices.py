@@ -213,7 +213,14 @@ if __name__ == "__main__":
             name = linedat[args.name_col]
             if ((name not in gene_names) and
                 (name not in fbgn2name or (fbgn2name[name] not in gene_names))):
-                continue
+                if ',' in name:
+                    for subname in name.split(','):
+                        if subname in fbgn2name:
+                            if fbgn2name[subname] in gene_names:
+                                name = subname
+                                break
+                else:
+                    continue
             fpkm = float(linedat[args.expr_col])
 
 
