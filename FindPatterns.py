@@ -1,4 +1,5 @@
 from collections import defaultdict
+from argparse import ArgumentParser
 
 def find_after_break(expr, sigs):
     breakpoints = []
@@ -26,7 +27,7 @@ def find_peak(expr, sigs):
             or (expr [peak_point - 1] > expr[peak_point] > expr[peak_point + 1])):
             continue
             # This isn't the actual peak
-                                                           
+
 
         sign = 1 if expr[peak_point] > expr[peak_point - 1] else -1
 
@@ -126,12 +127,59 @@ def test_case_7():
     sigs[6][5] = sigs[6][6] = False
     print "Case 7:", find_after_break(expr, sigs), find_peak(expr, sigs)
 
+def parse_args():
+    parser = ArgumentParser()
+    parser.add_argument('--has-gene-id', '-g', action="store_true",
+                        default=False)
+    parser.add_argument('--testing', '-t', action="store_true", default=False)
+
+    args = parser.parse_args()
+    return args
+
+def process_file(args):
+
+    expr_file = open(args.filename)
+    expr_by_gene = defaultdict(lambda: dict)
+    sig_by_gene = defaultdict(lambda: defaultdict(lambda: dict))
+
+    # When there's a gene_id column, everything is shifted over by one.
+    gene_name_idx = 1 + args.has_gene_id
+    samp1_idx = 3 + args.has_gene_id
+    samp2_idx = 4 + args.has_gene_id
+    test_idx =  5 + args.has_gene_id
+    expr1_idx = 6 + args.has_gene_id
+    expr2_idx = 7 + args.has_gene_id
+    sig_idx =  11 + args.has_gene_id
+
+    expr_file.readline()
+    for line in expr_file:
+        data = line.split()
+        gene_name = data[gene_name_idx]
+        samp1 = data[samp1_idx]
+        samp2 = data[samp2_idx]
+        expr1 = float(data[expr1_idx])
+        expr2 = float(data[expr2_idx])
+        sig = float(data[sig_idx])
+        expr_by_gene[gene_name][samp1] = float(expr1)
+        expr_by_gene[gene_name][samp2] = float(expr2)
+        sig_by_gene[gene_name][samp1][samp2] = (sig == 'yes')
+
+    for gene in expr_by_gene:
+        sigs = sig_by_gene[gene]
+        expr = [expr_by_gene[gene][sample] for sample in sigs]
+        print gene, find_after_break(expr, sigs), find_peak(expr, sigs)
+    return expr_by_gene, sig_by_gene
+
+
 
 if __name__ == "__main__":
-    locs = locals()
-    for thing in sorted(locs.keys()):
-        # need to iterate over keys because locals changes when we include thing
-        if thing.startswith('test_case'):
-            print thing
-            locs[thing]()
-
+    args = parse_args()
+    if args.testing:
+        locs = locals()
+        for thing in sorted(locs.keys()):
+            # need to iterate over keys because locals changes when we include thing
+            if thing.startswith('test_case'):
+                print thing
+                locs[thing]()
+    else:
+        expr_by_gene, sig_by_gene = process_file(args)
