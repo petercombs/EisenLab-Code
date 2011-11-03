@@ -19,7 +19,7 @@ for i, line in enumerate(file(sys.argv[2])):
         grab_next = True
     if grab_next:
         id = line.strip().split()[0].replace('+', '>')
-        print id
-        print seq
+        print(id)
+        print(seq)
         grab_next = False
 
