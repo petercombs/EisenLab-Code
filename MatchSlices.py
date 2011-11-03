@@ -5,6 +5,7 @@ BDTN project, http://bdtnp.lbl.gov/).  Will report the best match for each time
 point.
 """
 from __future__ import print_function, division
+import cPickle as pickle
 import PointClouds as pc
 import sys
 import numpy as np
@@ -189,13 +190,17 @@ if __name__ == "__main__":
         slices = pickle.load(args.pre_calc_data)
     else:
         sys.stdout.flush()
-        all_data = [row for row in bdtnp_parser]
+        #all_data = [row for row in bdtnp_parser]
         exparray, posarray = bdtnp_parser.data_to_arrays()
 
         print("Doing virtual slicing")
         starts, slices = virtual_slice(exparray, posarray, axis=args.axis,
                                        width=args.slice_width,
                                        reduce_fcn=args.reduce_fcn)
+        tmp = open('lastslice.pkl', 'w')
+        pickle.dump(starts, tmp)
+        pickle.dump(slices, tmp)
+        tmp.close()
     nslices, ngenes, ntimes = np.shape(slices)
 
     for expr_file in args.expr_file:
