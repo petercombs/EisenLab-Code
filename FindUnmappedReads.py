@@ -13,13 +13,13 @@ printlines = 0
 
 grab_next = False
 for i, line in enumerate(file(sys.argv[2])):
-    # Sequence line
-    if i % 4 == 1 and line.strip() not in ids:
-        seq = line.strip()
-        grab_next = True
     if grab_next:
         id = line.strip().split()[0].replace('+', '>')
         print(id)
         print(seq)
         grab_next = False
 
+    # Sequence line
+    if i % 4 == 1 and line.strip() not in ids:
+        seq = line.strip()
+        grab_next = True
