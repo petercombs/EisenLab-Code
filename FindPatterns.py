@@ -132,6 +132,7 @@ def parse_args():
     parser.add_argument('--has-gene-id', '-g', action="store_true",
                         default=False)
     parser.add_argument('--testing', '-t', action="store_true", default=False)
+    parser.add_argument("filename", help="File to operate on")
 
     args = parser.parse_args()
     return args
@@ -139,8 +140,8 @@ def parse_args():
 def process_file(args):
 
     expr_file = open(args.filename)
-    expr_by_gene = defaultdict(lambda: dict)
-    sig_by_gene = defaultdict(lambda: defaultdict(lambda: dict))
+    expr_by_gene = defaultdict(lambda: dict())
+    sig_by_gene = defaultdict(lambda: defaultdict(dict))
 
     # When there's a gene_id column, everything is shifted over by one.
     gene_name_idx = 1 + args.has_gene_id
@@ -159,7 +160,7 @@ def process_file(args):
         samp2 = data[samp2_idx]
         expr1 = float(data[expr1_idx])
         expr2 = float(data[expr2_idx])
-        sig = float(data[sig_idx])
+        sig = data[sig_idx]
         expr_by_gene[gene_name][samp1] = float(expr1)
         expr_by_gene[gene_name][samp2] = float(expr2)
         sig_by_gene[gene_name][samp1][samp2] = (sig == 'yes')
