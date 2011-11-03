@@ -8,6 +8,7 @@ def read_n(fobj, n):
         yield ret
 
 if __name__ == "__main__":
+    pass
     for (h1, seq, h2, q) in read_n(file('unmapped_s_5_1.fq'), 4):
         print "H1:", h1, "Seq: ", seq, "H2: ", h2, "Q: ", q
         sys.stdout.flush()
