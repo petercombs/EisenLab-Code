@@ -18,7 +18,7 @@ seq_dir = 'sequence'
 
 tophat_base = 'tophat -p8 -r 200 --no-novel-juncs '
 cufflinks_base = 'cufflinks -p 8 -q '
-cuffdiff_base = ('cufflinks.cuffdiff -p 8 -v --FDR .001 -o %(ad)s %(gtf)s '
+cuffdiff_base = ('cuffdiff -p 8 -v --FDR .001 -o %(ad)s %(gtf)s '
                  % {'gtf':GTF, 'ad': analysis_dir})
 
 
@@ -157,9 +157,14 @@ all_bams = map(lambda s: join('analysis', s, 'accepted_hits.bam'),
 
 # Do Cuffdiff
 #system(cuffdiff_base + " ".join(all_bams))
+print ' '.join(cuffdiff_base.split() 
+               + ['-L', ','.join(libraries[rf] for rf in readnames)]
+               + all_bams)
+
 cuffdiff_proc = Popen(cuffdiff_base.split() +
                       ['-L', ','.join(libraries[rf] for rf in readnames)]
                       + all_bams)
+cuffdiff_proc.wait()
 
 # Stop the timing
 end = time()
