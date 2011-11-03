@@ -13,13 +13,12 @@ printlines = 0
 
 grab_next = False
 for i, line in enumerate(file(sys.argv[2])):
-    if grab_next:
-        id = line.strip().split()[0].replace('+', '>')
-        print(id)
-        print(seq)
-        grab_next = False
+    # Header line
+    if i % 4 == 0:
+        id = line.strip().split()[0].replace('@', '>')
 
     # Sequence line
     if i % 4 == 1 and line.strip() not in ids:
         seq = line.strip()
-        grab_next = True
+        print(id)
+        print(seq)
