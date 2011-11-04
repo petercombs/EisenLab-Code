@@ -12,13 +12,14 @@ print(time.time() - start_lib, file=sys.stderr)
 printlines = 0
 
 grab_next = False
-for i, line in enumerate(file(sys.argv[2])):
-    # Header line
-    if i % 4 == 0:
-        id = line.strip().split()[0].replace('@', '>')
+for fname in sys.argv[2:]:
+    for i, line in enumerate(file(fname)):
+        # Header line
+        if i % 4 == 0:
+            id = line.strip().split()[0].replace('@', '>')
 
-    # Sequence line
-    if i % 4 == 1 and line.strip() not in ids:
-        seq = line.strip()
-        print(id)
-        print(seq)
+        # Sequence line
+        if i % 4 == 1 and line.strip() not in ids:
+            seq = line.strip()
+            print(id)
+            print(seq)
