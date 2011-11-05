@@ -184,14 +184,13 @@ if __name__ == "__main__":
 
     print("Loading Data...")
 
+    exparray, posarray = bdtnp_parser.data_to_arrays()
     if args.pre_calc_data:
         import cPickle as pickle
         starts = pickle.load(args.pre_calc_data)
         slices = pickle.load(args.pre_calc_data)
     else:
         sys.stdout.flush()
-        #all_data = [row for row in bdtnp_parser]
-        exparray, posarray = bdtnp_parser.data_to_arrays()
 
         print("Doing virtual slicing")
         starts, slices = virtual_slice(exparray, posarray, axis=args.axis,
