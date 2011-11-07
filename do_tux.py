@@ -30,7 +30,9 @@ reads = [','.join(glob(join(seq_dir, '*index2*'))),
          ','.join(glob(join(seq_dir, '*index6*')))
         ]
 
-readnames = {'index2' : ','.join(glob(join(seq_dir, '*index2*'))),
+readnames = {'index1' : ','.join(glob(join(seq_dir, '*index1*'))),
+             'index2' : ','.join(glob(join(seq_dir, '*index2*'))),
+             'index3' : ','.join(glob(join(seq_dir, '*index3*'))),
              'index4' : ','.join(glob(join(seq_dir, '*index4*'))),
              'index5' : ','.join(glob(join(seq_dir, '*index5*'))),
              'index6' : ','.join(glob(join(seq_dir, '*index6*')))
@@ -38,10 +40,12 @@ readnames = {'index2' : ','.join(glob(join(seq_dir, '*index2*'))),
         
 
 libraries = {
-            'index2' : 'A',
-            'index4' : 'B',
-            'index5' : 'C',
-            'index6' : 'D',
+            'index1' : 'A',
+            'index2' : 'B',
+            'index3' : 'C',
+            'index4' : 'D',
+            'index5' : 'E',
+            'index6' : 'F',
             }
 
 # Dictionary with the number of reads in each file
