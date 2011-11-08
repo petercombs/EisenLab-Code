@@ -26,23 +26,12 @@ cuffdiff_base = ('cuffdiff -p 8 -v --FDR .001 -o %(ad)s %(gtf)s '
 ########################################################################
 
 
-readnames = {'index1' : ','.join(glob(join(seq_dir, '*index1*'))),
-             'index2' : ','.join(glob(join(seq_dir, '*index2*'))),
-             'index3' : ','.join(glob(join(seq_dir, '*index3*'))),
-             'index4' : ','.join(glob(join(seq_dir, '*index4*'))),
-             'index5' : ','.join(glob(join(seq_dir, '*index5*'))),
-             'index6' : ','.join(glob(join(seq_dir, '*index6*')))
-            }
-        
+indices_used = [1,2,3,4,5,6]
+readnames = {"index%02d" % idx: join(seq_dir, '*_index%d_*' % idx)
+             for idx in indices_used }
 
-libraries = {
-            'index1' : 'A',
-            'index2' : 'B',
-            'index3' : 'C',
-            'index4' : 'D',
-            'index5' : 'E',
-            'index6' : 'F',
-            }
+libraries = { "index%02d" % idx : chr(ord('A') + idx - 1)
+             for idx in indices_used }
 
 # Dictionary with the number of reads in each file
 numreads = {}
