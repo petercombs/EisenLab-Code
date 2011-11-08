@@ -5,6 +5,7 @@ BDTN project, http://bdtnp.lbl.gov/).  Will report the best match for each time
 point.
 """
 from __future__ import print_function, division
+import cPickle as pickle
 import PointClouds as pc
 import sys
 import numpy as np
@@ -52,6 +53,10 @@ def parse_args():
     argparser.add_argument('--pearson', dest='comp_fcn', action='store_const',
                            const=stats.pearsonr,
                            help='Use Pearson correlation for comparison')
+    argparser.add_argument('--name-col', '-n', default=0, type=int,
+                           help="0-indexed Column with the gene name")
+    argparser.add_argument('--expr-col', '-e', default=5, type=int,
+                           help="0-indexed Column with the expresion")
 
     return argparser.parse_args()
 
@@ -179,19 +184,22 @@ if __name__ == "__main__":
 
     print("Loading Data...")
 
+    exparray, posarray = bdtnp_parser.data_to_arrays()
     if args.pre_calc_data:
         import cPickle as pickle
         starts = pickle.load(args.pre_calc_data)
         slices = pickle.load(args.pre_calc_data)
     else:
         sys.stdout.flush()
-        all_data = [row for row in bdtnp_parser]
-        exparray, posarray = bdtnp_parser.data_to_arrays()
 
         print("Doing virtual slicing")
         starts, slices = virtual_slice(exparray, posarray, axis=args.axis,
                                        width=args.slice_width,
                                        reduce_fcn=args.reduce_fcn)
+        tmp = open('lastslice.pkl', 'w')
+        pickle.dump(starts, tmp)
+        pickle.dump(slices, tmp)
+        tmp.close()
     nslices, ngenes, ntimes = np.shape(slices)
 
     for expr_file in args.expr_file:
@@ -201,11 +209,18 @@ if __name__ == "__main__":
         expr = {}
         for line in expr_file:
             linedat = line.split()
-            name = linedat[0]
+            name = linedat[args.name_col]
             if ((name not in gene_names) and
                 (name not in fbgn2name or (fbgn2name[name] not in gene_names))):
-                continue
-            fpkm = float(linedat[5])
+                if ',' in name:
+                    for subname in name.split(','):
+                        if subname in fbgn2name:
+                            if fbgn2name[subname] in gene_names:
+                                name = subname
+                                break
+                else:
+                    continue
+            fpkm = float(linedat[args.expr_col])
 
 
             expr[fbgn2name[name] if name in fbgn2name else name] = fpkm
