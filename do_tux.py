@@ -24,11 +24,6 @@ cuffdiff_base = ('cuffdiff -p 8 -v --FDR .001 -o %(ad)s %(gtf)s '
 
 ########################################################################
 
-reads = [','.join(glob(join(seq_dir, '*index2*'))),
-         ','.join(glob(join(seq_dir, '*index4*'))),
-         ','.join(glob(join(seq_dir, '*index5*'))),
-         ','.join(glob(join(seq_dir, '*index6*')))
-        ]
 
 readnames = {'index1' : ','.join(glob(join(seq_dir, '*index1*'))),
              'index2' : ','.join(glob(join(seq_dir, '*index2*'))),
