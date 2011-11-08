@@ -16,7 +16,7 @@ seq_dir = 'sequence'
 
 ########################################################################
 
-tophat_base = 'tophat -p8 -r 200 --no-novel-juncs '
+tophat_base = 'tophat -p8 --no-novel-juncs '
 cufflinks_base = 'cufflinks -p 8 -q '
 cuffdiff_base = ('cuffdiff -p 8 -v --FDR .001 -o %(ad)s %(gtf)s '
                  % {'gtf':GTF, 'ad': analysis_dir})
