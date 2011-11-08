@@ -58,7 +58,11 @@ def find_ambiguous_stretches(aln, species1, species2, length=40):
             break
     return stretches
 
-def count_stretches_in_file(fname, expr_dict):
+def map_to_args(args):
+    return count_stretches_in_file(*args)
+
+def count_stretches_in_file(args):
+    fname, expr_dict = args
     melname = path.basename(fname.replace('-aligned.fasta', ''))
     expr = mean(expr_dict[melname]) if melname in expr_dict else 1
     expr = expr or 1
@@ -118,7 +122,7 @@ def print_summary(ambiguous, total):
     for row in total:
         print(row, end='\t')
         for col in total:
-            print('%.3f' % (100 * ambiguous[row][col]/total[row]), end='\t')
+            print('%.3f' % (100 * ambiguous[row][col]/total[r]), end='\t')
         print()
 
 
@@ -133,9 +137,11 @@ if __name__ == "__main__":
     total = defaultdict(int)
     ambiguous = defaultdict(lambda: defaultdict(int))
 
-    pool = mp.Pool(6)
+    pool = mp.Pool()
     files = glob(path.join(data_dir, '*.fasta'))
-    res = pool.imap(count_stretches_in_file, zip(files, [expr_dict]*len(files)))
+    res = pool.map(count_stretches_in_file, zip(files, [expr_dict]*len(files)),
+                   chunksize = 4000)
+
     for ambig, lens in res:
         for key1 in ambig:
             total[key1] += lens[key1]
