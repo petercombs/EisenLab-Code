@@ -3,6 +3,7 @@ import cPickle as pickle
 
 from glob import glob
 from os.path import join
+import os
 from time import time
 from subprocess import Popen, PIPE
 
@@ -84,6 +85,10 @@ if '-cdo' not in sys.argv:
         numreads[readname] /= 4
 
         od = join(analysis_dir, readname)
+        try:
+            os.makedirs(od)
+        except OSError:
+            print "Directory '%s' already exists... shouldn't be a problem" % od
 
         # Figure out Read Group ID
         f = open(rf.split(',')[0])
