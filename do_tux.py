@@ -145,7 +145,7 @@ if '-cdo' not in sys.argv:
             if "mapped" in line:
                 mappedreads[readname] = int(line.split()[0])
                 break
-        p2 = Popen(['samtools', 'rmdup', join(od, 'accepted_hits.bam'),
+        p2 = Popen(['samtools', 'rmdup', '-s', join(od, 'accepted_hits.bam'),
                     join(od, 'filtered_hits.bam'),],
                    stdout=file(join(od, 'hit_filtering.log'), 'w'))
         p2.wait()
