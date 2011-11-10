@@ -3,6 +3,7 @@ import cPickle as pickle
 
 from glob import glob
 from os.path import join
+import os
 from time import time
 from subprocess import Popen, PIPE
 
@@ -16,7 +17,7 @@ seq_dir = 'sequence'
 
 ########################################################################
 
-tophat_base = 'tophat -p8 -r 200 --no-novel-juncs '
+tophat_base = 'tophat -p8 --no-novel-juncs '
 cufflinks_base = 'cufflinks -p 8 -q '
 cuffdiff_base = ('cuffdiff -p 8 -v --FDR .001 -o %(ad)s %(gtf)s '
                  % {'gtf':GTF, 'ad': analysis_dir})
@@ -24,25 +25,13 @@ cuffdiff_base = ('cuffdiff -p 8 -v --FDR .001 -o %(ad)s %(gtf)s '
 
 ########################################################################
 
-reads = [','.join(glob(join(seq_dir, '*index2*'))),
-         ','.join(glob(join(seq_dir, '*index4*'))),
-         ','.join(glob(join(seq_dir, '*index5*'))),
-         ','.join(glob(join(seq_dir, '*index6*')))
-        ]
 
-readnames = {'index2' : ','.join(glob(join(seq_dir, '*index2*'))),
-             'index4' : ','.join(glob(join(seq_dir, '*index4*'))),
-             'index5' : ','.join(glob(join(seq_dir, '*index5*'))),
-             'index6' : ','.join(glob(join(seq_dir, '*index6*')))
-            }
-        
+indices_used = [1,2,3,4,5,6]
+readnames = {"index%02d" % idx: ",".join(sorted( glob(join(seq_dir, '*_index%d_*' % idx))))
+             for idx in indices_used }
 
-libraries = {
-            'index2' : 'A',
-            'index4' : 'B',
-            'index5' : 'C',
-            'index6' : 'D',
-            }
+libraries = { "index%02d" % idx : chr(ord('A') + idx - 1)
+             for idx in indices_used }
 
 # Dictionary with the number of reads in each file
 numreads = {}
@@ -63,7 +52,7 @@ for line in file(FBtoName):
 
 start = time()
 if '-cdo' not in sys.argv:
-    for readname, rf in readnames.iteritems():
+    for readname, rf in sorted(readnames.items()):
         # Print the name of the files we're going through, as a rough progress bar
         print '-'*72
         print rf
@@ -85,6 +74,10 @@ if '-cdo' not in sys.argv:
         numreads[readname] /= 4
 
         od = join(analysis_dir, readname)
+        try:
+            os.makedirs(od)
+        except OSError:
+            print "Directory '%s' already exists... shouldn't be a problem" % od
 
         # Figure out Read Group ID
         f = open(rf.split(',')[0])
@@ -146,7 +139,7 @@ if '-cdo' not in sys.argv:
             if "mapped" in line:
                 mappedreads[readname] = int(line.split()[0])
                 break
-        p2 = Popen(['samtools', 'rmdup', join(od, 'accepted_hits.bam'),
+        p2 = Popen(['samtools', 'rmdup', '-s', join(od, 'accepted_hits.bam'),
                     join(od, 'filtered_hits.bam'),],
                    stdout=file(join(od, 'hit_filtering.log'), 'w'))
         p2.wait()
@@ -157,13 +150,13 @@ all_bams = map(lambda s: join('analysis', s, 'accepted_hits.bam'),
 
 # Do Cuffdiff
 #system(cuffdiff_base + " ".join(all_bams))
-print ' '.join(cuffdiff_base.split() 
-               + ['-L', ','.join(libraries[rf] for rf in readnames)]
-               + all_bams)
+cuffdiff_call = (cuffdiff_base.split() 
+                 + ['-L', ','.join(libraries[rf] for rf in sorted(readnames.keys()))]
+                 + all_bams)
 
-cuffdiff_proc = Popen(cuffdiff_base.split() +
-                      ['-L', ','.join(libraries[rf] for rf in readnames)]
-                      + all_bams)
+print ' '.join(cuffdiff_call)
+
+cuffdiff_proc = Popen(cuffdiff_call)
 cuffdiff_proc.wait()
 
 # Stop the timing
