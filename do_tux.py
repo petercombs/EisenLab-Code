@@ -27,10 +27,10 @@ cuffdiff_base = ('cuffdiff -p 8 -v --FDR .001 -o %(ad)s %(gtf)s '
 
 
 indices_used = [2,4,5,6]
-readnames = {"index%2d" % idx: ",".join(sorted( glob(join(seq_dir, '*_index%d_*' % idx))))
+readnames = {"index%d" % idx: ",".join(sorted( glob(join(seq_dir, '*_index%d_*' % idx))))
              for idx in indices_used }
 
-libraries = { "index%2d" % idx : chr(ord('A') + i - 1)
+libraries = { "index%d" % idx : chr(ord('A') + i )
              for i, idx in enumerate(indices_used)}
 
 # Dictionary with the number of reads in each file
