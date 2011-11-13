@@ -7,6 +7,8 @@ from matplotlib.pyplot import show, legend, errorbar, gca, savefig, title, \
         close, figure
 from os import path
 
+FUDGE_FACTOR = .3
+
 def check_data(gene, transcripts, intervals):
     if len(transcripts) <= 1:
         # Only one transcript isn't interesting and/or will be picked up on the
@@ -19,7 +21,7 @@ def check_data(gene, transcripts, intervals):
     for col in range(n_samples):
         this = argmax(transcripts[:, col])
         if this != best and var(transcripts[:, col]) > 0:
-            if ((transcripts[this, col] - intervals[this][0, col]) 
+            if ((transcripts[this, col] - intervals[this][0, col])
                 > (transcripts[best, col] + intervals[best][1, col])):
                 print("-"*72)
                 print(gene)
@@ -28,6 +30,40 @@ def check_data(gene, transcripts, intervals):
                 print(intervals)
                 return gene
             # Flag it and get out quickly.  Let the hoo-mans sort this gene out.
+
+
+def is_high(row, col, exprs, confs):
+    """ DOCSTRING """
+    rows, cols = shape(exprs)
+    flag = False
+    for row2 in range(rows):
+        if (exprs[row2, col] - FUDGE_FACTOR * confs[row2][0,col] > exprs[row, col]):
+            return False
+        flag = (flag
+                or (exprs[row2, col] + FUDGE_FACTOR * confs[row2][1, col]
+                    < exprs[row, col]))
+        return flag
+
+def report_to_files(gn_to_tr, tr_expr):
+    num_samples = len(tr_expr.itervalues().next()[0])
+
+    for col in range(num_samples):
+        hi_fi = open(path.join(argv[2], '%d_hi.txt' % col), 'w')
+        lo_fi = open(path.join(argv[2], '%d_lo.txt' % col), 'w')
+
+        for gene, xscripts in gn_to_tr.iteritems():
+            exprs = array([tr_expr[xscript][0,:] for xscript in xscripts])
+            confs = [tr_expr[xscript][1:,:] for xscript in xscripts]
+            for i, xscript in enumerate(xscripts):
+                if (is_high(i, col, exprs, confs) and 
+                    any([not is_high(i, other, exprs, confs) for other in
+                         range(num_samples) if other != col])):
+                    hi_fi.write(xscript + '\n')
+                elif (not is_high(i, col, exprs, confs) and
+                      any([is_high(i, other, exprs, confs) for other in
+                           range(num_samples) if other != col])):
+                    lo_fi.write(xscript + '\n')
+
 
 def main():
     gn_to_tr = defaultdict(list)
@@ -57,6 +93,8 @@ def main():
         os.makedirs(argv[2])
     except OSError:
         pass
+    
+    report_to_files(gn_to_tr, tr_expr)
 
     for gene in gn_to_tr:
         exprs = [tr_expr[tr][0, :] for tr in gn_to_tr[gene]]
