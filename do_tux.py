@@ -27,7 +27,7 @@ cuffdiff_base = ('cuffdiff -p 8 -v --FDR .001 -o %(ad)s %(gtf)s '
 
 
 indices_used = [1,2,3,4,5,6]
-readnames = {"index%02d" % idx: sorted(glob(join(seq_dir, '*_index%d_*' % idx)))
+readnames = {"index%02d" % idx: ",".join(sorted( glob(join(seq_dir, '*_index%d_*' % idx))))
              for idx in indices_used }
 
 libraries = { "index%02d" % idx : chr(ord('A') + idx - 1)
@@ -52,7 +52,7 @@ for line in file(FBtoName):
 
 start = time()
 if '-cdo' not in sys.argv:
-    for readname, rf in sorted(readnames.items())
+    for readname, rf in sorted(readnames.items()):
         # Print the name of the files we're going through, as a rough progress bar
         print '-'*72
         print rf
@@ -150,13 +150,13 @@ all_bams = map(lambda s: join('analysis', s, 'accepted_hits.bam'),
 
 # Do Cuffdiff
 #system(cuffdiff_base + " ".join(all_bams))
-print ' '.join(cuffdiff_base.split() 
-               + ['-L', ','.join(libraries[rf] for rf in readnames)]
-               + all_bams)
+cuffdiff_call = (cuffdiff_base.split() 
+                 + ['-L', ','.join(libraries[rf] for rf in sorted(readnames.keys()))]
+                 + all_bams)
 
-cuffdiff_proc = Popen(cuffdiff_base.split() +
-                      ['-L', ','.join(libraries[rf] for rf in readnames)]
-                      + all_bams)
+print ' '.join(cuffdiff_call)
+
+cuffdiff_proc = Popen(cuffdiff_call)
 cuffdiff_proc.wait()
 
 # Stop the timing
