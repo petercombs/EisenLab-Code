@@ -55,7 +55,7 @@ def report_to_files(gn_to_tr, tr_expr):
             exprs = array([tr_expr[xscript][0,:] for xscript in xscripts])
             confs = [tr_expr[xscript][1:,:] for xscript in xscripts]
             for i, xscript in enumerate(xscripts):
-                if (is_high(i, col, exprs, confs) and 
+                if (is_high(i, col, exprs, confs) and
                     any([not is_high(i, other, exprs, confs) for other in
                          range(num_samples) if other != col])):
                     hi_fi.write(xscript + '\n')
