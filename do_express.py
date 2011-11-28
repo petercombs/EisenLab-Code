@@ -89,15 +89,16 @@ if '-cdo' not in sys.argv:
 
         # Do Bowtie
         commandstr = bowtie_options + ['--un', join(od, 'unaligned.fq'), bowtie_index, rf]
-        print commandstr
+        print ' '.join(commandstr)
         bowtie_proc = Popen(commandstr, stdout=PIPE)
 
         # Do eXpress
 
         print 'eXpressing...', '\n', '='*30
+        commandstr = express_options + ['-o', od, target_seqs]
+        print ' '.join(commandstr)
         sys.stdout.flush()
-        command_str = express_options + ['-o', od, target_seqs]
-        express_proc = Popen(express_options, stdin=bowtie_proc.stdout)
+        express_proc = Popen(commandstr, stdin=bowtie_proc.stdout)
 
         express_proc.wait()
         if express_proc.returncode:
