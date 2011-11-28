@@ -3,7 +3,7 @@ from collections import defaultdict
 from sys import argv
 from numpy import array, shape, argmax, var
 import os
-from matplotlib.pyplot import show, legend, errorbar, gca, savefig, title, \
+from matplotlib.pyplot import legend, errorbar, gca, savefig, title, \
         close, figure
 from os import path
 

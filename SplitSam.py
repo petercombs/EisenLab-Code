@@ -3,7 +3,6 @@ Split a sam file such that each line goes to a new file with name matching the
 chromosome that the read came from.
 """
 from __future__ import print_function
-from collections import defaultdict
 
 import sys
 

@@ -122,7 +122,7 @@ def print_summary(ambiguous, total):
     for row in total:
         print(row, end='\t')
         for col in total:
-            print('%.3f' % (100 * ambiguous[row][col]/total[r]), end='\t')
+            print('%.3f' % (100 * ambiguous[row][col]/total[row]), end='\t')
         print()
 
 
