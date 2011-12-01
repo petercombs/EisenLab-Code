@@ -4,6 +4,7 @@
 *.log
 *.tmp
 *.ebwt
+*.bt2
 *.fa*
 *.bam
 *.sam
