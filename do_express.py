@@ -7,9 +7,10 @@ import os
 from time import time
 from subprocess import Popen, PIPE
 
-analysis_dir = 'analysis'
+analysis_dir = 'analysis-express'
 GTF =  'Reference/dmel-all-r5.32_transcripts_fixed.gtf'
-idxfile = 'Reference/dmel-all-r5.23'
+bowtie_index = 'Reference/dmel-transcripts'
+target_seqs = 'Reference/dmel-all-transcript-r5.40.fasta'
 interest = 'GenesOfInterest.txt'
 FBtoName = 'Reference/dmelfbgns.txt'
 notificationEmail = 'peter.combs@berkeley.edu'
@@ -17,11 +18,10 @@ seq_dir = 'sequence'
 
 ########################################################################
 
-tophat_base = 'tophat -p8 --no-novel-juncs '
-cufflinks_base = 'cufflinks -p 8 -q '
-cuffdiff_base = ('cuffdiff -p 8 -v --FDR .001 -o %(ad)s %(gtf)s '
-                 % {'gtf':GTF, 'ad': analysis_dir})
 
+bowtie_options = ['bowtie', '-S', '-a', '-v', '3', '-p', '4', '--chunkmbs',
+                  '256' ]
+express_options = ['express', '--output-alignments']
 
 ########################################################################
 
@@ -87,43 +87,22 @@ if '-cdo' not in sys.argv:
         lane = l.split(":")[1]
 
 
-        # Do tophat
-        print 'Tophatting...', '\n', '='*30
-        commandstr =  (tophat_base + '-G %(GTF)s -o %(od)s --rg-library %(library)s'
-                       ' --rg-center VCGSL --rg-sample %(library)s --rg-platform'
-                       ' ILLUMINA --rg-id %(rgid)s  --rg-platform-unit %(lane)s %(idxfile)s %(rf)s'
-               % {'GTF': GTF,
-                  'od': od,
-                  'idxfile': idxfile,
-                  'rf': rf,
-                  'library': readname,
-                  'rgid': rgid,
-                  'lane': lane})
-        print commandstr
+        # Do Bowtie
+        commandstr = bowtie_options + ['--un', join(od, 'unaligned.fq'), bowtie_index, rf]
+        print ' '.join(commandstr)
+        bowtie_proc = Popen(commandstr, stdout=PIPE)
+
+        # Do eXpress
+
+        print 'eXpressing...', '\n', '='*30
+        commandstr = express_options + ['-o', od, target_seqs]
+        print ' '.join(commandstr)
         sys.stdout.flush()
-        tophat_proc = Popen(commandstr.split())
-        tophat_proc.wait()
+        express_proc = Popen(commandstr, stdin=bowtie_proc.stdout)
 
-
-        if tophat_proc.returncode:
-            errormail_proc = Popen(['mail', '-s', "Failed on tophatting %s" %
-                                    readname,
-                                    notificationEmail], stdin=PIPE)
-            errormail_proc.communicate('Oh no!')
-
-        # Do cufflinks
-
-        print 'Cufflinksing...', '\n', '='*30
-        sys.stdout.flush()
-        commandstr = (cufflinks_base + '-G %(GTF)s -o %(od)s %(hits)s'
-               % {'GTF': GTF, 'od': od,
-                  'hits': join(od, 'accepted_hits.bam')})
-        print commandstr
-        cufflinks_proc = Popen(commandstr.split())
-
-        cufflinks_proc.wait()
-        if cufflinks_proc.returncode:
-            errormail_proc = Popen(['mail', '-s', "Failed on cufflinksing %s" %
+        express_proc.wait()
+        if express_proc.returncode:
+            errormail_proc = Popen(['mail', '-s', "Failed on expressing %s" %
                                     readname,
                                     notificationEmail], stdin=PIPE)
             errormail_proc.communicate('Oh no!')
@@ -131,21 +110,22 @@ if '-cdo' not in sys.argv:
 
         # Figure out how well everything mapped
         print '='*30
-        commandstr = ['samtools', 'flagstat', join(od, 'accepted_hits.bam')]
-        samtools_proc = Popen(commandstr, stdout=PIPE)
-        samout, samerr = samtools_proc.communicate()
+        #commandstr = ['samtools', 'flagstat', join(od, 'accepted_hits.bam')]
+        #samtools_proc = Popen(commandstr, stdout=PIPE)
 
-        for line in samout.splitlines():
-            if "mapped" in line:
-                mappedreads[readname] = int(line.split()[0])
-                break
-        p2 = Popen(['samtools', 'rmdup', '-s', join(od, 'accepted_hits.bam'),
-                    join(od, 'filtered_hits.bam'),],
-                   stdout=file(join(od, 'hit_filtering.log'), 'w'))
-        p2.wait()
+        #samout, samerr = samtools_proc.communicate()
 
-all_bams = map(lambda s: join('analysis', s, 'accepted_hits.bam'),
-               (s for s in readnames))
+        #for line in samout.splitlines():
+            #if "mapped" in line:
+                #mappedreads[readname] = int(line.split()[0])
+                #break
+        #p2 = Popen(['samtools', 'rmdup', '-s', join(od, 'accepted_hits.bam'),
+                    #join(od, 'filtered_hits.bam'),],
+                   #stdout=file(join(od, 'hit_filtering.log'), 'w'))
+        #p2.wait()
+
+#all_bams = map(lambda s: join('analysis', s, 'accepted_hits.bam'),
+#               (s for s in readnames))
 
 
 # Do Cuffdiff
