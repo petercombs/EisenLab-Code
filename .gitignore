@@ -26,4 +26,6 @@ Reference/miso-events
 NonFlyNonHum*
 blaststuff
 *.xml
+StartCheck.py
+WatchDeme.py
 
