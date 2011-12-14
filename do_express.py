@@ -9,8 +9,8 @@ from subprocess import Popen, PIPE
 
 analysis_dir = 'analysis-express'
 #GTF =  'Reference/dmel-all-r5.32_transcripts_fixed.gtf'
-bowtie_index = 'Reference/melpsevir'
-target_seqs = 'Reference/melpsevir.fasta'
+bowtie_index = 'Reference/melpsevir-transcript'
+target_seqs = 'Reference/melpsevir-transcript.fasta'
 interest = 'GenesOfInterest.txt'
 FBtoName = 'Reference/dmelfbgns.txt'
 notificationEmail = 'peter.combs@berkeley.edu'
@@ -94,7 +94,7 @@ if '-cdo' not in sys.argv:
         bowtie_proc = Popen(commandstr)
         bowtie_proc.wait()
 
-        goodsams = Popen(['awk', '$1 ~ /@/ || $3 ~ /FBtr',
+        goodsams = Popen(['awk', '$1 ~ /@/ || $3 ~ /FBtr/',
                           join(od, 'accepted_hits.sam')],
                          stdout=open(join(od, 'mapped_hits.sam'), 'w'))
         goodsams.wait()
