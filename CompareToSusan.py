@@ -17,7 +17,7 @@ my_cols, my_colnames = zip(*[(idx, colname)
                              for idx, colname in enumerate(my_col_headers) 
                              if colname.endswith('_FPKM')])
 my_colnames = list(my_colnames)
-my_colnames.append('summed')
+my_colnames.append('averaged')
 
 susan_expr = {}
 my_expr = {}
@@ -34,7 +34,7 @@ for line in my_data:
     cols = line.split()
     my_expr[cols[my_name_col]] = map(float,
                                      [cols[i] for i in my_cols])
-    my_expr[cols[my_name_col]].append(sum(my_expr[cols[my_name_col]]))
+    my_expr[cols[my_name_col]].append(mean(my_expr[cols[my_name_col]]))
 
 #print sorted([(max(susan_expr[key]), key) for key in susan_expr if key not in
               #my_expr])
@@ -75,7 +75,6 @@ for i in range(num_rows):
     fem_vals = sorted(susan_expr_arr[i,fem_cols])
     if abs(log2(mean(male_vals)/mean(fem_vals))) > 1:
         my_val = my_expr_arr[i,-1]
-        print keys[i]
         if ((fem_vals[0] < male_vals[1] < fem_vals[1])
             or (male_vals[0] < fem_vals[1] < fem_vals[1])):
             print "Ambiguous: ", keys[i]
