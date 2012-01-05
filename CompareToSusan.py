@@ -1,5 +1,5 @@
 from collections import defaultdict
-from numpy import array
+from numpy import array, log2, size, shape, mean
 from scipy import stats
 
 susan_data_fname = '../journal.pbio.1000590.s002.txt'
@@ -62,4 +62,25 @@ for my_column, my_colname in enumerate(my_colnames):
         print '%s\t%4f\t%4f' % (susan_colname, spearman_r, pearson_r)
     
     print "Best hit: ", susan_colnames[best], bestr
+#### Male vs Female identification
 
+males = ['M14C', 'M14C_r2']
+male_cols = [num for num, col in enumerate(susan_colnames) if col in males]
+fems = ['F14C', 'F14C_r2']
+fem_cols = [num for num, col in enumerate(susan_colnames) if col in fems]
+
+num_rows, num_cols = shape(susan_expr_arr)
+for i in range(num_rows):
+    male_vals = sorted(susan_expr_arr[i,male_cols])
+    fem_vals = sorted(susan_expr_arr[i,fem_cols])
+    if abs(log2(mean(male_vals)/mean(fem_vals))) > 1:
+        my_val = my_expr_arr[i,-1]
+        print keys[i]
+        if ((fem_vals[0] < male_vals[1] < fem_vals[1])
+            or (male_vals[0] < fem_vals[1] < fem_vals[1])):
+            print "Ambiguous: ", keys[i]
+            continue
+        if male_vals[0] < my_val < male_vals[1] and male_vals[0] != 0:
+            print keys[i], 'MALE', male_vals, my_val, fem_vals
+        if fem_vals[0] < my_val < fem_vals[1] and fem_vals[0] != 0:
+            print keys[i], 'FEM', fem_vals, my_val, male_vals
