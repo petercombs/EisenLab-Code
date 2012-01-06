@@ -2,7 +2,7 @@ from matplotlib import pyplot as mpl
 from matplotlib import cm
 from collections import defaultdict
 from scipy.stats import spearmanr, pearsonr, gaussian_kde
-from numpy import log, array, Inf, median, exp, argsort
+from numpy import log, array, Inf, median, exp, argsort, linspace
 
 
 def loglog_heat(x,y, **kwargs):
@@ -30,20 +30,25 @@ def loglog_heat(x,y, **kwargs):
     return retval
 
 
-def hist_sorted(*args, labels=None, **kwargs):
+def hist_sorted(*args, **kwargs):
     all_ns = []
     all_patches = []
 
+    labels = kwargs.pop('labels', None)
     if not labels:
         labels = ['data %d' % (i+1) for i in range(len(args))]
     elif len(labels) != len(args):
         raise ValueError('length of labels not equal to length of data')
 
+    bins = kwargs.pop('bins', linspace(min(min(a) for a in args),
+                                       max(max(a) for a in args),
+                                       num = 11))
+
     for data, label in zip(args, labels):
-        ns, bins, patches = mpl.hist(data, label=label, **kwargs)
+        ns, bins, patches = mpl.hist(data, bins=bins, label=label, **kwargs)
         all_ns.append(ns)
         all_patches.append(patches)
-    z_orders = argsort(all_ns, axis=0)
+    z_orders = -argsort(all_ns, axis=0)
 
     for zrow, patchrow in zip(z_orders, all_patches):
         assert len(zrow) == len(patchrow)
