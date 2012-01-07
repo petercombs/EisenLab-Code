@@ -99,7 +99,7 @@ if '-cdo' not in sys.argv:
                          stdout=open(join(od, 'mapped_hits.sam'), 'w'))
         goodsams.wait()
 
-        samTobam = Popen(['samtools', 'view', '-bS', '-o',
+        samToBam = Popen(['samtools', 'view', '-bS', '-o',
                           join(od, 'mapped_hits.bam'),
                           join(od, 'mapped_hits.sam')])
         samToBam.wait()

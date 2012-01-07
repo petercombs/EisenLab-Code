@@ -8,8 +8,8 @@ from time import time
 from subprocess import Popen, PIPE
 
 analysis_dir = 'analysis'
-GTF =  'Reference/dmel-all-r5.32_transcripts_fixed.gtf'
-idxfile = 'Reference/dmel-all-r5.23'
+GTF =  'Reference/melpsevir-all.gtf'
+idxfile = 'Reference/melpsevir-chromosome'
 interest = 'GenesOfInterest.txt'
 FBtoName = 'Reference/dmelfbgns.txt'
 notificationEmail = 'peter.combs@berkeley.edu'
@@ -19,14 +19,14 @@ seq_dir = 'sequence'
 
 tophat_base = 'tophat -p8 --no-novel-juncs '
 cufflinks_base = 'cufflinks -p 8 -q -u -b ' + idxfile + '.fa '
-cuffdiff_base = ('cuffdiff -p 8 -v --FDR .001 -o %(ad)s %(gtf)s '
+cuffdiff_base = ('cuffdiff -p 8 -v -o %(ad)s %(gtf)s '
                  % {'gtf':GTF, 'ad': analysis_dir})
 
 
 ########################################################################
 
 
-indices_used = [2,4,5,6]
+indices_used = [2,4,5,6, 7, 12]
 readnames = {"index%d" % idx: [",".join(sorted( glob(join(seq_dir,
                                                           '*_index%d_*_R1*'
                                                           % idx)))),
