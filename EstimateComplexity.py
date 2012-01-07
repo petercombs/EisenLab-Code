@@ -1,5 +1,6 @@
 from __future__ import division
 from collections import Counter, defaultdict
+from numpy import histogram
 FBTR_LEN = 11
 
 def read_gtf(fname):
@@ -52,26 +53,56 @@ def map_to_strand(rname, pos, exons, strands):
 
 if __name__ == "__main__":
     from sys import stdin, stdout
+    import re
+
+    match_string = re.compile('([0-9]+)M')
     ids = set()
     posns = set()
-    perfect_matches = defaultdict(list)
+    best_matches = defaultdict(Counter)
 
     exons, strands = read_gtf('Reference/melpsevir-all.gtf')
     has_printed = []
 
-    for line in stdin:
-        data = line.split()
-        if not ((data[5] == '100M') 
-                or ('99M' in data[5]) 
-                or ('98M' in data[5])):
-            continue
-        posn = map_to_strand(data[2], int(data[3]), exons, strands)
+    try:
+        for line in stdin:
+            data = line.split()
+            posn = map_to_strand(data[2], int(data[3]), exons, strands)
+            if not posn:
+                continue
 
-        ids.add(data[0])
-        posns.add(posn)
+            species = posn[0][:4]
+            best_matches[data[0]][species] = max(max([int(val) for val in
+                                                  match_string.findall(data[5])]),
+                                                 best_matches[data[0]][species])
 
-        if len(ids) % 2e5 == 0 and len(ids) not in has_printed:
-            print len(posns) / len(ids), ',',
-            has_printed.append(len(ids))
-            stdout.flush()
+            ids.add(data[0])
+            posns.add(posn)
+
+            if len(ids) % 2e5 == 0 and len(ids) not in has_printed:
+                print len(posns) / len(ids), ',',
+                has_printed.append(len(ids))
+                stdout.flush()
+    except KeyboardInterrupt:
+        pass
+
+    
+    best_differences = []
+
+    for key in best_matches:
+        if len(best_matches[key]) == 1:
+            best_differences.append(100)
+        else:
+            try:
+                scores = best_matches[key].most_common()
+                best_differences.append(scores[0][1] - scores[1][1])
+            except IndexError:
+                print key, scores
+
+    print
+    print histogram(best_differences, 101)
+    print histogram(best_differences, 101, normed=True)
+    from cPickle import dump
+    print "dumping!"
+    stdout.flush()
+    dump(best_differences, open('difference_dump.pkl', 'w'))
 
