@@ -8,9 +8,9 @@ from time import time
 from subprocess import Popen, PIPE
 
 analysis_dir = 'analysis-express'
-GTF =  'Reference/dmel-all-r5.32_transcripts_fixed.gtf'
-bowtie_index = 'Reference/dmel-transcripts'
-target_seqs = 'Reference/dmel-all-transcript-r5.40.fasta'
+#GTF =  'Reference/dmel-all-r5.32_transcripts_fixed.gtf'
+bowtie_index = 'Reference/melpsevir-transcript'
+target_seqs = 'Reference/melpsevir-transcript.fasta'
 interest = 'GenesOfInterest.txt'
 FBtoName = 'Reference/dmelfbgns.txt'
 notificationEmail = 'peter.combs@berkeley.edu'
@@ -19,14 +19,13 @@ seq_dir = 'sequence'
 ########################################################################
 
 
-bowtie_options = ['bowtie', '-S', '-a', '-v', '3', '-p', '4', '--chunkmbs',
-                  '256' ]
+bowtie_options = ['bowtie2', '-a', '-p', '8', '--very-sensitive-local', '-t', ]
 express_options = ['express', '--output-alignments']
 
 ########################################################################
 
 
-indices_used = [2,4,5,6]
+indices_used = [2, 4, 5, 6, 7, 12]
 readnames = {"index%d" % idx: ",".join(sorted( glob(join(seq_dir, '*_index%d_*' % idx))))
              for idx in indices_used }
 
@@ -52,6 +51,7 @@ for line in file(FBtoName):
 
 start = time()
 if '-cdo' not in sys.argv:
+    all_sorts = []
     for readname, rf in sorted(readnames.items()):
         # Print the name of the files we're going through, as a rough progress bar
         print '-'*72
@@ -88,28 +88,46 @@ if '-cdo' not in sys.argv:
 
 
         # Do Bowtie
-        commandstr = bowtie_options + ['--un', join(od, 'unaligned.fq'), bowtie_index, rf]
+        commandstr = bowtie_options + ['-x', bowtie_index, '-U', rf,
+                                       '-S', join(od, 'accepted_hits.sam')]
         print ' '.join(commandstr)
-        bowtie_proc = Popen(commandstr, stdout=PIPE)
+        bowtie_proc = Popen(commandstr)
+        bowtie_proc.wait()
+
+        goodsams = Popen(['awk', '$1 ~ /@/ || $3 ~ /FBtr/',
+                          join(od, 'accepted_hits.sam')],
+                         stdout=open(join(od, 'mapped_hits.sam'), 'w'))
+        goodsams.wait()
+
+        samToBam = Popen(['samtools', 'view', '-bS', '-o',
+                          join(od, 'mapped_hits.bam'),
+                          join(od, 'mapped_hits.sam')])
+        samToBam.wait()
+
+        sortBams = Popen(['samtools', 'sort', '-n', '-m', '2000000',
+                          join(od, 'mapped_hits.bam'),
+                          join(od, 'sorted_hits')])
+
+        all_sorts.append(sortBams)
 
         # Do eXpress
 
-        print 'eXpressing...', '\n', '='*30
-        commandstr = express_options + ['-o', od, target_seqs]
-        print ' '.join(commandstr)
+        #print 'eXpressing...', '\n', '='*30
+        #commandstr = express_options + ['-o', od, target_seqs]
+        #print ' '.join(commandstr)
         sys.stdout.flush()
-        express_proc = Popen(commandstr, stdin=bowtie_proc.stdout)
+        #express_proc = Popen(commandstr, stdin=bowtie_proc.stdout)
 
-        express_proc.wait()
-        if express_proc.returncode:
-            errormail_proc = Popen(['mail', '-s', "Failed on expressing %s" %
-                                    readname,
-                                    notificationEmail], stdin=PIPE)
-            errormail_proc.communicate('Oh no!')
+        #express_proc.wait()
+        #if express_proc.returncode:
+        #    errormail_proc = Popen(['mail', '-s', "Failed on expressing %s" %
+        #                            readname,
+        ##                            notificationEmail], stdin=PIPE)
+        #    errormail_proc.communicate('Oh no!')
 
 
         # Figure out how well everything mapped
-        print '='*30
+        #print '='*30
         #commandstr = ['samtools', 'flagstat', join(od, 'accepted_hits.bam')]
         #samtools_proc = Popen(commandstr, stdout=PIPE)
 
@@ -130,6 +148,9 @@ if '-cdo' not in sys.argv:
 
 # Do Cuffdiff
 #system(cuffdiff_base + " ".join(all_bams))
+
+[i.wait() for i in all_sorts]
+
 cuffdiff_call = (cuffdiff_base.split() 
                  + ['-L', ','.join(libraries[rf] for rf in sorted(readnames.keys()))]
                  + all_bams)
