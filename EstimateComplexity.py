@@ -2,6 +2,7 @@ from __future__ import division
 from collections import Counter, defaultdict
 from numpy import histogram
 FBTR_LEN = 11
+MAX_STOP = 5000000.
 
 def read_gtf(fname):
     strands = {}
@@ -82,25 +83,36 @@ if __name__ == "__main__":
                 print len(posns) / len(ids), ',',
                 has_printed.append(len(ids))
                 stdout.flush()
+            if len(ids) > MAX_STOP:
+                raise KeyboardInterrupt
     except KeyboardInterrupt:
         pass
 
     
     best_differences = []
+    species_count = Counter()
 
     for key in best_matches:
         if len(best_matches[key]) == 1:
             best_differences.append(100)
+            species_count[best_matches[key].keys()[0]] += 1
         else:
             try:
                 scores = best_matches[key].most_common()
                 best_differences.append(scores[0][1] - scores[1][1])
+                if scores[0][1] - scores[1][1] > 2:
+                    species_count[scores[0][0]] += 1
+
             except IndexError:
                 print key, scores
 
     print
-    print histogram(best_differences, 101)
-    print histogram(best_differences, 101, normed=True)
+    print species_count
+    for spec in ['dmel', 'dpse', 'dvir']:
+        print spec, species_count[spec]/MAX_STOP
+    print (MAX_STOP - sum(species_count.values()))/MAX_STOP
+    #print histogram(best_differences, 101)
+    #print histogram(best_differences, 101, normed=True)
     from cPickle import dump
     print "dumping!"
     stdout.flush()
