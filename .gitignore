@@ -10,6 +10,7 @@
 *.sam
 *.tsv
 *.gtf
+*.gff
 __pycache__
 *.fai
 *.pdf
