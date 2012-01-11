@@ -1,6 +1,6 @@
 import re
 from collections import defaultdict
-import inspect_shell
+import pdb
 
 def find_tss(fname):
     first_exons = {}
@@ -9,7 +9,7 @@ def find_tss(fname):
     transcript_starts = {}
     find_fbtr = re.compile('FBtr[0-9]+')
     find_fbgn = re.compile('FBgn[0-9]+')
-    find_exon_number = re.compile('exon_number.*"?([0-9]+)"?;')
+    find_exon_number = re.compile('exon_number *"?([0-9]+)"?;')
     print 'Loading GTF...'
     for line in open(fname):
         if line.startswith("#"): continue
@@ -23,6 +23,8 @@ def find_tss(fname):
             fbgn_to_fbtr[fbgn].append(fbtr)
             transcript_starts[fbtr] = int(data[3 + (strand == '-')])
 
+        #if find_fbgn.findall(line) == ['FBgn0003659']:
+            #pdb.set_trace()
         elif kind == 'exon':
             fbtr = find_fbtr.findall(data[-1])[0]
             first_base = int(data[3 + (strand == '-')])
@@ -30,6 +32,7 @@ def find_tss(fname):
             if exon_number == ['1']:
                 first_exons[fbtr] = data[0], int(data[3]), int(data[4])
                 fbgn = find_fbgn.findall(data[-1])[0]
+                print "loading ", fbtr, fbgn, data[3], data[4], line
                 fbtr_to_fbgn[fbtr] = fbgn
                 fbgn_to_fbtr[fbgn].append(fbtr)
             if ((fbtr not in transcript_starts) 
@@ -94,7 +97,7 @@ if __name__ == "__main__":
                     genes[gene].append(0)
 
                 genes[gene][tss] += 1
-                continue
+                break
 
     outfh = open(sys.argv[2], 'w')
     dump(genes, outfh)
