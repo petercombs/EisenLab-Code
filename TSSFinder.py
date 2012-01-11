@@ -9,10 +9,11 @@ def find_tss(fname):
     transcript_starts = {}
     find_fbtr = re.compile('FBtr[0-9]+')
     find_fbgn = re.compile('FBgn[0-9]+')
+    find_exon_number = re.compile('exon_number.*"?([0-9]+)"?;')
     print 'Loading GTF...'
     for line in open(fname):
         if line.startswith("#"): continue
-        data = line.split()
+        data = line.split('\t')
         kind = data[2]
         strand = data[6]
         if kind == 'mRNA':
@@ -25,6 +26,12 @@ def find_tss(fname):
         elif kind == 'exon':
             fbtr = find_fbtr.findall(data[-1])[0]
             first_base = int(data[3 + (strand == '-')])
+            exon_number = find_exon_number.findall(data[-1])
+            if exon_number == ['1']:
+                first_exons[fbtr] = data[0], int(data[3]), int(data[4])
+                fbgn = find_fbgn.findall(data[-1])[0]
+                fbtr_to_fbgn[fbtr] = fbgn
+                fbgn_to_fbtr[fbgn].append(fbtr)
             if ((fbtr not in transcript_starts) 
                 or (first_base != transcript_starts[fbtr])):
                 continue
