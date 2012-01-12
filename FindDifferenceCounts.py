@@ -5,6 +5,11 @@ from numpy import array, shape, sum, sqrt
 
 if __name__ == "__main__":
     slices = []
+    tss_data = False
+    try:
+        tss_data = load(open('inv_tss.pkl'))
+    except IOError:
+        pass
     for fname in sys.argv[1:]:
         slices.append(load(open(fname)))
 
@@ -34,8 +39,12 @@ if __name__ == "__main__":
                     for tss in range(cols):
                         if rt_chi2_signed[sample, tss] > cutoff:
                             print "Hi: Sample %d TSS %d" % (sample, tss)
+                            if tss_data:
+                                print tss_data[gene, tss]
                         elif rt_chi2_signed[sample, tss] < -cutoff:
                             print "Lo: Sample %d TSS %d" % (sample, tss)
+                            if tss_data:
+                                print tss_data[gene, tss]
         except ValueError:
             print "Failed on: ", gene, data
 
