@@ -108,7 +108,7 @@ if __name__ == "__main__":
         chrom = data[2]
         pos = int(data[3])
         if (chrom, pos) in tsss2:
-            for gene, tss in tss2[chrom, pos]:
+            for gene, tss in tsss2[chrom, pos]:
                 while tss >= len(genes[gene]):
                     genes[gene].append(0)
 
