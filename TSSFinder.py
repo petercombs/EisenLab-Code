@@ -1,6 +1,7 @@
 import re
 from collections import defaultdict
 import pdb
+import cPickle as pickle
 
 def find_tss(fname):
     first_exons = {}
@@ -10,6 +11,7 @@ def find_tss(fname):
     find_fbtr = re.compile('FBtr[0-9]+')
     find_fbgn = re.compile('FBgn[0-9]+')
     find_exon_number = re.compile('exon_number *"?([0-9]+)"?;')
+    strands = {}
     print 'Loading GTF...'
     for line in open(fname):
         if line.startswith("#"): continue
@@ -19,6 +21,7 @@ def find_tss(fname):
         if kind == 'mRNA':
             fbtr = find_fbtr.findall(data[-1])[0]
             fbgn = find_fbgn.findall(data[-1])[0]
+            strands[fbgn] = strand
             fbtr_to_fbgn[fbtr] = fbgn
             fbgn_to_fbtr[fbgn].append(fbtr)
             transcript_starts[fbtr] = int(data[3 + (strand == '-')])
@@ -35,6 +38,7 @@ def find_tss(fname):
                 print "loading ", fbtr, fbgn, data[3], data[4], line
                 fbtr_to_fbgn[fbtr] = fbgn
                 fbgn_to_fbtr[fbgn].append(fbtr)
+                strands[fbgn] = strand
             if ((fbtr not in transcript_starts) 
                 or (first_base != transcript_starts[fbtr])):
                 continue
@@ -61,6 +65,8 @@ def find_tss(fname):
                 filtered_first_exons[fbgn].append(first_exons[fbtr])
 
     chroms = defaultdict(dict)
+    inv_tss_file = open('inv_tss.pkl', 'w')
+    inv_chroms = {}
     print "Sorting by chromosome..."
     for gene in filtered_first_exons:
         if len(filtered_first_exons[gene]) == 1:
@@ -69,6 +75,10 @@ def find_tss(fname):
         num = 0
         for num, (chrom, low, high) in enumerate(filtered_first_exons[gene]):
             chroms[chrom][low, high] = gene, num
+            inv_chroms[gene, num] = chrom, low, high, strands[gene]
+
+    pickle.dump(inv_chroms, inv_tss_file)
+    inv_tss_file.close()
 
     return chroms
 
