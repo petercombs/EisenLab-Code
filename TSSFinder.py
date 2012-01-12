@@ -91,6 +91,13 @@ if __name__ == "__main__":
     from cPickle import dump
     tsss = find_tss(sys.argv[1])
 
+    tsss2 = defaultdict(list)
+    for chrom in tsss:
+        for exon in tsss[chrom]:
+            for i in range(exon[0], exon[1] + 1):
+                tsss2[chrom, i].append(tsss[chrom][exon])
+
+
     genes = defaultdict(list)
     for i, line in enumerate(sys.stdin):
         if i % 100000 == 0:
@@ -100,14 +107,12 @@ if __name__ == "__main__":
         id = data[0]
         chrom = data[2]
         pos = int(data[3])
-        for low, high in tsss[chrom]:
-            if low <= pos <= high:
-                gene, tss = tsss[chrom][low, high]
+        if (chrom, pos) in tsss2:
+            for gene, tss in tss2[chrom, pos]:
                 while tss >= len(genes[gene]):
                     genes[gene].append(0)
 
                 genes[gene][tss] += 1
-                break
 
     outfh = open(sys.argv[2], 'w')
     dump(genes, outfh)
