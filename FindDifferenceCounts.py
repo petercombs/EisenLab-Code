@@ -1,7 +1,7 @@
 import sys
 from cPickle import load
 from scipy import stats
-from numpy import array, shape
+from numpy import array, shape, sum, sqrt
 
 if __name__ == "__main__":
     slices = []
@@ -23,7 +23,19 @@ if __name__ == "__main__":
         try:
             chi2, p, dof, expected = stats.chi2_contingency(data)
             if p < (.05 / (len(slices[0])* len(sys.argv[1:]))):
-                print gene, data
+                cutoff = sqrt(stats.chi2.ppf(.95, dof))
+                rt_chi2_signed = (data - expected) / sqrt(expected)
+                print '='*30
+                print gene, cols, "TSSs", sum(data, axis=1), 'dof=', dof,
+                print 'cutoff=', cutoff
+                print data
+                print (data - expected)/sqrt(expected)
+                for sample in range(rows):
+                    for tss in range(cols):
+                        if rt_chi2_signed[sample, tss] > cutoff:
+                            print "Hi: Sample %d TSS %d" % (sample, tss)
+                        elif rt_chi2_signed[sample, tss] < -cutoff:
+                            print "Lo: Sample %d TSS %d" % (sample, tss)
         except ValueError:
             print "Failed on: ", gene, data
 
