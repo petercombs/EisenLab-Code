@@ -35,16 +35,21 @@ if __name__ == "__main__":
                 print 'cutoff=', cutoff
                 print data
                 print (data - expected)/sqrt(expected)
-                for sample in range(rows):
-                    for tss in range(cols):
+                for tss in range(cols):
+                    if tss_data:
+                        this_data = tss_data[gene, tss]
+                    else:
+                        this_data = False
+                    high_in = []
+                    low_in = []
+                    for sample in range(rows):
                         if rt_chi2_signed[sample, tss] > cutoff:
-                            print "Hi: Sample %d TSS %d" % (sample, tss)
-                            if tss_data:
-                                print tss_data[gene, tss]
+                            high_in.append(sample)
                         elif rt_chi2_signed[sample, tss] < -cutoff:
-                            print "Lo: Sample %d TSS %d" % (sample, tss)
-                            if tss_data:
-                                print tss_data[gene, tss]
+                            low_in.append(sample)
+
+                    print this_data, 'lo', low_in
+                    print this_data, 'hi', high_in
         except ValueError:
             print "Failed on: ", gene, data
 
