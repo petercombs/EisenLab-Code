@@ -47,7 +47,8 @@ def main():
                 start = int(hi_pos)
                 promoter = chroms[chr][start - args.downstream
                                               : start + args.upstream]
-            promoter.id = line.strip()
+            promoter.id = '_'.join([chr, lo_pos, hi_pos, strand,
+                                    str(args.upstream), str(args.downstream)])
             SeqIO.write(promoter, outfile, 'fasta')
 
 
