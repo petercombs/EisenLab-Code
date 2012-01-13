@@ -48,8 +48,14 @@ if __name__ == "__main__":
                         elif rt_chi2_signed[sample, tss] < -cutoff:
                             low_in.append(sample)
 
-                    print this_data, 'lo', low_in
-                    print this_data, 'hi', high_in
+                    print '# LO',
+                    for item in this_data:
+                        print item,
+                    print str(low_in).replace(' ', '')
+                    print '# HI',
+                    for item in this_data:
+                        print item,
+                    print str(high_in).replace(' ', '')
         except ValueError:
             print "Failed on: ", gene, data
 
