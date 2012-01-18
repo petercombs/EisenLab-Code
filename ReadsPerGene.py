@@ -11,6 +11,8 @@ for line in open(argv[1]):
     try:
         data = line.split('\t')
         chr = data[0]
+        kind = data[2]
+        if kind != 'exon': continue
         start = int(data[3])
         stop = int(data[4])
         fbgn = data[-1][-12:-2]
