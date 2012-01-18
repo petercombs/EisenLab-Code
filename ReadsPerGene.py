@@ -4,12 +4,12 @@ import cPickle as pickle
 
 chrs = defaultdict(lambda : defaultdict(list))
 
-for line in open('../Reference/trimmed_exons.gtf'):
+for line in open('../Reference/melpsevir-all.gtf'):
     try:
-        data = line.split()
-        chr = data[0].replace('chr','dmel_', 1)
-        start = int(data[2])
-        stop = int(data[3])
+        data = line.split('\t')
+        chr = data[0]
+        start = int(data[3])
+        stop = int(data[4])
         fbgn = data[-1][-12:-2]
         for i in range(start, stop+1):
             if fbgn not in chrs[chr][i]:
