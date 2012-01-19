@@ -38,8 +38,9 @@ for line in open(argv[1]):
 genes = Counter()
 for dir in os.listdir('.'):
     if not path.isdir(dir): continue
+    print '-' * 30
     print dir
-    print '-'*30
+    print '-' * 30
     samtools = subprocess.Popen(['samtools', 'view', 
                                  path.join(dir, 'accepted_hits.bam')],
                                 stdout=subprocess.PIPE)
@@ -61,5 +62,7 @@ for dir in os.listdir('.'):
     outfh = open(dir + '_coverage.pkl', 'w')
 
     pickle.dump(genes, outfh)
+    print
+    print 'Done Dumping'
 
 
