@@ -47,7 +47,7 @@ for dir in os.listdir('.'):
             print '.',
             stdout.flush()
 
-    outfh = open(dir + '.pkl', 'w')
+    outfh = open(dir + '_coverage.pkl', 'w')
 
     pickle.dump(genes, outfh)
 
