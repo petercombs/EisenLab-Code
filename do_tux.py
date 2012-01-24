@@ -26,7 +26,7 @@ cuffdiff_base = ('cuffdiff -p 8 -v -o %(ad)s %(gtf)s '
 ########################################################################
 
 
-indices_used = [2,4,5,6, 7, 12]
+indices_used = [2,4,5,6, ]
 readnames = {"index%d" % idx: [",".join(sorted( glob(join(seq_dir,
                                                           '*_index%d_*_R1*'
                                                           % idx)))),
@@ -151,7 +151,7 @@ if '-cdo' not in sys.argv:
                    stdout=file(join(od, 'hit_filtering.log'), 'w'))
         p2.wait()
 
-all_bams = map(lambda s: join('analysis', s, 'accepted_hits.bam'),
+all_bams = map(lambda s: join(analysis_dir, s, 'accepted_hits.bam'),
                (s for s in readnames))
 
 
