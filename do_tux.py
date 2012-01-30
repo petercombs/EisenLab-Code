@@ -7,9 +7,9 @@ import os
 from time import time
 from subprocess import Popen, PIPE
 
-analysis_dir = 'analysis'
-GTF =  'Reference/dmel-all-r5.32_transcripts_fixed.gtf'
-idxfile = 'Reference/dmel-all-r5.23'
+analysis_dir = 'analysis42'
+GTF =  'Reference/dmel-all-r5.42.gtf'
+idxfile = 'Reference/dmel-all-chromosome-r5.42'
 interest = 'GenesOfInterest.txt'
 FBtoName = 'Reference/dmelfbgns.txt'
 notificationEmail = 'peter.combs@berkeley.edu'
@@ -19,15 +19,20 @@ seq_dir = 'sequence'
 
 tophat_base = 'tophat -p8 --no-novel-juncs '
 cufflinks_base = 'cufflinks -p 8 -q -u -b ' + idxfile + '.fa '
-cuffdiff_base = ('cuffdiff -p 8 -v --FDR .001 -o %(ad)s %(gtf)s '
+cuffdiff_base = ('cuffdiff -p 8 -v -o %(ad)s %(gtf)s '
                  % {'gtf':GTF, 'ad': analysis_dir})
 
 
 ########################################################################
 
 
-indices_used = [2,4,5,6]
-readnames = {"index%d" % idx: ",".join(sorted( glob(join(seq_dir, '*_index%d_*' % idx))))
+indices_used = [2,4,5,6, 7, 12]
+readnames = {"index%d" % idx: [",".join(sorted( glob(join(seq_dir,
+                                                          '*_index%d_*_R1*'
+                                                          % idx)))),
+                               ",".join(sorted( glob(join(seq_dir,
+                                                          '*_index%d_*_R2*' % idx))))
+                              ]
              for idx in indices_used }
 
 libraries = { "index%d" % idx : chr(ord('A') + i )
@@ -52,19 +57,19 @@ for line in file(FBtoName):
 
 start = time()
 if '-cdo' not in sys.argv:
-    for readname, rf in sorted(readnames.items()):
+    for readname, (rf1, rf2) in sorted(readnames.items()):
         # Print the name of the files we're going through, as a rough progress bar
         print '-'*72
-        print rf
+        print readname
         print '-'*72
 
         # Just grab the first file name (paired ends have the same number in both)
-        rf2 = rf.split(',')
+        rfs = rf1.split(',')
 
         # This section will probably need to be fixed if/when I do paired-end reads.
         # Just splitting on commas will have a non-existant file with the last file
         # of the first end and the first file of the second end
-        wc_proc = Popen(['wc', '-l']+ rf2, stdout=PIPE)
+        wc_proc = Popen(['wc', '-l']+ rfs, stdout=PIPE)
         wcout, wcerr = wc_proc.communicate()
         print wcout
 
@@ -80,7 +85,7 @@ if '-cdo' not in sys.argv:
             print "Directory '%s' already exists... shouldn't be a problem" % od
 
         # Figure out Read Group ID
-        f = open(rf.split(',')[0])
+        f = open(rf1.split(',')[0])
         l = f.readline()
         f.close()
         rgid = l.split(":")[0][1:]
@@ -91,11 +96,13 @@ if '-cdo' not in sys.argv:
         print 'Tophatting...', '\n', '='*30
         commandstr =  (tophat_base + '-G %(GTF)s -o %(od)s --rg-library %(library)s'
                        ' --rg-center VCGSL --rg-sample %(library)s --rg-platform'
-                       ' ILLUMINA --rg-id %(rgid)s  --rg-platform-unit %(lane)s %(idxfile)s %(rf)s'
+                       ' ILLUMINA --rg-id %(rgid)s  --rg-platform-unit %(lane)s'
+                    ' %(idxfile)s %(rf1)s %(rf2)s'
                % {'GTF': GTF,
                   'od': od,
                   'idxfile': idxfile,
-                  'rf': rf,
+                  'rf1': rf1,
+                  'rf2': rf2,
                   'library': readname,
                   'rgid': rgid,
                   'lane': lane})
