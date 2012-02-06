@@ -26,7 +26,8 @@ cuffdiff_base = ('cuffdiff -p 8 -v -o %(ad)s %(gtf)s '
 ########################################################################
 
 
-indices_used = [2,4,5,6, 7, 12]
+indices_used = set([name.split('_')[1][5:] 
+                    for name in glob(join(seq_dir, '*index*'))])
 readnames = {"index%d" % idx: [",".join(sorted( glob(join(seq_dir,
                                                           '*_index%d_*_R1*'
                                                           % idx)))),
@@ -54,6 +55,7 @@ for line in file(FBtoName):
     FBKey[line[0]] = line[1]
     NameKey[line[1]] = line[0]
 
+print "Looking at indices:", indices_used
 
 start = time()
 if '-cdo' not in sys.argv:
@@ -62,6 +64,7 @@ if '-cdo' not in sys.argv:
         print '-'*72
         print readname
         print '-'*72
+        sys.stdout.flush()
 
         # Just grab the first file name (paired ends have the same number in both)
         rfs = rf1.split(',')
@@ -108,6 +111,7 @@ if '-cdo' not in sys.argv:
                   'lane': lane})
         print commandstr
         sys.stdout.flush()
+        sys.stderr.flush()
         tophat_proc = Popen(commandstr.split())
         tophat_proc.wait()
 
@@ -122,6 +126,7 @@ if '-cdo' not in sys.argv:
 
         print 'Cufflinksing...', '\n', '='*30
         sys.stdout.flush()
+        sys.stderr.flush()
         commandstr = (cufflinks_base + '-G %(GTF)s -o %(od)s %(hits)s'
                % {'GTF': GTF, 'od': od,
                   'hits': join(od, 'accepted_hits.bam')})
