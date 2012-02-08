@@ -25,6 +25,7 @@ tophat_base = ['tophat',
 cufflinks_base = ['cufflinks', 
                   '--num-threads',  '4', 
                   '--quiet', '--multi-read-correct', 
+                  '--upper-quartile-norm',
                   '--frag-bias-correct', idxfile + '.fa ', 
                   '-M', mask_GTF] #Mask file
 cuffdiff_base = ('cuffdiff -p 8 -v -o %(ad)s %(gtf)s '
