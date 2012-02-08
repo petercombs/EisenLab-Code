@@ -14,6 +14,7 @@ coverage = 0
 all_dirs = []
 all_rpks = []
 all_pct_uniques = []
+all_lens = []
 
 for bam_fname in glob(path.join(analysis_dir, '*', 'accepted_hits.bam')):
     print bam_fname
@@ -44,14 +45,18 @@ for bam_fname in glob(path.join(analysis_dir, '*', 'accepted_hits.bam')):
                 starts.add(read.pos)
 
         elif kind == 'CDS':
-            coverages[parent] = (coverage/curr_len, len(starts)/curr_len)
+            coverages[parent] = (curr_len, coverage/curr_len, len(starts)/curr_len)
 
-    rpks, pct_uniques = zip(*coverages.itervalues())
+    curr_lens, rpks, pct_uniques = zip(*coverages.itervalues())
     dir, fname = path.split(bam_fname)
     all_dirs.append(dir)
     all_rpks.append(rpks)
     all_pct_uniques.append(pct_uniques)
+    all_lens.append(curr_lens)
 
                 
 
-
+import cPickle as pickle
+out_fh = open('checkcoverage.pkl', 'w')
+pickle.dump({'dirs':all_dirs, 'rpks':all_rpks, 'pct_uniques':all_pct_uniques,
+             'lens': all_lens}, out_fh)
