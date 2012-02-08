@@ -3,9 +3,11 @@ import pysam
 import re
 from glob import glob
 from os import path
+from scipy import stats
+from numpy import array, log, exp
 
 gtf_fname = 'Reference/dmel-all-r5.42.gtf'
-analysis_dir = 'analysis42'
+analysis_dir = 'analysis'
 
 starts = set()
 curr_len = -1
@@ -16,7 +18,9 @@ all_rpks = []
 all_pct_uniques = []
 all_lens = []
 
-for bam_fname in glob(path.join(analysis_dir, '*', 'accepted_hits.bam')):
+cutoff = 0
+
+for bam_fname in glob(path.join(analysis_dir, '*.bam')):
     print bam_fname
     bam_file = pysam.Samfile(bam_fname, 'rb')
 
@@ -49,10 +53,21 @@ for bam_fname in glob(path.join(analysis_dir, '*', 'accepted_hits.bam')):
 
     curr_lens, rpks, pct_uniques = zip(*coverages.itervalues())
     dir, fname = path.split(bam_fname)
-    all_dirs.append(dir)
+    all_dirs.append(fname)
     all_rpks.append(rpks)
     all_pct_uniques.append(pct_uniques)
     all_lens.append(curr_lens)
+
+    try:
+        xs = array(rpks)
+        ys = array(pct_uniques)
+        cutoff = min(xs[ys>.3])
+        print cutoff
+        reg = stats.linregress(log(xs[(xs < cutoff) * (xs > 0) * (ys > 0)]),
+                               log(ys[(xs < cutoff) * (xs > 0) * (ys > 0)]))
+        print "exp(%f) * x ** %f" % (reg[1], reg[0])
+    except Exception as exc:
+        print exc
 
                 
 
