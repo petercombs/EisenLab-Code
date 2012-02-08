@@ -34,8 +34,8 @@ cuffdiff_base = ('cuffdiff -p 8 -v -o %(ad)s %(gtf)s '
 ########################################################################
 
 
-indices_used = set([int(name.split('_')[1][5:] )
-                    for name in glob(join(seq_dir, '*index*'))])
+indices_used = sorted(set([int(name.split('_')[1][5:] )
+                    for name in glob(join(seq_dir, '*index*'))]))
 readnames = {"index%d" % idx: [",".join(sorted( glob(join(seq_dir,
                                                           '*_index%d_*_R1*'
                                                           % idx)))),
