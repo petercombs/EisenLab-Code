@@ -7,10 +7,10 @@ import os
 from time import time
 from subprocess import Popen, PIPE
 
-analysis_dir = 'analysis42'
-GTF =  'Reference/dmel-all-r5.42.gtf'
-idxfile = 'Reference/dmel-all-chromosome-r5.42'
-interest = 'GenesOfInterest.txt'
+analysis_dir = 'analysis'
+GTF =  'Reference/dmel-all-r5.43.gtf'
+mask_GTF = 'Reference/mask.gtf'
+idxfile = 'Reference/dmel-all-chromosome-r5.43'
 FBtoName = 'Reference/dmelfbgns.txt'
 notificationEmail = 'peter.combs@berkeley.edu'
 seq_dir = 'sequence'
@@ -34,7 +34,7 @@ cuffdiff_base = ('cuffdiff -p 8 -v -o %(ad)s %(gtf)s '
 ########################################################################
 
 
-indices_used = set([name.split('_')[1][5:] 
+indices_used = set([int(name.split('_')[1][5:] )
                     for name in glob(join(seq_dir, '*index*'))])
 readnames = {"index%d" % idx: [",".join(sorted( glob(join(seq_dir,
                                                           '*_index%d_*_R1*'
