@@ -17,8 +17,16 @@ seq_dir = 'sequence'
 
 ########################################################################
 
-tophat_base = 'tophat -p8 --no-novel-juncs '
-cufflinks_base = 'cufflinks -p 8 -q -u -b ' + idxfile + '.fa '
+tophat_base = ['tophat', 
+               '--num-threads', '4', 
+               '--no-novel-juncs',
+               '--transcriptome-index', 'FlyBaseTrancriptome/known',
+               '--transcriptome-only']
+cufflinks_base = ['cufflinks', 
+                  '--num-threads',  '4', 
+                  '--quiet', '--multi-read-correct', 
+                  '--frag-bias-correct', idxfile + '.fa ', 
+                  '-M', mask_GTF] #Mask file
 cuffdiff_base = ('cuffdiff -p 8 -v -o %(ad)s %(gtf)s '
                  % {'gtf':GTF, 'ad': analysis_dir})
 
@@ -64,6 +72,8 @@ if '-cdo' not in sys.argv:
         print '-'*72
         print readname
         print '-'*72
+        print rf1, rf2
+        print '-'*32
         sys.stdout.flush()
 
         # Just grab the first file name (paired ends have the same number in both)
@@ -97,22 +107,19 @@ if '-cdo' not in sys.argv:
 
         # Do tophat
         print 'Tophatting...', '\n', '='*30
-        commandstr =  (tophat_base + '-G %(GTF)s -o %(od)s --rg-library %(library)s'
-                       ' --rg-center VCGSL --rg-sample %(library)s --rg-platform'
-                       ' ILLUMINA --rg-id %(rgid)s  --rg-platform-unit %(lane)s'
-                    ' %(idxfile)s %(rf1)s %(rf2)s'
-               % {'GTF': GTF,
-                  'od': od,
-                  'idxfile': idxfile,
-                  'rf1': rf1,
-                  'rf2': rf2,
-                  'library': readname,
-                  'rgid': rgid,
-                  'lane': lane})
-        print commandstr
+        commandstr =  tophat_base + ['--GTF', GTF, 
+                                     '--output-dir', od,
+                                     '--rg-library', readname, 
+                                     '--rg-center', 'VCGSL', 
+                                     '--rg-sample', readname,
+                                     '--rg-platform', 'ILLUMINA', 
+                                     '--rg-id', rgid, 
+                                     '--rg-platform-unit', lane,
+                                     idxfile, rf1, rf2]
+        print " ".join(commandstr)
         sys.stdout.flush()
         sys.stderr.flush()
-        tophat_proc = Popen(commandstr.split())
+        tophat_proc = Popen(commandstr)
         tophat_proc.wait()
 
 
@@ -127,11 +134,10 @@ if '-cdo' not in sys.argv:
         print 'Cufflinksing...', '\n', '='*30
         sys.stdout.flush()
         sys.stderr.flush()
-        commandstr = (cufflinks_base + '-G %(GTF)s -o %(od)s %(hits)s'
-               % {'GTF': GTF, 'od': od,
-                  'hits': join(od, 'accepted_hits.bam')})
-        print commandstr
-        cufflinks_proc = Popen(commandstr.split())
+        commandstr = cufflinks_base + ['--GTF', GTF, '--output-dir', od,
+                                       join(od, 'accepted_hits.bam')]
+        print " ".join(commandstr)
+        cufflinks_proc = Popen(commandstr)
 
         cufflinks_proc.wait()
         if cufflinks_proc.returncode:
