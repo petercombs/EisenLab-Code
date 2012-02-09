@@ -27,6 +27,7 @@ all_lens = []
 cutoff = 0
 
 for bam_fname in sys.argv[2:]:
+    if not bam_fname.endswith('.bam'): continue
     print bam_fname, 
     bam_file = pysam.Samfile(bam_fname, 'rb')
 
@@ -71,6 +72,7 @@ for bam_fname in sys.argv[2:]:
         reg = stats.linregress(log(xs[(xs < cutoff) * (xs > 0) * (ys > 0)]),
                                log(ys[(xs < cutoff) * (xs > 0) * (ys > 0)]))
         print "exp(%f) * x ** %f" % (reg[1], reg[0])
+        print "Duplicate badness score: ", exp(-reg[1]-.38)
     except Exception as exc:
         print exc
 
