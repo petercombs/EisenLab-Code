@@ -1,12 +1,18 @@
+#!/usr/bin/env python
 from __future__ import division
 import pysam
 import re
+import sys
 from glob import glob
 from os import path
 from scipy import stats
 from numpy import array, log, exp
 
-gtf_fname = 'Reference/dmel-all-r5.42.gtf'
+if len(sys.argv) < 3:
+    print """Usage: python CheckCoverage.py <GTF-File> BAMfile [BAMfile ...]"""
+    sys.exit(1)
+
+gtf_fname = sys.argv[1] #'Reference/dmel-all-r5.42.gtf'
 analysis_dir = 'analysis'
 
 starts = set()
@@ -20,8 +26,8 @@ all_lens = []
 
 cutoff = 0
 
-for bam_fname in glob(path.join(analysis_dir, '*.bam')):
-    print bam_fname
+for bam_fname in sys.argv[2:]:
+    print bam_fname, 
     bam_file = pysam.Samfile(bam_fname, 'rb')
 
     coverages = {}
@@ -61,8 +67,7 @@ for bam_fname in glob(path.join(analysis_dir, '*.bam')):
     try:
         xs = array(rpks)
         ys = array(pct_uniques)
-        cutoff = min(xs[ys>.3])
-        print cutoff
+        cutoff = min(xs[ys>.1])
         reg = stats.linregress(log(xs[(xs < cutoff) * (xs > 0) * (ys > 0)]),
                                log(ys[(xs < cutoff) * (xs > 0) * (ys > 0)]))
         print "exp(%f) * x ** %f" % (reg[1], reg[0])
