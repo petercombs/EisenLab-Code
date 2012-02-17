@@ -44,7 +44,6 @@ for bam_fname in sys.argv[2:]:
         kind = data[2]
         start = int(data[3]) - 1
         stop = int(data[4])
-        starts = set()
         fbtr_finder = re.compile('FBtr[0-9]*')
         if kind == 'mRNA':
             parent = fbtr_finder.findall(line)[0]
