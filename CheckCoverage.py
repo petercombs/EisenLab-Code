@@ -44,7 +44,7 @@ for bam_fname in sys.argv[2:]:
         kind = data[2]
         start = int(data[3]) - 1
         stop = int(data[4])
-        starts = ()
+        starts = set()
         fbtr_finder = re.compile('FBtr[0-9]*')
         if kind == 'mRNA':
             parent = fbtr_finder.findall(line)[0]
@@ -53,15 +53,18 @@ for bam_fname in sys.argv[2:]:
             starts = set()
             
         if kind == 'transcript':  #For using cufflinks generated GTFs
-            coverages[parent] = (curr_len, coverage/curr_len, len(starts)/curr_len)
-            parent = fbtr_finder.findall(line)[0]
+            if curr_len:
+                coverages[parent] = (curr_len, coverage/curr_len, len(starts)/curr_len)
+            parent = (fbtr_finder.findall(line) or [''])[0]
             curr_len = 0
             coverage = 0
             starts = set()
             
 
         elif kind == 'exon':
-            fbtr = fbtr_finder.findall(line)[0]
+            fbtrs = fbtr_finder.findall(line)
+            if not fbtrs: continue
+            fbtr = fbtrs[0]
             curr_len += (stop - start)
             if fbtr != parent: continue
             for read in bam_file.fetch(chrom, start, stop):
@@ -69,7 +72,8 @@ for bam_fname in sys.argv[2:]:
                 starts.add(read.pos)
 
         elif kind == 'CDS':
-            coverages[parent] = (curr_len, coverage/curr_len, len(starts)/curr_len)
+            if curr_len:
+                coverages[parent] = (curr_len, coverage/curr_len, len(starts)/curr_len)
 
     curr_lens, rpks, pct_uniques = zip(*coverages.itervalues())
     dir, fname = path.split(bam_fname)
