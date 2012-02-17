@@ -32,6 +32,10 @@ for bam_fname in sys.argv[2:]:
     bam_file = pysam.Samfile(bam_fname, 'rb')
 
     coverages = {}
+    parent = ''
+    curr_len = 0
+    coverage = 0
+    starts = set()
 
     for line in open(gtf_fname):
         if line.startswith('#'): continue
@@ -40,12 +44,21 @@ for bam_fname in sys.argv[2:]:
         kind = data[2]
         start = int(data[3]) - 1
         stop = int(data[4])
+        starts = ()
         fbtr_finder = re.compile('FBtr[0-9]*')
         if kind == 'mRNA':
             parent = fbtr_finder.findall(line)[0]
             curr_len = 0
             coverage = 0
             starts = set()
+            
+        if kind == 'transcript':  #For using cufflinks generated GTFs
+            coverages[parent] = (curr_len, coverage/curr_len, len(starts)/curr_len)
+            parent = fbtr_finder.findall(line)[0]
+            curr_len = 0
+            coverage = 0
+            starts = set()
+            
 
         elif kind == 'exon':
             fbtr = fbtr_finder.findall(line)[0]
