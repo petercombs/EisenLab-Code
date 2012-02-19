@@ -21,7 +21,7 @@ tophat_base = ['tophat',
                '--num-threads', '4', 
                '--no-novel-juncs',
                '--transcriptome-index', 'FlyBaseTrancriptome/known',
-               '--transcriptome-only']
+               ]
 cufflinks_base = ['cufflinks', 
                   '--num-threads',  '4', 
                   '--quiet', '--multi-read-correct', 
