@@ -34,6 +34,25 @@ cuffdiff_base = ('cuffdiff -p 8 -v -o %(ad)s %(gtf)s '
 
 ########################################################################
 
+try:
+    import gntp.notifier
+    try:
+        passwd = open('growl.log').readline().strip()
+    except OSError:
+        passwd = ''
+    growl = gntp.notifier.GrowlNotifier(applicationName='do_tux',
+                                        notifications=['Progress', 'Error'],
+                                        defaultNotifications=['Notification'],
+                                        hostname=os.environ['SSH_CONNECTION'].split()[0],
+                                        password=passwd)
+    result = growl.register()
+    if result:
+        print "Growl set up, sending to:", os.environ['SSH_CONNECTION'].split()[0]
+    else:
+        print "Growl failed with:", result
+except Exception as err:
+    print "Growl failed with:", err
+    growl = False
 
 indices_used = sorted(set([int(name.split('_')[1][5:] )
                     for name in glob(join(seq_dir, '*index*'))]))
@@ -76,6 +95,10 @@ if '-cdo' not in sys.argv:
         print rf1, rf2
         print '-'*32
         sys.stdout.flush()
+        if growl:
+            growl.notify(noteType='Progress', title='Starting set of reads',
+                         description='Starting on: %s\n\nElapsed time: %dm' % 
+                         (readname, (time() - start)/60))
 
         # Just grab the first file name (paired ends have the same number in both)
         rfs = rf1.split(',')
@@ -129,6 +152,9 @@ if '-cdo' not in sys.argv:
                                     readname,
                                     notificationEmail], stdin=PIPE)
             errormail_proc.communicate('Oh no!')
+            if growl:
+                growl.notify(noteType='Error', title='Problem with Tophat',
+                             description='Working on %s' % readname)
 
         # Do cufflinks
 
@@ -146,7 +172,10 @@ if '-cdo' not in sys.argv:
                                     readname,
                                     notificationEmail], stdin=PIPE)
             errormail_proc.communicate('Oh no!')
-
+            if growl:
+                growl.notify(noteType='Error', title='Problem with Cufflinks',
+                             description='Working on %s' % readname)
+  
 
         # Figure out how well everything mapped
         print '='*30
@@ -165,6 +194,11 @@ if '-cdo' not in sys.argv:
 
 all_bams = map(lambda s: join('analysis', s, 'accepted_hits.bam'),
                (s for s in readnames))
+
+if growl:
+    growl.notify(noteType='Progress', title='Starting cuffdiff',
+                 description='Elapsed time: %dm' % 
+                 ((time() - start)/60))
 
 
 # Do Cuffdiff
