@@ -54,7 +54,7 @@ except Exception as err:
     print "Growl failed with:", err
     growl = False
 
-indices_used = sorted(set([int(name.split('_')[1][5:] )
+indices_used = sorted(set([int(name.split('_')[3][5:] )
                     for name in glob(join(seq_dir, '*index*'))]))
 readnames = {"index%d" % idx: [",".join(sorted( glob(join(seq_dir,
                                                           '*_index%d_*_R1*'
@@ -83,7 +83,7 @@ for line in file(FBtoName):
     FBKey[line[0]] = line[1]
     NameKey[line[1]] = line[0]
 
-print "Looking at indices:", indices_used
+print "Looking at indices:", indices_used, libraries
 
 start = time()
 if '-cdo' not in sys.argv:
