@@ -23,10 +23,12 @@ Usage:
 
 The GTF file works best when using a FlyBase derived file, and assumes the
 following order of annotation types:
-* mRNA: Should have both the FBtr ID and the FBgn ID in the annotation field
-* exon: One or more exons per transcript, containingi the FBtr ID in the
+ * mRNA: Should have both the FBtr ID and the FBgn ID in the annotation field
+
+ * exon: One or more exons per transcript, containingi the FBtr ID in the
   annotation field
-* CDS: Used by this program as a signal that there are no more exons for this
+
+ * CDS: Used by this program as a signal that there are no more exons for this
   transcript.  If there are, it will confuse the program.
 
 PointClouds.py
