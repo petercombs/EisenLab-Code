@@ -7,7 +7,27 @@ noted) is released under the CRAPL v0 license.  Please contact me direclty
 (peter.combs@berkeley.edu) for any data I've generated, as it's most likely too
 large to fit on github anyways.
 
-[TOC]
+CheckCoverage.py
+----------------
+
+Utility to estimate the relative level of PCR Duplication found in a sample.
+By looking at the number of unique read positions in low-to-moderately
+expressed genes, and comparing to a simulated model, a Badness score can be
+calculated, which roughly corresponds to the number of reads per fragment.  A
+perfect Badness score would be 1, with higher scores indicating a higher level
+of PCR duplication in the sample. 
+
+Usage:
+
+ $ python CheckCoverage.py GTF-file bamfile.bam [bamfile.bam ...]
+
+The GTF file works best when using a FlyBase derived file, and assumes the
+following order of annotation types:
+* mRNA: Should have both the FBtr ID and the FBgn ID in the annotation field
+* exon: One or more exons per transcript, containingi the FBtr ID in the
+  annotation field
+* CDS: Used by this program as a signal that there are no more exons for this
+  transcript.  If there are, it will confuse the program.
 
 PointClouds.py
 --------------
