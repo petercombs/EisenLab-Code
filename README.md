@@ -19,7 +19,7 @@ of PCR duplication in the sample.
 
 Usage:
 
- $ python CheckCoverage.py GTF-file bamfile.bam [bamfile.bam ...]
+   $ python CheckCoverage.py GTF-file bamfile.bam [bamfile.bam ...]
 
 The GTF file works best when using a FlyBase derived file, and assumes the
 following order of annotation types:
