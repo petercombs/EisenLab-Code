@@ -169,6 +169,18 @@ def parse_translation_table(translation_table):
 
     return fbgn2name, name2fbgn
 
+def nan_safe_spearman(a, b):
+    """ Calculate the Spearman rank correlation, ignoring any points where one
+    or both entries are NaN
+
+    This ought to generally improve comparison across time points, since before
+    the differing number of genes that are measured at each time point could
+    affect the weighting.
+    """
+    assert np.shape(a) == np.shape(b)
+    nums = ~(np.isnan(a) + np.isnan(b))
+    return stats.spearmanr(np.array(a)[nums], np.array(b)[nums])
+
 
 if __name__ == "__main__":
     args = parse_args()
@@ -233,9 +245,7 @@ if __name__ == "__main__":
             bestcorr = 0
             bestslice = -1
             for slice in range(nslices):
-                #corr = np.abs(np.corrcoef(expr_l, slices[slice, :, time]))[1,0]
-                #corr = stats.pearsonr(expr_l, slices[slice, :, time])[0]
-                corr = stats.spearmanr(expr_l, slices[slice, :, time])[0]
+                corr = nan_safe_spearman(expr_l, slices[slice, :, time])[0]
                 corrmat[time, slice] = corr
                 if corr > bestcorr:
                     bestcorr = corr

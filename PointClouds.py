@@ -91,7 +91,7 @@ class PointCloudReader(object):
         genes = self.get_gene_names()
 
         if HAS_NUMPY:
-            exparray = np.zeros((len(all_data), len(genes), len(times)))
+            exparray = np.zeros((len(all_data), len(genes), len(times))) * np.nan
         else:
             exparray = [[[0 for k in times]
                          for j in genes]
