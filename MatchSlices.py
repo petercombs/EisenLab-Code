@@ -11,6 +11,7 @@ import sys
 import numpy as np
 from argparse import ArgumentParser
 from scipy import stats
+import progressbar as pbar
 
 def parse_args():
     """Parse command line arguments"""
@@ -121,23 +122,16 @@ def virtual_slice(exparray, posarray, axis='x', width=50.0, resolution=1.0,
 
     allslices = np.zeros((nslices, ngenes, ntimes))
     for k in range(ntimes):
-        # Poor man's progress bar
-        print("\nTime %d: " % k, end='')
-        next_print = 0
-        sys.stdout.flush()
-
+        progress = pbar.ProgressBar(widgets=['Time %d' % k, pbar.Percentage(), 
+                                             ' ', pbar.Bar(), pbar.ETA()],
+                                    maxval=nslices)
         # Actually do the slicing:
-        for i, slicepos in enumerate(slicestarts):
+        for i, slicepos in progress(enumerate(slicestarts)):
             allslices[i, :] = reduce_fcn(exparray[
                                   (slicepos <= posarray[:, axis, k])
                                 * (posarray[:, axis, k] < slicepos + width)],
                               axis=0)
 
-            # More progress bar
-            if i / nslices > next_print:
-                print('.', end='')
-                sys.stdout.flush()
-                next_print += .05
 
     print()
 
