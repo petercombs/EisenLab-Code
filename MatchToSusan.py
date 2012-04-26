@@ -21,6 +21,11 @@ for fname in os.listdir('susan/by_cycle/'):
         susan_exprs[fbase][gene_name] = (mean_expr, std_expr)
         
 
+fout = raw_input("Output file name? Leave blank for none. ")
+
+if fout:
+    fout = open(fout, 'w')
+
 likelihoods = {time:0 for time in susan_exprs}
 
 for line in open(sys.argv[1]):
@@ -38,6 +43,11 @@ for line in open(sys.argv[1]):
             continue
         else:
             likelihoods[time] += L
+            if fout:
+                fout.write('%f\t%s - %s\t%f\t%f -- %f\n' % (L, gene_name, time,
+                                                       mean(susan_exprs[time][gene_name]),
+                                                       std(susan_exprs[time][gene_name]),
+                                                       mean_expr))
 
 min_val = min(val for val in likelihoods.itervalues())
 max_val = max(val for val in likelihoods.itervalues())
@@ -47,3 +57,5 @@ for time in likelihoods:
     likelihoods[time] /= (max_val - min_val)
 
 print likelihoods
+
+if fout: fout.close()
