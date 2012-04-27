@@ -3,7 +3,7 @@ import sys
 from os import path
 from collections import defaultdict, Counter
 from scipy.stats import norm
-from numpy import isinf, isnan, log, finfo, float64, mean, std, median
+from numpy import isinf, isnan, log, finfo, float64, mean, std, median, abs
 import progressbar as pb
 
 
@@ -32,6 +32,7 @@ if fout:
 
 likelihoods = Counter()
 allLs = defaultdict(list)
+allZs = defaultdict(list)
 n = Counter()
 bads = Counter()
 
@@ -43,7 +44,7 @@ f.seek(0)
 
 for line in f:
     pbar.update(f.tell())
-    if "_name" in line: continue
+    if "name" in line.lower(): continue
     data = line.split()
     gene_name = data[0]
     mean_expr = mean([float(i) for i in data[1:]])
@@ -57,6 +58,7 @@ for line in f:
         L = log(norm.cdf(mean_expr + std_expr, susan_mean, susan_std+.01)
                 - norm.cdf(mean_expr - std_expr, susan_mean, susan_std+.01)
                 + 1e-200)
+        Z = abs((mean_expr - susan_mean)/(susan_std+.001))
         #L = log(min(norm.cdf(mean_expr, susan_mean, susan_std+.01),
         #            norm.sf(mean_expr, susan_mean, susan_std+.01))
         #        + 1e-200)
@@ -78,6 +80,7 @@ for line in f:
             likelihoods[time] += L
             n[time] += 1
             allLs[time].append(L)
+            allZs[time].append(Z)
             if fout:
                 fout.write('%f\t%s - %s\t%f +/- %f -- %f\n' % (L, gene_name,
                                                                time,
@@ -92,7 +95,7 @@ max_val = max(val for val in likelihoods.itervalues())
 
 for key in sorted(likelihoods.keys()):
     print '\t', key, likelihoods[key]/n[key], n[key], bads[key],
-    print median(allLs[key])
+    print median(allLs[key]), median(allZs[key])
 
 #for time in likelihoods:
     #likelihoods[time] -= min_val
