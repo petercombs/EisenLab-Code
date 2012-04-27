@@ -4,12 +4,17 @@ from os import path
 from collections import defaultdict, Counter
 from scipy.stats import norm
 from numpy import isinf, isnan, log, finfo, float64, mean, std, median
+import progressbar as pb
 
 
+pbar_widgets = [pb.Percentage(), ' ', pb.Bar(), ' ', pb.ETA()]
 min_val = log(finfo(float64).tiny)
 susan_exprs = {}
 
-for fname in os.listdir('susan/by_cycle/'):
+susan_files = os.listdir('susan/by_cycle')
+pbar = pb.ProgressBar(widgets=["Loading Susan's Data: "] + pbar_widgets, maxval=len(susan_files))
+
+for fname in pbar(susan_files):
     fbase = fname[:-4]
     susan_exprs[fbase] = defaultdict(lambda : (0,100000))
     for line in open(path.join('susan/by_cycle/', fname)):
@@ -30,7 +35,14 @@ allLs = defaultdict(list)
 n = Counter()
 bads = Counter()
 
-for line in open(sys.argv[1]):
+f = open(sys.argv[1])
+pbar = pb.ProgressBar(widgets=["Calculating Liklihoods: "]+pbar_widgets, maxval=len(f.read()))
+pbar.start()
+
+f.seek(0)
+
+for line in f:
+    pbar.update(f.tell())
     if "_name" in line: continue
     data = line.split()
     gene_name = data[0]
@@ -55,7 +67,11 @@ for line in open(sys.argv[1]):
         if isinf(L) or isnan(L):
             # Not ideal, but since we're subtracting the minimum value, having
             # something in range will always contribute.
-            print gene_name, time, mean_expr, susan_exprs[time][gene_name]
+            #print gene_name, time, mean_expr, susan_exprs[time][gene_name]
+            print mean_expr, std_expr
+            print susan_mean, susan_std
+            print norm.cdf(mean_expr + std_expr, susan_mean, susan_std+.01)
+            print norm.cdf(mean_expr - std_expr, susan_mean, susan_std+.01)
             assert False
             continue
         else:
