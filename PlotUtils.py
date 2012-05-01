@@ -66,7 +66,7 @@ def plot_likelihoods(likelihoods, starts, column_headers):
     n_samples = len(column_headers)
     plots = []
     for i in range(n_samples): 
-        hsv = array([0.7*i/n_samples, 1, 1])
+        hsv = np.array([0.7*i/n_samples, 1, 1])
         color = tuple(hsv_to_rgb(np.reshape(hsv, (1,1,3))))[0].flatten()
         print color
         plots.append(mpl.plot(starts[:400], likelihoods[i,:400], label=column_headers[i],

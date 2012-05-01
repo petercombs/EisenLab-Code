@@ -157,7 +157,7 @@ def virtual_slice(exparray, posarray, axis='x', width=50.0, resolution=1.0,
     allstds = np.zeros((nslices, ngenes, ntimes))
     print("Calculating variation")
     for k in range(ntimes):
-        progress = pbar.ProgressBar(widgets=['Time %d' % k, pbar.Percentage(),
+        progress = pbar.ProgressBar(widgets=['Time %d: ' % k, pbar.Percentage(),
                                              ' ', pbar.Bar(), pbar.ETA()],
                                     maxval=nslices)
 
