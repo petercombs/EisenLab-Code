@@ -269,6 +269,8 @@ if __name__ == "__main__":
     for line in args.expr_file:
         data = line.split()
         gn_name = data[args.name_col]
+        if gn_name in fbgn2name:
+            gn_name = fbgn2name[gn_name]
         try:
             gn_index = gn_list.index(gn_name)
             gn_exprs = [float(data[i]) for i in args.expr_col]

@@ -64,14 +64,16 @@ def hist_sorted(*args, **kwargs):
 
 def plot_likelihoods(likelihoods, starts, column_headers):
     n_samples = len(column_headers)
+    max_val = np.argmax(starts>150)
+    print max_val
     plots = []
     for i in range(n_samples): 
         hsv = np.array([0.7*i/n_samples, 1, 1])
         color = tuple(hsv_to_rgb(np.reshape(hsv, (1,1,3))))[0].flatten()
         print color
-        plots.append(mpl.plot(starts[:400], likelihoods[i,:400], label=column_headers[i],
-             color=color))
-        best = np.argmax(likelihoods[i])
+        plots.append(mpl.plot(starts[:max_val], likelihoods[i,:max_val],
+                              label=column_headers[i], color=color))
+        best = np.argmax(likelihoods[i,:])
         print best
         plots.append(mpl.plot(starts[best], likelihoods[i,best], '*',
                           color=color))
