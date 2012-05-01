@@ -74,6 +74,9 @@ def parse_args():
                            help="0-indexed Column with the gene name")
     argparser.add_argument('--expr-col', '-e', default=[1], type=int, nargs='+',
                            help="0-indexed Columns with the expresion")
+    argparser.add_argument('--num-slices', '-N', default=0, type=int, 
+                           help="Number of slices taken. If not specified,"
+                           " assume all data is given")
 
     return argparser.parse_args()
 
@@ -256,7 +259,7 @@ if __name__ == "__main__":
         tmp.close()
     nslices, ngenes, ntimes = np.shape(slices)
     assert ntimes > args.time
-    nsamples = len(args.expr_col)
+    nsamples = args.num_slices or len(args.expr_col)
 
     all_likelihoods = np.zeros((nsamples, nslices, ngenes))
     likelihoods = np.zeros((nsamples, nslices))
