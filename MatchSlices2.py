@@ -199,18 +199,6 @@ def parse_translation_table(translation_table):
 
     return fbgn2name, name2fbgn
 
-def nan_safe_spearman(a, b):
-    """ Calculate the Spearman rank correlation, ignoring any points where one
-    or both entries are NaN
-
-    This ought to generally improve comparison across time points, since before
-    the differing number of genes that are measured at each time point could
-    affect the weighting.
-    """
-    assert np.shape(a) == np.shape(b)
-    nums = ~(np.isnan(a) + np.isnan(b))
-    return stats.spearmanr(np.array(a)[nums], np.array(b)[nums])
-
 def load_rnaseq_expr(rnaseq, translate):
     rnaseq_expr = {}
     for line in rnaseq:
