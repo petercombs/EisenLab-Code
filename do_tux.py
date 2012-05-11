@@ -142,16 +142,16 @@ if '-cdo' not in sys.argv:
         samtools_proc = Popen(commandstr, stdout=PIPE)
         samout, samerr = samtools_proc.communicate()
 
+        commandstr[1] = 'index'
+        samtools_proc = Popen(commandstr)
+        samtools_proc.wait()
+
         for line in samout.splitlines():
             if "mapped" in line:
                 mappedreads[readname] = int(line.split()[0])
                 break
-        p2 = Popen(['samtools', 'rmdup', '-s', join(od, 'accepted_hits.bam'),
-                    join(od, 'filtered_hits.bam'),],
-                   stdout=file(join(od, 'hit_filtering.log'), 'w'))
-        p2.wait()
 
-all_bams = map(lambda s: join('analysis', s, 'accepted_hits.bam'),
+all_bams = map(lambda s: join(analysis_dir, s, 'accepted_hits.bam'),
                (s for s in readnames))
 
 
