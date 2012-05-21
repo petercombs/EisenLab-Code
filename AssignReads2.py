@@ -92,6 +92,7 @@ for fname in sys.argv[1:]:
     for read in samfile:
         pbar.update(samfile.tell() - start)
         process_read(read)
+    pbar.finish()
     print
     print "Species assignments: ", species_counts
     print "Ambiguity distribution: ", ambig_counts
