@@ -7,13 +7,13 @@ import os
 from time import time
 from subprocess import Popen, PIPE
 
-analysis_dir = 'analysis'
-GTF =  'Reference/dmel-all-r5.42.gtf'
-idxfile = 'Reference/dmel-all-chromosome-r5.42'
-interest = 'GenesOfInterest.txt'
+analysis_dir = 'analysis_may'
+GTF =  'Reference/melpsevir-all.gtf'
+idxfile = 'Reference/melpsevir-chromosome'
 FBtoName = 'Reference/dmelfbgns.txt'
 notificationEmail = 'peter.combs@berkeley.edu'
 seq_dir = 'sequence'
+indices_used = [2, 4, 5, 6, 7, 12]
 
 ########################################################################
 
