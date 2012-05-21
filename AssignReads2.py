@@ -68,6 +68,7 @@ ambig_threshold = 3
 for fname in sys.argv[1:]:
     print fname
     samfile = pysam.Samfile(fname, 'rb')
+    references = samfile.references
     dir = path.dirname(fname)
     assigned = pysam.Samfile(path.join(dir, 'assigned.bam'), 'wb',
                              template=samfile)
