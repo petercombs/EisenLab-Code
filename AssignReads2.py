@@ -81,12 +81,12 @@ for fname in sys.argv[1:]:
     species_counts = Counter()
     ambig_counts = Counter()
 
+    print "Measuring file size"
     start = samfile.tell()
-    for read in samfile: pass
-    maxval = samfile.tell()
-    pbar = ProgressBar(maxval=maxval, widgets = [fname, ': ', Percentage(), ' ',
-                                                Bar(), ' ', ETA(), ' '])
-    samfile.seek(start)
+    maxval = path.getsize(fname) * 2**16 # I don't know why it's off by 2^16
+    pbar = ProgressBar(maxval=maxval - start + 2**16, 
+                       widgets = [fname, ': ', Percentage(), ' ', Bar(), ' ',
+                                  ETA(), ' '])
     pbar.start()
 
     for read in samfile:
