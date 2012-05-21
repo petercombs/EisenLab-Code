@@ -7,7 +7,7 @@ import os
 from time import time
 from subprocess import Popen, PIPE
 
-analysis_dir = 'analysis_dryrun'
+analysis_dir = 'analysis'
 GTF =  'Reference/melpsevir-all.gtf'
 idxfile = 'Reference/melpsevir-chromosome'
 FBtoName = 'Reference/dmelfbgns.txt'
