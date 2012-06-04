@@ -8,8 +8,8 @@ from time import time
 from subprocess import Popen, PIPE
 
 analysis_dir = 'analysis'
-GTF =  'Reference/dmel-all-r5.42.gtf'
-idxfile = 'Reference/dmel-all-chromosome-r5.42'
+GTF =  'Reference/melpsevir-all.gtf'
+idxfile = 'Reference/melpsevir-chromosome'
 interest = 'GenesOfInterest.txt'
 FBtoName = 'Reference/dmelfbgns.txt'
 notificationEmail = 'peter.combs@berkeley.edu'
