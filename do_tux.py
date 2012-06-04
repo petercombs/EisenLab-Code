@@ -152,7 +152,7 @@ if '-cdo' not in sys.argv:
                 break
 
 all_bams = map(lambda s: join(analysis_dir, s, 'accepted_hits.bam'),
-               (s for s in readnames))
+               (s for s in sorted(readnames.keys())))
 
 
 # Do Cuffdiff
