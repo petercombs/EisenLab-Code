@@ -110,6 +110,37 @@ def get_datasize(exparray):
     return ngenes, ntimes
 
 
+def votes_from_likelihoods(all_likelihoods):
+    n_samples, n_slices, n_genes = np.shape(all_likelihoods)
+    for sample in range(n_samples):
+        if np.sum(all_likelihoods[sample, :, :] != 0) == 0:
+            n_samples -= 1
+
+    global all_votes
+    votes = np.zeros((n_samples, n_slices))
+    all_votes = []
+
+    for gene in range(n_genes):
+        if np.sum(all_likelihoods[:,:,gene]) == 0:
+            continue
+        for sample in range(n_samples):
+            vals = all_likelihoods[sample, :, gene]
+            vals = np.exp(vals)
+            floor = stats.scoreatpercentile(vals, 25)
+            vals -= floor
+            ceil = vals.max()
+            clipped_Ls = vals.clip(0, ceil)
+            if sum(clipped_Ls) == 0 or ceil == 0:
+                print("No variation at: ", gene, sample)
+                continue
+            if clipped_Ls[-1] > 0:
+                print(clipped_Ls, gene, sample)
+            votes[sample, :] += ceil * clipped_Ls / max(clipped_Ls)
+            if sample == 0:
+                all_votes.append((gene, ceil*clipped_Ls/sum(clipped_Ls)))
+    return votes
+
+
 
 def virtual_slice(exparray, posarray, axis='x', width=50.0, resolution=1.0,
                   std_width=25.0, reduce_fcn = np.sum):
