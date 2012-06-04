@@ -7,7 +7,7 @@ import os
 from time import time
 from subprocess import Popen, PIPE
 
-analysis_dir = 'analysis42'
+analysis_dir = 'analysis'
 GTF =  'Reference/dmel-all-r5.42.gtf'
 idxfile = 'Reference/dmel-all-chromosome-r5.42'
 interest = 'GenesOfInterest.txt'
@@ -26,7 +26,7 @@ cuffdiff_base = ('cuffdiff -p 8 -v -o %(ad)s %(gtf)s '
 ########################################################################
 
 
-indices_used = [2,4,5,6, 7, 12]
+indices_used = [3, 4, 5, 6, 8, 11]
 readnames = {"index%d" % idx: [",".join(sorted( glob(join(seq_dir,
                                                           '*_index%d_*_R1*'
                                                           % idx)))),
@@ -142,16 +142,16 @@ if '-cdo' not in sys.argv:
         samtools_proc = Popen(commandstr, stdout=PIPE)
         samout, samerr = samtools_proc.communicate()
 
+        commandstr[1] = 'index'
+        samtools_proc = Popen(commandstr)
+        samtools_proc.wait()
+
         for line in samout.splitlines():
             if "mapped" in line:
                 mappedreads[readname] = int(line.split()[0])
                 break
-        p2 = Popen(['samtools', 'rmdup', '-s', join(od, 'accepted_hits.bam'),
-                    join(od, 'filtered_hits.bam'),],
-                   stdout=file(join(od, 'hit_filtering.log'), 'w'))
-        p2.wait()
 
-all_bams = map(lambda s: join('analysis', s, 'accepted_hits.bam'),
+all_bams = map(lambda s: join(analysis_dir, s, 'accepted_hits.bam'),
                (s for s in readnames))
 
 
