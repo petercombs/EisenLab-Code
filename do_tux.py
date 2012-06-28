@@ -37,6 +37,7 @@ readnames = {"index%d" % idx: [",".join(sorted( glob(join(seq_dir,
 
 libraries = { "index%d" % idx : chr(ord('A') + i )
              for i, idx in enumerate(indices_used)}
+print libraries
 
 
 assign_procs = []
@@ -161,7 +162,9 @@ if '-cdo' not in sys.argv:
 
 
 all_bams = map(lambda s: join(analysis_dir, s, 'accepted_hits.bam'),
-               (s for s in sorted(readnames.keys())))
+               ('index%d' % s for s in indices_used))
+
+print all_bams
 
 
 for proc in assign_procs:
@@ -169,7 +172,7 @@ for proc in assign_procs:
 # Do Cuffdiff
 #system(cuffdiff_base + " ".join(all_bams))
 cuffdiff_call = (cuffdiff_base.split() 
-                 + ['-L', ','.join(libraries[rf] for rf in sorted(readnames.keys()))]
+                 + ['-L', ','.join(libraries['index%d'%rf] for rf in indices_used)]
                  + all_bams)
 
 print ' '.join(cuffdiff_call)
