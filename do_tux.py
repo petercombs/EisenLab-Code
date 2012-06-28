@@ -10,14 +10,15 @@ from subprocess import Popen, PIPE
 analysis_dir = 'analysis'
 GTF =  'Reference/melpsevir-all.gtf'
 idxfile = 'Reference/melpsevir-chromosome'
-interest = 'GenesOfInterest.txt'
 FBtoName = 'Reference/dmelfbgns.txt'
 notificationEmail = 'peter.combs@berkeley.edu'
 seq_dir = 'sequence'
+indices_used = [3, 4, 5, 6, 7, 8, 9]
 
 ########################################################################
 
-tophat_base = 'tophat -p8 --no-novel-juncs '
+tophat_base = ('tophat -p8 --no-novel-juncs --read-mismatches 4 '
+                '--report-secondary-alignments ')
 cufflinks_base = 'cufflinks -p 8 -q -u -b ' + idxfile + '.fa '
 cuffdiff_base = ('cuffdiff -p 8 -q -o %(ad)s %(gtf)s '
                  % {'gtf':GTF, 'ad': analysis_dir})
@@ -26,7 +27,6 @@ cuffdiff_base = ('cuffdiff -p 8 -q -o %(ad)s %(gtf)s '
 ########################################################################
 
 
-indices_used = [3, 4, 5, 6, 7, 8, 9]
 readnames = {"index%d" % idx: [",".join(sorted( glob(join(seq_dir,
                                                           '*_index%d_*_R1*'
                                                           % idx)))),
@@ -37,6 +37,9 @@ readnames = {"index%d" % idx: [",".join(sorted( glob(join(seq_dir,
 
 libraries = { "index%d" % idx : chr(ord('A') + i )
              for i, idx in enumerate(indices_used)}
+
+
+assign_procs = []
 
 # Dictionary with the number of reads in each file
 numreads = {}
@@ -151,10 +154,18 @@ if '-cdo' not in sys.argv:
                 mappedreads[readname] = int(line.split()[0])
                 break
 
+        commandstr = ['python', 'AssignReads2.py', join(od,
+                                                        'accepted_hits.bam')]
+        assign_procs.append(Popen(commandstr))
+
+
+
 all_bams = map(lambda s: join(analysis_dir, s, 'accepted_hits.bam'),
                (s for s in sorted(readnames.keys())))
 
 
+for proc in assign_procs:
+    proc.wait()
 # Do Cuffdiff
 #system(cuffdiff_base + " ".join(all_bams))
 cuffdiff_call = (cuffdiff_base.split() 
