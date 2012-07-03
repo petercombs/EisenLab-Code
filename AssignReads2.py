@@ -5,6 +5,16 @@ from collections import defaultdict, Counter
 from progressbar import ProgressBar, ETA, Bar, Percentage
 from numpy import histogram
 
+class my_defaultdict(dict):
+    def __init__(self, default_factory, basename, other_args):
+        self.default_factory = default_factory
+        self.basename = basename
+        self.other_args = other_args
+    def __missing__(self, key):
+        self[key] = value = self.default_factory(self.basename % key,
+                                                 **self.other_args)
+        return value
+
 def get_nh(read):
     return [t[1] for t in read.tags if t[0] == 'NH'][0]
 
@@ -20,6 +30,7 @@ def process_read(read):
     species = get_species(read)
     if nh == 1:
         assigned.write(read)
+        specific_files[species].write(read)
         species_counts[species] += 1
         return
     else:
@@ -41,8 +52,9 @@ def on_last_multiread(read):
         # Looks like there were multiple hits from the same species.
         # Report the best, or if equal quality, the first (which
         # tophat would've given anyways)
+        species = get_species(read)
         assigned.write(read)
-        species = references[read.rname].split('_')[0]
+        specific_files[species].write(read)
         species_counts[species] += 1
     else:
         # Hits from multiple species
@@ -51,8 +63,11 @@ def on_last_multiread(read):
         diff_val = vals[1][0] - vals[0][0]
         ambig_counts[diff_val] += 1
         if diff_val > ambig_threshold:
-            assigned.write(to_be_resolved_reads[read.qname][vals[0][1]])
-            species_counts[vals[0][1]] += 1
+            species = vals[0][1]
+            best_read = to_be_resolved_reads[read.qname][species]
+            assigned.write(best_read)
+            specific_files[species].write(best_read)
+            species_counts[species] += 1
         else:
             species_counts['ambig'] += 1
             for amb_read in to_be_resolved_reads[read.qname].itervalues():
@@ -74,6 +89,10 @@ for fname in sys.argv[1:]:
                              template=samfile)
     ambig = pysam.Samfile(path.join(dir, 'ambiguous.bam'), 'wb',
                              template=samfile)
+    specific_files = my_defaultdict(pysam.Samfile, 
+                                    path.join(dir, 'assigned_%s.bam'),
+                                    {'template': samfile,
+                                     'mode': 'wb'})
 
     to_be_resolved_reads = defaultdict(dict)
     to_be_resolved_vals = defaultdict(lambda : defaultdict(lambda : 1000))
