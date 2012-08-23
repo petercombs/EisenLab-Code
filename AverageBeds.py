@@ -1,7 +1,7 @@
 import pdb
 from numpy import argmax, argmin, mean, Inf
 from glob import glob
-from collections import defaultdict, Counter 
+from collections import defaultdict, Counter
 import sys
 
 def any(my_list, test):
@@ -22,7 +22,7 @@ for i, line in enumerate(bedlines):
         line = files[i].readline().split()
     bedlines[i] = line
 
-starts, stops, exprs = [list(i) for i 
+starts, stops, exprs = [list(i) for i
                         in zip(*[[int(el) for el in line[1:]] for line in bedlines])]
 chroms = [line[0] for line in bedlines]
 while any(chroms, chrom):

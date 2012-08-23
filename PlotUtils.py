@@ -67,7 +67,7 @@ def plot_likelihoods(likelihoods, starts, column_headers):
     max_val = np.argmax(starts>150)
     print max_val
     plots = []
-    for i in range(n_samples): 
+    for i in range(n_samples):
         hsv = np.array([0.7*i/n_samples, 1, 1])
         color = tuple(hsv_to_rgb(np.reshape(hsv, (1,1,3))))[0].flatten()
         print color

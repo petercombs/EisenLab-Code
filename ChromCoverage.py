@@ -17,7 +17,7 @@ for fname in sys.argv[1:]:
             chromcov.extend([0]*(pos - len(chromcov)))
             chromcov[pos-1] = cov
 
-    polvals = [(start/widthscale, 50*np.mean(chromcov[start:start+step])) 
+    polvals = [(start/widthscale, 50*np.mean(chromcov[start:start+step]))
                for start in range(0, len(chromcov), step)]
 
     polvals.insert(0,(0,0))
@@ -29,6 +29,5 @@ for fname in sys.argv[1:]:
 
     svg = plot.SVG()
     svg.save(fname+'.svg')
-        
 
 

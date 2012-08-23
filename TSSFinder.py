@@ -39,7 +39,7 @@ def find_tss(fname):
                 fbtr_to_fbgn[fbtr] = fbgn
                 fbgn_to_fbtr[fbgn].append(fbtr)
                 strands[fbgn] = strand
-            if ((fbtr not in transcript_starts) 
+            if ((fbtr not in transcript_starts)
                 or (first_base != transcript_starts[fbtr])):
                 continue
             if fbtr in first_exons:
@@ -56,7 +56,7 @@ def find_tss(fname):
             for first_exon in filtered_first_exons[fbgn]:
                 if (first_exons[fbtr][1] == first_exon[1]
                     or first_exons[fbtr][2] == first_exon[2]):
-                    if (first_exons[fbtr][1] < first_exon[1] 
+                    if (first_exons[fbtr][1] < first_exon[1]
                         or first_exons[fbtr][2] > first_exon[2]):
                         filtered_first_exons[fbgn].remove(first_exon)
                         filtered_first_exons[fbgn].append(first_exons[fbtr])
@@ -85,7 +85,7 @@ def find_tss(fname):
 
 
 
-    
+
 if __name__ == "__main__":
     import sys
     from cPickle import dump

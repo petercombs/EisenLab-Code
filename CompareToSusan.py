@@ -13,8 +13,8 @@ my_data_fname = 'analysis/genes.fpkm_tracking'
 my_data = open(my_data_fname)
 my_name_col = 4
 my_col_headers = my_data.readline().split()
-my_cols, my_colnames = zip(*[(idx, colname) 
-                             for idx, colname in enumerate(my_col_headers) 
+my_cols, my_colnames = zip(*[(idx, colname)
+                             for idx, colname in enumerate(my_col_headers)
                              if colname.endswith('_FPKM')])
 my_colnames = list(my_colnames)
 my_colnames.append('averaged')
@@ -60,7 +60,7 @@ for my_column, my_colname in enumerate(my_colnames):
             bestr = spearman_r
 
         print '%s\t%4f\t%4f' % (susan_colname, spearman_r, pearson_r)
-    
+
     print "Best hit: ", susan_colnames[best], bestr
 #### Male vs Female identification
 
@@ -77,7 +77,7 @@ for i in range(num_rows):
         my_val = my_expr_arr[i,-1]
         if ((fem_vals[0] < male_vals[1] < fem_vals[1])
             or (male_vals[0] < fem_vals[1] < fem_vals[1])):
-            print "Ambiguous: ", keys[i]
+            #print "Ambiguous: ", keys[i]
             continue
         if male_vals[0] < my_val < male_vals[1] and male_vals[0] != 0:
             print keys[i], 'MALE', male_vals, my_val, fem_vals

@@ -21,7 +21,7 @@ def parse_args():
     argparser.add_argument('-p', '--pre_calc_data', default=None, type=open,
                            help="A pickle file containing the starts and"
                            " virtual slices")
-    argparser.add_argument('-w', '--slice_width', default=50.0, type=float, 
+    argparser.add_argument('-w', '--slice_width', default=50.0, type=float,
                            help='Thickness of the slice in RNAseq data '
                            '(default: 50um)')
     argparser.add_argument('-x', dest='axis', action='store_const', const='x',
@@ -122,7 +122,7 @@ def virtual_slice(exparray, posarray, axis='x', width=50.0, resolution=1.0,
 
     allslices = np.zeros((nslices, ngenes, ntimes))
     for k in range(ntimes):
-        progress = pbar.ProgressBar(widgets=['Time %d' % k, pbar.Percentage(), 
+        progress = pbar.ProgressBar(widgets=['Time %d' % k, pbar.Percentage(),
                                              ' ', pbar.Bar(), pbar.ETA()],
                                     maxval=nslices)
         # Actually do the slicing:

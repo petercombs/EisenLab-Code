@@ -28,7 +28,7 @@ cutoff = 0
 
 for bam_fname in sys.argv[2:]:
     if not bam_fname.endswith('.bam'): continue
-    print bam_fname, 
+    print bam_fname,
     bam_file = pysam.Samfile(bam_fname, 'rb')
 
     coverages = {}
@@ -50,7 +50,7 @@ for bam_fname in sys.argv[2:]:
             curr_len = 0
             coverage = 0
             starts = set()
-            
+
         if kind == 'transcript':  #For using cufflinks generated GTFs
             if curr_len:
                 coverages[parent] = (curr_len, coverage/curr_len, len(starts)/curr_len)
@@ -58,7 +58,7 @@ for bam_fname in sys.argv[2:]:
             curr_len = 0
             coverage = 0
             starts = set()
-            
+
 
         elif kind == 'exon':
             fbtrs = fbtr_finder.findall(line)
@@ -92,7 +92,6 @@ for bam_fname in sys.argv[2:]:
     except Exception as exc:
         print exc
 
-                
 
 import cPickle as pickle
 out_fh = open('checkcoverage.pkl', 'w')

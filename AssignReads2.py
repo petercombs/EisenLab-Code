@@ -84,7 +84,7 @@ for fname in sys.argv[1:]:
     print "Measuring file size"
     start = samfile.tell()
     maxval = path.getsize(fname) * 2**16 # I don't know why it's off by 2^16
-    pbar = ProgressBar(maxval=maxval - start + 2**16, 
+    pbar = ProgressBar(maxval=maxval - start + 2**16,
                        widgets = [fname, ': ', Percentage(), ' ', Bar(), ' ',
                                   ETA(), ' '])
     pbar.start()
@@ -97,5 +97,4 @@ for fname in sys.argv[1:]:
     print "Species assignments: ", species_counts
     print "Ambiguity distribution: ", ambig_counts
 
-            
 

@@ -4,7 +4,7 @@ import collections as cs
 from Bio.Blast import NCBIXML
 import os
 
-human_types = [('Homo', 'sapiens'), (u'Human', u'DNA'), 
+human_types = [('Homo', 'sapiens'), (u'Human', u'DNA'),
                (u'Pan', u'troglodytes')]
 
 fly_types = [(u'Drosophila', u'melanogaster'), (u'Synthetic', u'construct'),

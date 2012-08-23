@@ -4,8 +4,8 @@ from os import path
 from glob import glob
 
 def parse_description(record):
-    """ Turn the description into a dictionary 
-    
+    """ Turn the description into a dictionary
+
     keys are the left hand side of the equals
     values are the right and side of the equals
     separate items are separated by spaces
@@ -17,9 +17,9 @@ def parse_description(record):
         item = item.strip('; ').split('=')
         description[item[0]] = item[1]
     return description
-        
-        
-        
+
+
+
 data_dir = '/Volumes/Plasmid/FlyBase/12genomes/'
 ortholog_table = path.join(data_dir, 'gene_orthologs_fb_2011_09.tsv')
 output_dir = path.expanduser('~/data/Orthologs/')
@@ -60,4 +60,4 @@ for fname in glob(path.join(data_dir, '*.fasta')):
         outfile = open(path.join(output_dir, melequiv + '.fasta'), 'a')
         SeqIO.write(record, outfile, 'fasta')
         outfile.close()
-        
+

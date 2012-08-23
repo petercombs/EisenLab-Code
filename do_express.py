@@ -151,7 +151,7 @@ if '-cdo' not in sys.argv:
 
 [i.wait() for i in all_sorts]
 
-cuffdiff_call = (cuffdiff_base.split() 
+cuffdiff_call = (cuffdiff_base.split()
                  + ['-L', ','.join(libraries[rf] for rf in sorted(readnames.keys()))]
                  + all_bams)
 

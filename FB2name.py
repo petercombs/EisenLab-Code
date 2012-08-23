@@ -2,7 +2,7 @@ from argparse import ArgumentParser, FileType
 import sys
 
 parser = ArgumentParser()
-parser.add_argument('-r', dest="reference", 
+parser.add_argument('-r', dest="reference",
                   help="File with conversions between names",
                   default="Reference/dmelfbgns.txt")
 parser.add_argument('-k', dest="keys", action='append',
@@ -13,7 +13,7 @@ parser.add_argument('filelist', type=FileType('r'), default=[sys.stdin],
                     nargs='*', action='store')
 
 options = parser.parse_args()
-NameFile = options.reference or 'Reference/dmelfbgns.txt' 
+NameFile = options.reference or 'Reference/dmelfbgns.txt'
 idkey = options.idkey
 fs = '\t'
 

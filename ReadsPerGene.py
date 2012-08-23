@@ -41,10 +41,10 @@ for dir in os.listdir('.'):
     print '-' * 30
     print dir
     print '-' * 30
-    samtools = subprocess.Popen(['samtools', 'view', 
+    samtools = subprocess.Popen(['samtools', 'view',
                                  path.join(dir, 'accepted_hits.bam')],
                                 stdout=subprocess.PIPE)
-    
+
     for i, line in enumerate(samtools.stdout):
         data = line.split()
         chr = data[2]

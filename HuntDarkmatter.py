@@ -12,7 +12,7 @@ import inspect_shell
 if __name__ == "__main__":
     GFF_file = sys.argv[1]
     print [path.basename(name) for name in sys.argv[2:]]
-    bamfiles = [pysam.Samfile(name, 'rb') 
+    bamfiles = [pysam.Samfile(name, 'rb')
                 for name in sys.argv[2:] if name.endswith('.bam')]
 
     counts = []
@@ -42,7 +42,7 @@ if __name__ == "__main__":
                 continue
             expect = [1/len(counts) for count in counts]
             m = met.Multinom(expect, counts)
-            pval =  m.twosided_exact_test() 
+            pval =  m.twosided_exact_test()
             print '-'*30
             print ('SIG' if pval < (.05 / gff_len) else 'NON'), pval
             print ID
@@ -54,8 +54,4 @@ if __name__ == "__main__":
             print counts
             print err
 
-                           
-
-
-            
 

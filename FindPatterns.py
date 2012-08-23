@@ -21,7 +21,7 @@ def find_after_break(expr, sigs):
             name1 = names[idx1]
             for idx2 in range(break_sample, len(expr)):
                 name2 = names[idx2]
-                if ((sigs[name1][name2] == False) 
+                if ((sigs[name1][name2] == False)
                         or (expr[idx1] > expr[idx2] != sign)):
                     break
             # "else continue break" construct breaks out of outer loop as well
@@ -41,7 +41,7 @@ def find_peak(expr, sigs):
     names = sorted(sigs.keys())
 
     for peak_point in range(1, len(expr) - 1):
-        if ((expr[peak_point - 1] < expr[peak_point] < expr[peak_point +1]) 
+        if ((expr[peak_point - 1] < expr[peak_point] < expr[peak_point +1])
             or (expr[peak_point - 1] > expr[peak_point] > expr[peak_point + 1])
            ):
             continue

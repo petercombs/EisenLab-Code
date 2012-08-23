@@ -25,7 +25,7 @@ bowtie_options = ['bowtie2', '-a', '-p', '8', '--very-sensitive-local', '-t', ]
 ########################################################################
 
 
-readnames = {"index%d" % idx: 
+readnames = {"index%d" % idx:
                 ",".join(sorted( glob(join(seq_dir, '*_index%d_*' % idx))))
              for idx in indices_used }
 
@@ -72,7 +72,7 @@ if '-cdo' not in sys.argv:
 
 
         # Do Bowtie
-        commandstr = bowtie_options + [ '-x', bowtie_index, '-U', rf, 
+        commandstr = bowtie_options + [ '-x', bowtie_index, '-U', rf,
                                        '-S', join(od, 'accepted_hits.sam')]
         print ' '.join(commandstr)
         sys.stdout.flush()

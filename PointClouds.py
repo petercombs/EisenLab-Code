@@ -129,7 +129,7 @@ def strip_to_number(dataval, chars = '\'" \t #'):
 
 
 def to_number(dataval):
-    """ A forgiving number converter. 
+    """ A forgiving number converter.
 
     Will convert to int if possible, float otherwise, and if neither, will return
     the input.
