@@ -8,25 +8,25 @@ from time import time
 from subprocess import Popen, PIPE
 
 analysis_dir = 'analysis'
-GTF =  'Reference/dmel-all-r5.42.gtf'
-idxfile = 'Reference/dmel-all-chromosome-r5.42'
-interest = 'GenesOfInterest.txt'
+GTF =  'Reference/melpsevir-all.gtf'
+idxfile = 'Reference/melpsevir-chromosome'
 FBtoName = 'Reference/dmelfbgns.txt'
 notificationEmail = 'peter.combs@berkeley.edu'
 seq_dir = 'sequence'
+indices_used = [3, 4, 5, 6, 7, 8, 9]
 
 ########################################################################
 
-tophat_base = 'tophat -p8 --no-novel-juncs '
+tophat_base = ('tophat -p8 --no-novel-juncs --read-mismatches 4 '
+                '--report-secondary-alignments ')
 cufflinks_base = 'cufflinks -p 8 -q -u -b ' + idxfile + '.fa '
-cuffdiff_base = ('cuffdiff -p 8 -v -o %(ad)s %(gtf)s '
+cuffdiff_base = ('cuffdiff -p 8 -q -o %(ad)s %(gtf)s '
                  % {'gtf':GTF, 'ad': analysis_dir})
 
 
 ########################################################################
 
 
-indices_used = [3, 4, 5, 6, 8, 11]
 readnames = {"index%d" % idx: [",".join(sorted( glob(join(seq_dir,
                                                           '*_index%d_*_R1*'
                                                           % idx)))),
@@ -37,6 +37,10 @@ readnames = {"index%d" % idx: [",".join(sorted( glob(join(seq_dir,
 
 libraries = { "index%d" % idx : chr(ord('A') + i )
              for i, idx in enumerate(indices_used)}
+print libraries
+
+
+assign_procs = []
 
 # Dictionary with the number of reads in each file
 numreads = {}
@@ -151,14 +155,24 @@ if '-cdo' not in sys.argv:
                 mappedreads[readname] = int(line.split()[0])
                 break
 
+        commandstr = ['python', 'AssignReads2.py', join(od,
+                                                        'accepted_hits.bam')]
+        assign_procs.append(Popen(commandstr))
+
+
+
 all_bams = map(lambda s: join(analysis_dir, s, 'accepted_hits.bam'),
-               (s for s in sorted(readnames.keys())))
+               ('index%d' % s for s in indices_used))
+
+print all_bams
 
 
+for proc in assign_procs:
+    proc.wait()
 # Do Cuffdiff
 #system(cuffdiff_base + " ".join(all_bams))
 cuffdiff_call = (cuffdiff_base.split()
-                 + ['-L', ','.join(libraries[rf] for rf in sorted(readnames.keys()))]
+                 + ['-L', ','.join(libraries['index%d'%rf] for rf in indices_used)]
                  + all_bams)
 
 print ' '.join(cuffdiff_call)
