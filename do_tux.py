@@ -1,3 +1,10 @@
+"""
+do_tux.py  Runs the tuxedo suite on an RNA-seq dataset
+
+Does its best to automatically calculate things like filenames, etc, based only
+on the given indices.
+
+"""
 import sys
 import cPickle as pickle
 
@@ -58,17 +65,17 @@ for line in file(FBtoName):
 start = time()
 if '-cdo' not in sys.argv:
     for readname, (rf1, rf2) in sorted(readnames.items()):
-        # Print the name of the files we're going through, as a rough progress bar
+        # Print the name of the files we're going through, as a progress bar
         print '-'*72
         print readname
         print '-'*72
 
-        # Just grab the first file name (paired ends have the same number in both)
+        # Just grab the first file name (PE have the same number in both)
         rfs = rf1.split(',')
 
-        # This section will probably need to be fixed if/when I do paired-end reads.
-        # Just splitting on commas will have a non-existant file with the last file
-        # of the first end and the first file of the second end
+        # This section will probably need to be fixed if/when I do paired-end
+        # reads.  Just splitting on commas will have a non-existant file with
+        # the last file of the first end and the first file of the second end
         wc_proc = Popen(['wc', '-l']+ rfs, stdout=PIPE)
         wcout, wcerr = wc_proc.communicate()
         print wcout
@@ -94,8 +101,10 @@ if '-cdo' not in sys.argv:
 
         # Do tophat
         print 'Tophatting...', '\n', '='*30
-        commandstr =  (tophat_base + '-G %(GTF)s -o %(od)s --rg-library %(library)s'
-                       ' --rg-center VCGSL --rg-sample %(library)s --rg-platform'
+        commandstr =  (tophat_base + '-G %(GTF)s -o %(od)s --rg-library '
+                       '%(library)s'
+                       ' --rg-center VCGSL --rg-sample %(library)s'
+                       ' --rg-platform'
                        ' ILLUMINA --rg-id %(rgid)s  --rg-platform-unit %(lane)s'
                     ' %(idxfile)s %(rf1)s %(rf2)s'
                % {'GTF': GTF,
@@ -151,14 +160,15 @@ if '-cdo' not in sys.argv:
                 mappedreads[readname] = int(line.split()[0])
                 break
 
-all_bams = map(lambda s: join(analysis_dir, s, 'accepted_hits.bam'),
-               (s for s in sorted(readnames.keys())))
+all_bams = [s.join(analysis_dir, s, 'accepted_hits.bam')
+            for s in sorted(readnames.keys())]
 
 
 # Do Cuffdiff
 #system(cuffdiff_base + " ".join(all_bams))
 cuffdiff_call = (cuffdiff_base.split()
-                 + ['-L', ','.join(libraries[rf] for rf in sorted(readnames.keys()))]
+                 + ['-L', ','.join(libraries[rf]
+                                   for rf in sorted(readnames.keys()))]
                  + all_bams)
 
 print ' '.join(cuffdiff_call)
@@ -188,11 +198,11 @@ email.write("\n\n")
 
 # Dump everything out to a file, so we can play with it later, maybe
 try:
-    pickle.dump(dict([(k,v) for k,v in locals().copy().iteritems()
+    pickle.dump(dict([(k, v) for k, v in locals().copy().iteritems()
                   if ((type(v) is not type(sys))
                      and (type(v) is not file))]),
                 file('tuxedo_dump', 'w'))
-except Exception as exc:
+except IOError as exc:
     print exc
     print "the pickling still doesn't work... skipping"
 
@@ -227,7 +237,8 @@ try:
     s1, s2, gene, idx = zip(*[(float(line.split()[6]), float(line.split()[7]),
                               line.split()[0], lnum)
                               for lnum, line
-                              in enumerate(file(join(analysis_dir, 'gene_exp.diff')))
+                              in enumerate(file(join(analysis_dir,
+                                                     'gene_exp.diff')))
                              if 'FBgn' in line])
 
     s1 = array(s1)
@@ -235,7 +246,7 @@ try:
 
     FBgnToIDX = dict(zip(gene, idx))
 
-    mpl.loglog(s1,s2,'k.', label="All Genes")
+    mpl.loglog(s1, s2, 'k.', label="All Genes")
     for fname in glob('Genes*.txt'):
         label = fname[5:-4]
         genes_of_interest = [l.strip() for l in file(fname)]
@@ -250,13 +261,13 @@ try:
                 print g, genediff[NameKey[g.strip()]]
 
     mpl.legend(numpoints=1, loc='lower right')
-    mpl.loglog([1e-2,2e4], [1e-2,2e4], 'r:') # Diagonal line to guide eye
+    mpl.loglog([1e-2, 2e4], [1e-2, 2e4], 'r:') # Diagonal line to guide eye
 
 
     # Clean up and label the axes
     ax = mpl.gca()
-    ax.set_xlim(1e-2,1e+4)
-    ax.set_ylim(1e-2,1e+4)
+    ax.set_xlim(1e-2, 1e+4)
+    ax.set_ylim(1e-2, 1e+4)
     ax.set_xlabel('Ant. Expr (RPKM)')
     ax.set_ylabel('Pos. Expr (RPKM)')
     mpl.savefig('LogLog.pdf')
