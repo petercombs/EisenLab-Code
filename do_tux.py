@@ -155,20 +155,27 @@ if '-cdo' not in sys.argv:
                 mappedreads[readname] = int(line.split()[0])
                 break
 
-        commandstr = ['python', 'AssignReads2.py', join(od,
-                                                        'accepted_hits.bam')]
+        commandstr = ['python', 'AssignReads2.py', 
+                      join(od, 'accepted_hits.bam')]
         assign_procs.append(Popen(commandstr))
-
-
-
-all_bams = map(lambda s: join(analysis_dir, s, 'accepted_hits.bam'),
-               ('index%d' % s for s in indices_used))
-
-print all_bams
 
 
 for proc in assign_procs:
     proc.wait()
+
+fs = glob(join(analysis_dir, 'index*', 'assigned_dmel.bam'))
+sort = Popen(['parallel', 
+              'samtools sort {} -m 3000000000 {//}/dmel_sorted',
+              ':::'] + fs)
+
+sort.wait()
+              
+all_bams = map(lambda s: join(analysis_dir, s, 'dmel_sorted.bam'),
+               ('index%d' % s for s in indices_used))
+
+print all_bams
+
+              
 # Do Cuffdiff
 #system(cuffdiff_base + " ".join(all_bams))
 cuffdiff_call = (cuffdiff_base.split()
