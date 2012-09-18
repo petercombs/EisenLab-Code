@@ -8,7 +8,7 @@ from time import time
 from subprocess import Popen, PIPE
 
 analysis_dir = 'analysis-multi'
-GTF =  'Reference/AAA/melpsevir-all.gtf'
+GTF =  'Reference/AAA/multi.gtf'
 idxfile = 'Reference/AAA/multi'
 FBtoName = 'Reference/dmelfbgns.txt'
 notificationEmail = 'peter.combs@berkeley.edu'
@@ -209,10 +209,13 @@ email.write("\n\n")
 
 # Dump everything out to a file, so we can play with it later, maybe
 try:
-    pickle.dump(dict([(k,v) for k,v in locals().copy().iteritems()
+    vars = dict([(k,v) for k,v in locals().copy().iteritems()
                   if ((type(v) is not type(sys))
-                     and (type(v) is not file))]),
-                file('tuxedo_dump', 'w'))
+                     and (type(v) is not type(file)))])
+    for var in vars:
+        print var, vars[var], type(var)
+                
+    pickle.dump(vars, file('tuxedo_dump', 'w'))
 except Exception as exc:
     print exc
     print "the pickling still doesn't work... skipping"
@@ -220,6 +223,7 @@ except Exception as exc:
 
 # Print out the actual read mapping percentages
 
+print "index#", "#reads", "%mapped"
 for rf in numreads:
     print rf, numreads[rf], 100.0*mappedreads[rf]/numreads[rf]
 
