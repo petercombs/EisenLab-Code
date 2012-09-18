@@ -70,6 +70,16 @@ def on_last_multiread(read):
             species_counts[species] += 1
         else:
             species_counts['ambig'] += 1
+            best = vals[0][0]
+            ambig_names = []
+            for val, spec in vals:
+                if val - best > ambig_threshold:
+                    break
+                if spec not in ambig_names:
+                    ambig_names.append(spec)
+
+            ambig_names = tuple(ambig_names)
+            ambig_types[ambig_names]+=1
             for amb_read in to_be_resolved_reads[read.qname].itervalues():
                 ambig.write(amb_read)
 
@@ -99,6 +109,7 @@ for fname in sys.argv[1:]:
     to_be_resolved_counts = Counter()
     species_counts = Counter()
     ambig_counts = Counter()
+    ambig_types = Counter()
 
     print "Measuring file size"
     start = samfile.tell()
@@ -115,5 +126,6 @@ for fname in sys.argv[1:]:
     print
     print "Species assignments: ", species_counts
     print "Ambiguity distribution: ", ambig_counts
+    print "Ambiguity types: ", ambig_types.most_common(50)
 
 
