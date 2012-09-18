@@ -45,6 +45,13 @@ def do_tuxedo_suite():
     "Call the do_tux program to run the tuxedo suite"
     sp.Popen(['python', 'do_tux.py']).wait()
 
+def assign_multireads():
+    """Assign reads to species, using appropriate cutoff"""
+
+    commandstr = ['python', 'AssignReads2.py']
+    files = glob('analysis/*/accepted_hits.bam')
+    sp.Popen(commandstr + files).wait()
+
 def main(args):
     """ Run all the sub-processing code"""
 
