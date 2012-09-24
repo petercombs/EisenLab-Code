@@ -18,6 +18,7 @@ __pycache__
 *.pkl
 *.fb
 *dump*
+*.cfg
 
 analysis*
 sequence*
