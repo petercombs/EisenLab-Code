@@ -3,7 +3,6 @@ import sys
 from os import path
 from collections import defaultdict, Counter
 from progressbar import ProgressBar, ETA, Bar, Percentage
-from numpy import histogram
 
 class my_defaultdict(dict):
     def __init__(self, default_factory, basename, other_args):
@@ -99,7 +98,7 @@ for fname in sys.argv[1:]:
                              template=samfile)
     ambig = pysam.Samfile(path.join(dir, 'ambiguous.bam'), 'wb',
                              template=samfile)
-    specific_files = my_defaultdict(pysam.Samfile, 
+    specific_files = my_defaultdict(pysam.Samfile,
                                     path.join(dir, 'assigned_%s.bam'),
                                     {'template': samfile,
                                      'mode': 'wb'})
@@ -124,7 +123,7 @@ for fname in sys.argv[1:]:
         process_read(read)
     pbar.finish()
     print
-    print "Species assignments: ", species_counts
+    print "Species assignments in %s: %d" % (fname, species_counts)
     print "Ambiguity distribution: ", ambig_counts
     print "Ambiguity types: ", ambig_types.most_common(50)
 
