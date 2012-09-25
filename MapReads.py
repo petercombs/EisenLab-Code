@@ -48,7 +48,7 @@ def process_config_file(cfg_fname):
         try:
             line = line.strip().split('\t')
             lib, mbepc, slice, idx, carrier = line
-            cfg_data['sample_to_lib'].append((lib + slice, 
+            cfg_data['sample_to_lib'].append((lib + slice,
                                               mbepc + '*index' + idx))
             cfg_data['sample_to_carrier'][lib + slice] = carrier
             cfg_data['samples'].append(lib + slice)
@@ -128,7 +128,7 @@ for libname, (rf1, rf2) in DATA.readnames.items():
     try:
         os.makedirs(TEMP.od)
     except OSError:
-        print ("Directory '%s' already exists... shouldn't be a problem" % 
+        print ("Directory '%s' already exists... shouldn't be a problem" %
                TEMP.od)
 
     # Figure out Read Group ID
@@ -213,10 +213,10 @@ for sample, bam in zip(ARGS.samples, DATA.all_bams):
 
 for sample in ARGS.samples:
     TEMP.od = join(ARGS.analysis_dir, sample)
-    TEMP.commandstr = (BASE.cufflinks_base + 
+    TEMP.commandstr = (BASE.cufflinks_base +
                   '-G %(GTF)s -o %(od)s %(hits)s'
-                  % dict(GTF=ARGS.base_GTF, 
-                         od=TEMP.od, 
+                  % dict(GTF=ARGS.base_GTF,
+                         od=TEMP.od,
                          hits=join(TEMP.od, 'dmel_sorted.bam')))
 
     print TEMP.commandstr
