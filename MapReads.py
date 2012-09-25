@@ -14,8 +14,9 @@ import os
 from time import time
 from datetime import timedelta
 from subprocess import Popen, PIPE
+from argparse import Namespace
 
-ARGS = object()
+ARGS = Namespace()
 ARGS.analysis_dir = 'analysis-multi'
 ARGS.GTF =  'Reference/dmel.gtf'
 ARGS.refbase = 'Reference/AAA/'
@@ -26,9 +27,10 @@ ARGS.config_file = 'RunConfig.cfg'
 
 ########################################################################
 
-ARGS.tophat_base = ('tophat -p8 --no-novel-juncs --read-edit-dist 6 '
+BASE = Namespace()
+BASE.tophat_base = ('tophat -p8 --no-novel-juncs --read-edit-dist 6 '
                 '--report-secondary-alignments ')
-ARGS.cufflinks_base = 'cufflinks -p 8 -q -u '
+BASE.cufflinks_base = 'cufflinks -p 8 -q -u '
 
 
 ########################################################################
@@ -99,24 +101,26 @@ def count_reads(read_files):
     last_reads = int(lines) / 4
     return first_reads + last_reads
 
-ARGS.config_data = process_config_file(ARGS.config_file)
-readnames = get_readfiles(ARGS.config_data)
+DATA = Namespace()
+DATA.config_data = process_config_file(ARGS.config_file)
+DATA.readnames = get_readfiles(DATA.config_data)
 
-ARGS.samples = ARGS.config_data['samples']
+DATA.samples = DATA.config_data['samples']
 
 
-assign_procs = []
-num_reads = {}
+DATA.assign_procs = []
+DATA.num_reads = {}
 
-start = time()
+TIMES = Namespace()
+TIMES.start = time()
 
-for libname, (rf1, rf2) in readnames.items():
+for libname, (rf1, rf2) in DATA.readnames.items():
     # Print the name of the files we're going through, as a progress bar
     print '-'*72, '\n', libname, '\n', '-'*72
 
     # Just grab the first file name (PE have the same number in both)
     rfs = rf1.split(',')
-    num_reads[libname] = count_reads(rfs)
+    DATA.num_reads[libname] = count_reads(rfs)
 
     od = join(ARGS.analysis_dir, libname)
     try:
@@ -132,13 +136,13 @@ for libname, (rf1, rf2) in readnames.items():
     lane = l.split(":")[1]
 
     idxfile = join(ARGS.refbase, ARGS.base_species +
-                   ARGS.config_data['sample_to_carrier'][libname])
+                   DATA.config_data['sample_to_carrier'][libname])
 
     # Do tophat
     print 'Tophatting...', '\n', '='*30
     GTF = join(ARGS.refbase, ARGS.base_species +
-               ARGS.config_data['sample_to_carrier'][libname] + '.gtf')
-    commandstr =  (ARGS.tophat_base + '-G %(GTF)s -o %(od)s --rg-library '
+               DATA.config_data['sample_to_carrier'][libname] + '.gtf')
+    commandstr =  (BASE.tophat_base + '-G %(GTF)s -o %(od)s --rg-library '
                    '%(library)s'
                    ' --rg-center VCGSL --rg-sample %(library)s'
                    ' --rg-platform'
@@ -158,21 +162,21 @@ for libname, (rf1, rf2) in readnames.items():
     tophat_proc.wait()
     commandstr = ['nice' 'python', 'AssignReads2.py',
                   join(od, 'accepted_hits.bam')]
-    assign_procs.append(Popen(commandstr))
+    DATA.assign_procs.append(Popen(commandstr))
 
 
 
 
 # Stop the timing
-end = time()
-print "Mapping elapsed time", timedelta(seconds = end-start)
+TIMES.end = time()
+print "Mapping elapsed time", timedelta(seconds = TIMES.end - TIMES.start)
 
-for proc in assign_procs:
+for proc in DATA.assign_procs:
     proc.wait()
 
-print "Assignment extra time", timedelta(seconds = time() - end)
+print "Assignment extra time", timedelta(seconds = time() - TIMES.end)
 
-sortstart = time()
+TIMES.sortstart = time()
 fs = glob(join(ARGS.analysis_dir, '*', 'assigned_dmel.bam'))
 sort = Popen(['parallel',
               'samtools sort {} -m %d {//}/dmel_sorted' %3e9, # 3GB of memory
@@ -180,15 +184,15 @@ sort = Popen(['parallel',
 
 sort.wait()
 
-sortend = time()
-print "Sorting time", timedelta(seconds = sortend - sortstart)
+TIMES.sortend = time()
+print "Sorting time", timedelta(seconds = TIMES.sortend - TIMES.sortstart)
 
 # Figure out how well everything mapped
-mapped_reads = {}
-all_bams = [join(ARGS.analysis_dir, sample_dir, 'dmel_sorted.bam')
+DATA.mapped_reads = {}
+DATA.all_bams = [join(ARGS.analysis_dir, sample_dir, 'dmel_sorted.bam')
             for sample_dir in ARGS.samples]
 
-for sample, bam in zip(ARGS.samples, all_bams):
+for sample, bam in zip(ARGS.samples, DATA.all_bams):
     print '='*30
     commandstr = ['samtools', 'flagstat', bam]
     print commandstr
@@ -197,9 +201,9 @@ for sample, bam in zip(ARGS.samples, all_bams):
 
     for line in samout.splitlines():
         if "mapped" in line:
-            mapped_reads[sample] = float(line.split()[0])
+            DATA.mapped_reads[sample] = float(line.split()[0])
             print "% reads dmel in ", sample,
-            print mapped_reads[sample]/num_reads[sample] * 100
+            print DATA.mapped_reads[sample] / DATA.num_reads[sample] * 100
             break
 
 
@@ -207,8 +211,8 @@ for sample, bam in zip(ARGS.samples, all_bams):
 for sample in ARGS.samples:
     od = join(ARGS.analysis_dir, sample)
     GTF = join(ARGS.refbase, ARGS.base_species +
-               ARGS.config_data['sample_to_carrier'][sample] + '.gtf')
-    commandstr = (ARGS.cufflinks_base + '-G %(GTF)s -o %(od)s %(hits)s'
+               DATA.config_data['sample_to_carrier'][sample] + '.gtf')
+    commandstr = (BASE.cufflinks_base + '-G %(GTF)s -o %(od)s %(hits)s'
                   % dict(GTF=GTF, od=od, hits=join(od, 'dmel_sorted.bam')))
 
     print commandstr
@@ -217,5 +221,5 @@ for sample in ARGS.samples:
 
     cufflinks_proc.wait()
 
-print "Final time", timedelta(seconds=time() - start)
-print "Cufflinks time", timedelta(seconds=time() - sortend)
+print "Final time", timedelta(seconds=time() - TIMES.start)
+print "Cufflinks time", timedelta(seconds=time() - TIMES.sortend)
