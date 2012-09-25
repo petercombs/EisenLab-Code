@@ -23,3 +23,18 @@ for other in rest:
                 SeqIO.write(rec, out_fh, 'fasta')
     out_fh.close()
 
+
+for other in rest:
+    print "GTF", base+other
+    out_fh = open(base + other + '.gtf', 'w')
+
+    for fname in listdir('.'):
+        if fname.startswith('d') and '.gtf' in fname and ((base in fname) or (other in fname)):
+            specname = fname.split('-')[0]
+            print specname
+
+            for line in open(fname):
+                out_fh.write(specname+"_"+line)
+    out_fh.close()
+
+
