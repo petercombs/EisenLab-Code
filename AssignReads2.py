@@ -123,7 +123,7 @@ for fname in sys.argv[1:]:
         process_read(read)
     pbar.finish()
     print
-    print "Species assignments in %s: %d" % (fname, species_counts)
+    print "Species assignments in %s: %s" % (fname, species_counts)
     print "Ambiguity distribution: ", ambig_counts
     print "Ambiguity types: ", ambig_types.most_common(50)
 
