@@ -18,7 +18,7 @@ from argparse import Namespace
 
 ARGS = Namespace()
 ARGS.analysis_dir = 'analysis-multi'
-ARGS.GTF =  'Reference/dmel.gtf'
+ARGS.base_GTF =  'Reference/AAA/dmel-all-r5.46.gtf'
 ARGS.refbase = 'Reference/AAA/'
 ARGS.base_species = 'mel'
 ARGS.notificationEmail = 'peter.combs@berkeley.edu'
@@ -94,10 +94,10 @@ def count_reads(read_files):
     # Let's cheat and only look in the last file: the others should have 4M
     # per...
     wc_proc = Popen(['wc', '-l', read_files[-1]], stdout=PIPE)
-    wcout, wcerr = wc_proc.communicate()
+    wcout, _ = wc_proc.communicate()
     first_reads = int(4e6) * (len(read_files) - 1)
-    result = wcout.splitlines()[-1].strip()
-    lines, fname = result.split()
+    result = str(wcout).splitlines()[-1].strip()
+    lines, _ = result.split()
     last_reads = int(lines) / 4
     return first_reads + last_reads
 
@@ -114,55 +114,58 @@ DATA.num_reads = {}
 TIMES = Namespace()
 TIMES.start = time()
 
+TEMP = Namespace()
+
 for libname, (rf1, rf2) in DATA.readnames.items():
     # Print the name of the files we're going through, as a progress bar
     print '-'*72, '\n', libname, '\n', '-'*72
 
     # Just grab the first file name (PE have the same number in both)
-    rfs = rf1.split(',')
-    DATA.num_reads[libname] = count_reads(rfs)
+    TEMP.rfs = rf1.split(',')
+    DATA.num_reads[libname] = count_reads(TEMP.rfs)
 
-    od = join(ARGS.analysis_dir, libname)
+    TEMP.od = join(ARGS.analysis_dir, libname)
     try:
-        os.makedirs(od)
+        os.makedirs(TEMP.od)
     except OSError:
-        print "Directory '%s' already exists... shouldn't be a problem" % od
+        print ("Directory '%s' already exists... shouldn't be a problem" % 
+               TEMP.od)
 
     # Figure out Read Group ID
     f = open(rf1.split(',')[0])
     l = f.readline()
     f.close()
-    rgid = l.split(":")[0][1:]
-    lane = l.split(":")[1]
+    TEMP.rgid = l.split(":")[0][1:]
+    TEMP.lane = l.split(":")[1]
 
-    idxfile = join(ARGS.refbase, ARGS.base_species +
+    TEMP.idxfile = join(ARGS.refbase, ARGS.base_species +
                    DATA.config_data['sample_to_carrier'][libname])
 
     # Do tophat
     print 'Tophatting...', '\n', '='*30
-    GTF = join(ARGS.refbase, ARGS.base_species +
+    TEMP.GTF = join(ARGS.refbase, ARGS.base_species +
                DATA.config_data['sample_to_carrier'][libname] + '.gtf')
-    commandstr =  (BASE.tophat_base + '-G %(GTF)s -o %(od)s --rg-library '
+    TEMP.commandstr =  (BASE.tophat_base + '-G %(GTF)s -o %(od)s --rg-library '
                    '%(library)s'
                    ' --rg-center VCGSL --rg-sample %(library)s'
                    ' --rg-platform'
                    ' ILLUMINA --rg-id %(rgid)s  --rg-platform-unit %(lane)s'
                 ' %(idxfile)s %(rf1)s %(rf2)s'
-           % {'GTF': GTF,
-              'od': od,
-              'idxfile': idxfile,
+           % {'GTF': TEMP.GTF,
+              'od': TEMP.od,
+              'idxfile': TEMP.idxfile,
               'rf1': rf1,
               'rf2': rf2,
               'library': libname,
-              'rgid': rgid,
-              'lane': lane})
-    print commandstr
+              'rgid': TEMP.rgid,
+              'lane': TEMP.lane})
+    print TEMP.commandstr
     sys.stdout.flush()
-    tophat_proc = Popen(commandstr.split())
-    tophat_proc.wait()
-    commandstr = ['nice' 'python', 'AssignReads2.py',
-                  join(od, 'accepted_hits.bam')]
-    DATA.assign_procs.append(Popen(commandstr))
+    TEMP.tophat_proc = Popen(str(TEMP.commandstr).split())
+    TEMP.tophat_proc.wait()
+    TEMP.commandstr = ['nice' 'python', 'AssignReads2.py',
+                  join(TEMP.od, 'accepted_hits.bam')]
+    DATA.assign_procs.append(Popen(TEMP.commandstr))
 
 
 
@@ -177,12 +180,12 @@ for proc in DATA.assign_procs:
 print "Assignment extra time", timedelta(seconds = time() - TIMES.end)
 
 TIMES.sortstart = time()
-fs = glob(join(ARGS.analysis_dir, '*', 'assigned_dmel.bam'))
-sort = Popen(['parallel',
+DATA.fs = glob(join(ARGS.analysis_dir, '*', 'assigned_dmel.bam'))
+TEMP.sort = Popen(['parallel',
               'samtools sort {} -m %d {//}/dmel_sorted' %3e9, # 3GB of memory
-              ':::'] + fs)
+              ':::'] + DATA.fs)
 
-sort.wait()
+TEMP.sort.wait()
 
 TIMES.sortend = time()
 print "Sorting time", timedelta(seconds = TIMES.sortend - TIMES.sortstart)
@@ -199,7 +202,7 @@ for sample, bam in zip(ARGS.samples, DATA.all_bams):
     samtools_proc = Popen(commandstr, stdout=PIPE)
     samout, samerr = samtools_proc.communicate()
 
-    for line in samout.splitlines():
+    for line in str(samout).splitlines():
         if "mapped" in line:
             DATA.mapped_reads[sample] = float(line.split()[0])
             print "% reads dmel in ", sample,
@@ -209,17 +212,18 @@ for sample, bam in zip(ARGS.samples, DATA.all_bams):
 
 
 for sample in ARGS.samples:
-    od = join(ARGS.analysis_dir, sample)
-    GTF = join(ARGS.refbase, ARGS.base_species +
-               DATA.config_data['sample_to_carrier'][sample] + '.gtf')
-    commandstr = (BASE.cufflinks_base + '-G %(GTF)s -o %(od)s %(hits)s'
-                  % dict(GTF=GTF, od=od, hits=join(od, 'dmel_sorted.bam')))
+    TEMP.od = join(ARGS.analysis_dir, sample)
+    TEMP.commandstr = (BASE.cufflinks_base + 
+                  '-G %(GTF)s -o %(od)s %(hits)s'
+                  % dict(GTF=ARGS.base_GTF, 
+                         od=TEMP.od, 
+                         hits=join(TEMP.od, 'dmel_sorted.bam')))
 
-    print commandstr
+    print TEMP.commandstr
     sys.stdout.flush()
-    cufflinks_proc = Popen(commandstr.split())
+    TEMP.cufflinks_proc = Popen(str(TEMP.commandstr).split())
 
-    cufflinks_proc.wait()
+    TEMP.cufflinks_proc.wait()
 
 print "Final time", timedelta(seconds=time() - TIMES.start)
 print "Cufflinks time", timedelta(seconds=time() - TIMES.sortend)
