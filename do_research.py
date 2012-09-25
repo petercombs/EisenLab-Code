@@ -15,35 +15,28 @@ import argparse as ap
 
 def make_multi():
     "Make a multi-genome fasta file"
-    sp.Popen(['python', 'MakeMultigenome.py', 'Reference/AAA']).wait()
-    btb = sp.Popen(['bowtie-build', 'multi.fa', 'multi'])
-    bt2b = sp.Popen(['bowtie2-build', 'multi.fa', 'multi'])
+    sp.Popen(['python', 'MakeMultigenome.py', 'Reference/AAA', 'mel', 'per',
+              'wil', 'moj', 'vir']).wait()
+    #btb = sp.Popen(['bowtie-build', 'multi.fa', 'multi'])
+    #bt2b = sp.Popen(['bowtie2-build', 'multi.fa', 'multi'])
     btb.wait()
     bt2b.wait()
 
-def combine_gffs():
-    "Combine all GFF files"
+def make_gtfs():
+    "Make GTF files from all flybase GFF files"
     root = os.getcwd()
     os.chdir('Reference/AAA')
 
-    out_name = 'multi.gff'
-    out_fh = open(out_name, 'w')
     for fname in glob('d*.gff'):
-        print "Getting FlyBase records from: ", fname
-        specname = fname.split('-')[0]
-        sp.Popen(['awk', '/^[^#].*FlyBase/ {print "%s_" $0}' % specname, fname],
-                 stdout=out_fh).wait()
-
-    out_fh.close()
-    print "Converting to GTF"
-    sp.Popen(['gffread', out_name, '-g', 'multi.fa', '-C', '-F', '-E',
-              '-T', '-o', 'multi.gtf']).wait()
+        print "Converting %s to GTF" % fname
+        sp.Popen(['gffread', out_name, '-E', '-T', '-o', 
+                  fname.replace('gff', 'gtf')]).wait()
 
     os.chdir(root)
 
-def do_tuxedo_suite():
+def map_reads():
     "Call the do_tux program to run the tuxedo suite"
-    sp.Popen(['python', 'do_tux.py']).wait()
+    sp.Popen(['python', 'MapReads.py']).wait()
 
 def assign_multireads():
     """Assign reads to species, using appropriate cutoff"""
@@ -55,14 +48,14 @@ def assign_multireads():
 def main(args):
     """ Run all the sub-processing code"""
 
-    if not('make_genome' in args.skiplist or '1' in args.skiplist):
+    if not('make_gtfs' in args.skiplist or '1' in args.skiplist):
+        make_gtfs()
+
+    if not('make_genome' in args.skiplist or '2' in args.skiplist):
         make_multi()
 
-    if not('combine_gff' in args.skiplist or '2' in args.skiplist):
-        combine_gffs()
-
-    if not('do_tux' in args.skiplist or '3' in args.skiplist):
-        do_tuxedo_suite()
+    if not('map_reads' in args.skiplist or '3' in args.skiplist):
+        map_reads()
 
 
 def parse_args():
