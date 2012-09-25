@@ -15,19 +15,20 @@ from time import time
 from datetime import timedelta
 from subprocess import Popen, PIPE
 
-analysis_dir = 'analysis-multi'
-GTF =  'Reference/dmel.gtf'
-idxbase = 'Reference/AAA/'
-base_species = 'mel'
-notificationEmail = 'peter.combs@berkeley.edu'
-seq_dir = 'sequence'
-config_file = 'RunConfig.cfg'
+ARGS = object()
+ARGS.analysis_dir = 'analysis-multi'
+ARGS.GTF =  'Reference/dmel.gtf'
+ARGS.refbase = 'Reference/AAA/'
+ARGS.base_species = 'mel'
+ARGS.notificationEmail = 'peter.combs@berkeley.edu'
+ARGS.seq_dir = 'sequence'
+ARGS.config_file = 'RunConfig.cfg'
 
 ########################################################################
 
-tophat_base = ('tophat -p8 --no-novel-juncs --read-edit-dist 6 '
+ARGS.tophat_base = ('tophat -p8 --no-novel-juncs --read-edit-dist 6 '
                 '--report-secondary-alignments ')
-cufflinks_base = 'cufflinks -p 8 -q -u '
+ARGS.cufflinks_base = 'cufflinks -p 8 -q -u '
 
 
 ########################################################################
@@ -45,7 +46,8 @@ def process_config_file(cfg_fname):
         try:
             line = line.strip().split('\t')
             lib, mbepc, slice, idx, carrier = line
-            cfg_data['sample_to_lib'].append((lib + slice, mbepc + '*index' + idx))
+            cfg_data['sample_to_lib'].append((lib + slice, 
+                                              mbepc + '*index' + idx))
             cfg_data['sample_to_carrier'][lib + slice] = carrier
             cfg_data['samples'].append(lib + slice)
             cfg_data['libraries'].append(mbepc + slice)
@@ -75,10 +77,11 @@ def get_readfiles(cfg_data):
     #     ...
     readnames = {}
     for sample, libname in cfg_data['sample_to_lib']:
-        read_1s = glob(join(seq_dir, 'Sample*' + libname + '*', "*_R1_*.fastq"))
         print "Finding reads for", sample
+        seq_dir = join(ARGS.seq_dir, 'Sample*' + libname + '*')
+        read_1s = glob(join(seq_dir, "*_R1_*.fastq"))
         print read_1s
-        read_2s = glob(join(seq_dir, 'Sample*' + libname + '*', "*_R2_*.fastq"))
+        read_2s = glob(join(seq_dir, "*_R2_*.fastq"))
         print read_2s
         readnames[sample] = [','.join(read_1s), ','.join(read_2s)]
     return readnames
@@ -96,10 +99,10 @@ def count_reads(read_files):
     last_reads = int(lines) / 4
     return first_reads + last_reads
 
-config_data = process_config_file(config_file)
-readnames = get_readfiles(config_data)
+ARGS.config_data = process_config_file(ARGS.config_file)
+readnames = get_readfiles(ARGS.config_data)
 
-samples = config_data['samples']
+ARGS.samples = ARGS.config_data['samples']
 
 
 assign_procs = []
@@ -115,7 +118,7 @@ for libname, (rf1, rf2) in readnames.items():
     rfs = rf1.split(',')
     num_reads[libname] = count_reads(rfs)
 
-    od = join(analysis_dir, libname)
+    od = join(ARGS.analysis_dir, libname)
     try:
         os.makedirs(od)
     except OSError:
@@ -128,14 +131,14 @@ for libname, (rf1, rf2) in readnames.items():
     rgid = l.split(":")[0][1:]
     lane = l.split(":")[1]
 
-    idxfile = join(idxbase, base_species +
-                   config_data['sample_to_carrier'][libname])
+    idxfile = join(ARGS.refbase, ARGS.base_species +
+                   ARGS.config_data['sample_to_carrier'][libname])
 
     # Do tophat
     print 'Tophatting...', '\n', '='*30
-    GTF = join(idxbase, base_species +
-               config_data['sample_to_carrier'][libname] + '.gtf')
-    commandstr =  (tophat_base + '-G %(GTF)s -o %(od)s --rg-library '
+    GTF = join(ARGS.refbase, ARGS.base_species +
+               ARGS.config_data['sample_to_carrier'][libname] + '.gtf')
+    commandstr =  (ARGS.tophat_base + '-G %(GTF)s -o %(od)s --rg-library '
                    '%(library)s'
                    ' --rg-center VCGSL --rg-sample %(library)s'
                    ' --rg-platform'
@@ -170,7 +173,7 @@ for proc in assign_procs:
 print "Assignment extra time", timedelta(seconds = time() - end)
 
 sortstart = time()
-fs = glob(join(analysis_dir, '*', 'assigned_dmel.bam'))
+fs = glob(join(ARGS.analysis_dir, '*', 'assigned_dmel.bam'))
 sort = Popen(['parallel',
               'samtools sort {} -m %d {//}/dmel_sorted' %3e9, # 3GB of memory
               ':::'] + fs)
@@ -182,10 +185,10 @@ print "Sorting time", timedelta(seconds = sortend - sortstart)
 
 # Figure out how well everything mapped
 mapped_reads = {}
-all_bams = [join(analysis_dir, sample_dir, 'dmel_sorted.bam')
-            for sample_dir in samples]
+all_bams = [join(ARGS.analysis_dir, sample_dir, 'dmel_sorted.bam')
+            for sample_dir in ARGS.samples]
 
-for sample, bam in zip(samples, all_bams):
+for sample, bam in zip(ARGS.samples, all_bams):
     print '='*30
     commandstr = ['samtools', 'flagstat', bam]
     print commandstr
@@ -201,11 +204,11 @@ for sample, bam in zip(samples, all_bams):
 
 
 
-for sample in samples:
-    od = join(analysis_dir, sample)
-    GTF = join(idxbase, base_species +
-               config_data['sample_to_carrier'][sample] + '.gtf')
-    commandstr = (cufflinks_base + '-G %(GTF)s -o %(od)s %(hits)s'
+for sample in ARGS.samples:
+    od = join(ARGS.analysis_dir, sample)
+    GTF = join(ARGS.refbase, ARGS.base_species +
+               ARGS.config_data['sample_to_carrier'][sample] + '.gtf')
+    commandstr = (ARGS.cufflinks_base + '-G %(GTF)s -o %(od)s %(hits)s'
                   % dict(GTF=GTF, od=od, hits=join(od, 'dmel_sorted.bam')))
 
     print commandstr
