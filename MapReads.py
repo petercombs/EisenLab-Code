@@ -163,8 +163,9 @@ for libname, (rf1, rf2) in DATA.readnames.items():
     sys.stdout.flush()
     TEMP.tophat_proc = Popen(str(TEMP.commandstr).split())
     TEMP.tophat_proc.wait()
-    TEMP.commandstr = ['nice' 'python', 'AssignReads2.py',
+    TEMP.commandstr = ['nice', 'python', 'AssignReads2.py',
                   join(TEMP.od, 'accepted_hits.bam')]
+    print TEMP.commandstr
     DATA.assign_procs.append(Popen(TEMP.commandstr))
 
 
@@ -193,9 +194,9 @@ print "Sorting time", timedelta(seconds = TIMES.sortend - TIMES.sortstart)
 # Figure out how well everything mapped
 DATA.mapped_reads = {}
 DATA.all_bams = [join(ARGS.analysis_dir, sample_dir, 'dmel_sorted.bam')
-            for sample_dir in ARGS.samples]
+            for sample_dir in DATA.samples]
 
-for sample, bam in zip(ARGS.samples, DATA.all_bams):
+for sample, bam in zip(DATA.samples, DATA.all_bams):
     print '='*30
     commandstr = ['samtools', 'flagstat', bam]
     print commandstr
@@ -211,7 +212,7 @@ for sample, bam in zip(ARGS.samples, DATA.all_bams):
 
 
 
-for sample in ARGS.samples:
+for sample in DATA.samples:
     TEMP.od = join(ARGS.analysis_dir, sample)
     TEMP.commandstr = (BASE.cufflinks_base + 
                   '-G %(GTF)s -o %(od)s %(hits)s'
@@ -227,3 +228,8 @@ for sample in ARGS.samples:
 
 print "Final time", timedelta(seconds=time() - TIMES.start)
 print "Cufflinks time", timedelta(seconds=time() - TIMES.sortend)
+
+import cPickle as pickle
+
+pickle.dump(dict(data=DATA, args=ARGS, temp=TEMP), 
+            open('mapreads_dump.pkl', 'w'))
