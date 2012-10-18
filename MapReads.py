@@ -80,9 +80,9 @@ def get_readfiles(args, sample, libname):
     readnames = {}
     print "Finding reads for", sample
     seq_dir = join(args.seq_dir, 'Sample*' + libname + '*')
-    read_1s = glob(join(seq_dir, "*_R1_*.fastq"))
+    read_1s = glob(join(seq_dir, "*_R1_*.fastq*"))
     print read_1s
-    read_2s = glob(join(seq_dir, "*_R2_*.fastq"))
+    read_2s = glob(join(seq_dir, "*_R2_*.fastq*"))
     print read_2s
     readnames[sample] = [','.join(read_1s), ','.join(read_2s)]
     return readnames
@@ -114,6 +114,8 @@ TIMES = Namespace()
 TIMES.start = time()
 
 TEMP = Namespace()
+TEMP.rezip_procs = []
+
 #for libname, (rf1, rf2) in DATA.readnames.items():
 for sample, libname in DATA.config_data['sample_to_lib']:
 
@@ -125,6 +127,25 @@ for sample, libname in DATA.config_data['sample_to_lib']:
     # Print the name of the files we're going through, as a progress bar
     print '-'*72, '\n', sample, '\n', '-'*72
     sys.stdout.flush()
+
+    # Unzip anything that's zipped
+    TEMP.to_unzip = []
+    for i, fname in enumerate(rf1):
+        if fname.endswith('.gz'):
+            print "Unzipping", fname
+            TEMP.to_unzip.append(fname)
+            rf1[i] = fname.strip('.gz')
+
+    for i, fname in enumerate(rf2):
+        if fname.endswith('.gz'):
+            print "Unzipping", fname
+            TEMP.to_unzip.append(fname)
+            rf2[i] = fname.strip('.gz')
+
+    if TEMP.to_unzip:
+        Popen(['parallel', '-j', '2', 'gunzip {}', ':::'] + 
+              TEMP.to_unzip).wait()
+
 
 
     # Just grab the first file name (PE have the same number in both)
@@ -171,6 +192,10 @@ for sample, libname in DATA.config_data['sample_to_lib']:
     sys.stdout.flush()
     TEMP.tophat_proc = Popen(str(TEMP.commandstr).split())
     TEMP.tophat_proc.wait()
+
+    TEMP.rezip_procs.append(Popen(['parallel', '-j', '2', 'gzip {}', ':::']
+                                  + rf1 + rf2))
+
     TEMP.commandstr = ['nice', 'python', 'AssignReads2.py',
                   join(TEMP.od, 'accepted_hits.bam')]
     print TEMP.commandstr
@@ -241,3 +266,6 @@ import cPickle as pickle
 
 pickle.dump(dict(data=DATA, args=ARGS, temp=TEMP), 
             open('mapreads_dump.pkl', 'w'))
+
+for proc in TEMP.rezip_procs:
+    proc.wait()
