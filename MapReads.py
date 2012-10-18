@@ -29,7 +29,8 @@ ARGS.config_file = 'RunConfig.cfg'
 
 BASE = Namespace()
 BASE.tophat_base = ('tophat -p8 --no-novel-juncs --read-edit-dist 6 '
-                '--report-secondary-alignments ')
+                '--report-secondary-alignments --keep-tmp ')
+#BASE.tophat_base = ('bowtie2 -p 8 --all --no-mixed --local ')
 BASE.cufflinks_base = 'cufflinks -p 8 -q -u '
 
 
