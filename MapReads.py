@@ -61,7 +61,7 @@ def process_config_file(cfg_fname):
             print "Continuing..."
     return cfg_data
 
-def get_readfiles(cfg_data):
+def get_readfiles(args, sample, libname):
     " Find the names of the read files, based on configuration"
 
     # Directory structure:
@@ -78,14 +78,13 @@ def get_readfiles(cfg_data):
     #   Sample_MBE_PC_64B_index2
     #     ...
     readnames = {}
-    for sample, libname in cfg_data['sample_to_lib']:
-        print "Finding reads for", sample
-        seq_dir = join(ARGS.seq_dir, 'Sample*' + libname + '*')
-        read_1s = glob(join(seq_dir, "*_R1_*.fastq"))
-        print read_1s
-        read_2s = glob(join(seq_dir, "*_R2_*.fastq"))
-        print read_2s
-        readnames[sample] = [','.join(read_1s), ','.join(read_2s)]
+    print "Finding reads for", sample
+    seq_dir = join(args.seq_dir, 'Sample*' + libname + '*')
+    read_1s = glob(join(seq_dir, "*_R1_*.fastq"))
+    print read_1s
+    read_2s = glob(join(seq_dir, "*_R2_*.fastq"))
+    print read_2s
+    readnames[sample] = [','.join(read_1s), ','.join(read_2s)]
     return readnames
 
 def count_reads(read_files):
@@ -103,7 +102,7 @@ def count_reads(read_files):
 
 DATA = Namespace()
 DATA.config_data = process_config_file(ARGS.config_file)
-DATA.readnames = get_readfiles(DATA.config_data)
+DATA.readnames = {} #get_readfiles(DATA.config_data)
 
 DATA.samples = DATA.config_data['samples']
 
@@ -115,16 +114,24 @@ TIMES = Namespace()
 TIMES.start = time()
 
 TEMP = Namespace()
+#for libname, (rf1, rf2) in DATA.readnames.items():
+for sample, libname in DATA.config_data['sample_to_lib']:
 
-for libname, (rf1, rf2) in DATA.readnames.items():
+
+    TEMP.sample_reads = get_readfiles(ARGS, sample, libname)
+    DATA.readnames.update(TEMP.sample_reads)
+    rf1, rf2 = TEMP.sample_reads[sample]
+
     # Print the name of the files we're going through, as a progress bar
-    print '-'*72, '\n', libname, '\n', '-'*72
+    print '-'*72, '\n', sample, '\n', '-'*72
+    sys.stdout.flush()
+
 
     # Just grab the first file name (PE have the same number in both)
     TEMP.rfs = rf1.split(',')
-    DATA.num_reads[libname] = count_reads(TEMP.rfs)
+    DATA.num_reads[sample] = count_reads(TEMP.rfs)
 
-    TEMP.od = join(ARGS.analysis_dir, libname)
+    TEMP.od = join(ARGS.analysis_dir, sample)
     try:
         os.makedirs(TEMP.od)
     except OSError:
@@ -139,12 +146,12 @@ for libname, (rf1, rf2) in DATA.readnames.items():
     TEMP.lane = l.split(":")[1]
 
     TEMP.idxfile = join(ARGS.refbase, ARGS.base_species +
-                   DATA.config_data['sample_to_carrier'][libname])
+                   DATA.config_data['sample_to_carrier'][sample])
 
     # Do tophat
     print 'Tophatting...', '\n', '='*30
     TEMP.GTF = join(ARGS.refbase, ARGS.base_species +
-               DATA.config_data['sample_to_carrier'][libname] + '.gtf')
+               DATA.config_data['sample_to_carrier'][sample] + '.gtf')
     TEMP.commandstr =  (BASE.tophat_base + '-G %(GTF)s -o %(od)s --rg-library '
                    '%(library)s'
                    ' --rg-center VCGSL --rg-sample %(library)s'
@@ -156,9 +163,10 @@ for libname, (rf1, rf2) in DATA.readnames.items():
               'idxfile': TEMP.idxfile,
               'rf1': rf1,
               'rf2': rf2,
-              'library': libname,
+              'library': sample,
               'rgid': TEMP.rgid,
               'lane': TEMP.lane})
+
     print TEMP.commandstr
     sys.stdout.flush()
     TEMP.tophat_proc = Popen(str(TEMP.commandstr).split())
