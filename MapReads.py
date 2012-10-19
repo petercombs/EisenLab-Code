@@ -20,6 +20,7 @@ ARGS = Namespace()
 ARGS.analysis_dir = 'analysis-multi'
 ARGS.base_GTF =  'Reference/AAA/dmel-all-r5.46.gtf'
 ARGS.refbase = 'Reference/AAA/'
+ARGS.transbase = 'Reference/AAA/transcriptome/'
 ARGS.base_species = 'mel'
 ARGS.notificationEmail = 'peter.combs@berkeley.edu'
 ARGS.seq_dir = 'sequence'
@@ -174,11 +175,20 @@ for sample, libname in DATA.config_data['sample_to_lib']:
     print 'Tophatting...', '\n', '='*30
     TEMP.GTF = join(ARGS.refbase, ARGS.base_species +
                DATA.config_data['sample_to_carrier'][sample] + '.gtf')
+
+    TEMP.transcriptome = join(ARGS.transbase, ARGS.base_species +
+                              DATA.config_data['sample_to_carrier'][sample])
+    if os.path.exists(TEMP.transcriptome + '.1.bt2'):
+        TEMP.transarg = '--transcriptome-index %s '%TEMP.transcriptome
+    else:
+        TEMP.transarg = ' '
+
     TEMP.commandstr =  (BASE.tophat_base + '-G %(GTF)s -o %(od)s --rg-library '
                    '%(library)s'
                    ' --rg-center VCGSL --rg-sample %(library)s'
                    ' --rg-platform'
                    ' ILLUMINA --rg-id %(rgid)s  --rg-platform-unit %(lane)s'
+                   ' %(transarg)s'
                 ' %(idxfile)s %(rf1)s %(rf2)s'
            % {'GTF': TEMP.GTF,
               'od': TEMP.od,
@@ -187,7 +197,8 @@ for sample, libname in DATA.config_data['sample_to_lib']:
               'rf2': rf2,
               'library': sample,
               'rgid': TEMP.rgid,
-              'lane': TEMP.lane})
+              'lane': TEMP.lane,
+              'transarg' : TEMP.transarg})
 
     print TEMP.commandstr
     sys.stdout.flush()
