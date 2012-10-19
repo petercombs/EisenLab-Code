@@ -86,7 +86,7 @@ def get_readfiles(args, sample, libname):
     print read_1s
     read_2s = glob(join(seq_dir, "*_R2_*.fastq*"))
     print read_2s
-    readnames[sample] = [','.join(read_1s), ','.join(read_2s)]
+    readnames[sample] = [sorted(read_1s), sorted(read_2s)]
     return readnames
 
 def count_reads(read_files):
@@ -151,7 +151,7 @@ for sample, libname in DATA.config_data['sample_to_lib']:
 
 
     # Just grab the first file name (PE have the same number in both)
-    TEMP.rfs = rf1.split(',')
+    TEMP.rfs = rf1
     DATA.num_reads[sample] = count_reads(TEMP.rfs)
 
     TEMP.od = join(ARGS.analysis_dir, sample)
@@ -162,7 +162,7 @@ for sample, libname in DATA.config_data['sample_to_lib']:
                TEMP.od)
 
     # Figure out Read Group ID
-    f = open(rf1.split(',')[0])
+    f = open(rf1[0])
     l = f.readline()
     f.close()
     TEMP.rgid = l.split(":")[0][1:]
@@ -193,8 +193,8 @@ for sample, libname in DATA.config_data['sample_to_lib']:
            % {'GTF': TEMP.GTF,
               'od': TEMP.od,
               'idxfile': TEMP.idxfile,
-              'rf1': rf1,
-              'rf2': rf2,
+              'rf1': ','.join(rf1),
+              'rf2': ','.join(rf2),
               'library': sample,
               'rgid': TEMP.rgid,
               'lane': TEMP.lane,
@@ -206,7 +206,7 @@ for sample, libname in DATA.config_data['sample_to_lib']:
     TEMP.tophat_proc.wait()
 
     TEMP.rezip_procs.append(Popen(['parallel', '-j', '2', 'gzip {}', ':::']
-                                  + rf1.split(',') + rf2.split(',')))
+                                  + rf1 + rf2))
 
     TEMP.commandstr = ['nice', 'python', 'AssignReads2.py',
                   join(TEMP.od, 'accepted_hits.bam')]
