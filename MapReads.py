@@ -195,7 +195,7 @@ for sample, libname in DATA.config_data['sample_to_lib']:
     TEMP.tophat_proc.wait()
 
     TEMP.rezip_procs.append(Popen(['parallel', '-j', '2', 'gzip {}', ':::']
-                                  + rf1 + rf2))
+                                  + rf1.split(',') + rf2.split(',')))
 
     TEMP.commandstr = ['nice', 'python', 'AssignReads2.py',
                   join(TEMP.od, 'accepted_hits.bam')]

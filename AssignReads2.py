@@ -3,6 +3,7 @@ import sys
 from os import path
 from collections import defaultdict, Counter
 from progressbar import ProgressBar, ETA, Bar, Percentage
+from argparse import Namespace
 
 class my_defaultdict(dict):
     def __init__(self, default_factory, basename, other_args):
@@ -37,17 +38,38 @@ def process_read(read):
 
 def resolve_multiread(read, nh, species):
     nm = [t[1] for t in read.tags if t[0] == 'NM'][0]
-    to_be_resolved_counts[read.qname] += 1
-    if nm < to_be_resolved_vals[read.qname][species]:
-        to_be_resolved_vals[read.qname][species] = nm
-        to_be_resolved_reads[read.qname][species] = read
+    has_multi_frags = bool(0x1 & read.flag)
+    is_first = bool(0x40 & read.flag)
+    is_last = bool(0x80 & read.flag)
+    if has_multi_frags and is_last:
+        to_be_resolved_counts2[read.qname] += 1
+        if nm < to_be_resolved_vals2[read.qname][species]:
+            to_be_resolved_vals2[read.qname][species] = nm
+            to_be_resolved_reads2[read.qname][species] = read
 
-    if nh == to_be_resolved_counts[read.qname]:
-        on_last_multiread(read)
+        if nh == to_be_resolved_counts2[read.qname]:
+            dbs = Namespace()
+            dbs.to_be_resolved_vals = to_be_resolved_vals2
+            dbs.to_be_resolved_counts = to_be_resolved_counts2
+            dbs.to_be_resolved_reads = to_be_resolved_reads2
+            on_last_multiread(dbs, read)
 
-def on_last_multiread(read):
+    else:
+        to_be_resolved_counts[read.qname] += 1
+        if nm < to_be_resolved_vals[read.qname][species]:
+            to_be_resolved_vals[read.qname][species] = nm
+            to_be_resolved_reads[read.qname][species] = read
+
+        if nh == to_be_resolved_counts[read.qname]:
+            dbs = Namespace()
+            dbs.to_be_resolved_vals = to_be_resolved_vals
+            dbs.to_be_resolved_counts = to_be_resolved_counts
+            dbs.to_be_resolved_reads = to_be_resolved_reads
+            on_last_multiread(dbs, read)
+
+def on_last_multiread(dbs, read):
     # Sort out the reads
-    if len(to_be_resolved_reads[read.qname]) == 1:
+    if len(dbs.to_be_resolved_reads[read.qname]) == 1:
         # Looks like there were multiple hits from the same species.
         # Report the best, or if equal quality, the first (which
         # tophat would've given anyways)
@@ -58,12 +80,12 @@ def on_last_multiread(read):
     else:
         # Hits from multiple species
         vals = sorted([(val, spec) for spec, val in
-                        to_be_resolved_vals[read.qname].iteritems()])
+                        dbs.to_be_resolved_vals[read.qname].iteritems()])
         diff_val = vals[1][0] - vals[0][0]
         ambig_counts[diff_val] += 1
         if diff_val > ambig_threshold:
             species = vals[0][1]
-            best_read = to_be_resolved_reads[read.qname][species]
+            best_read = dbs.to_be_resolved_reads[read.qname][species]
             assigned.write(best_read)
             specific_files[species].write(best_read)
             species_counts[species] += 1
@@ -79,13 +101,13 @@ def on_last_multiread(read):
 
             ambig_names = tuple(ambig_names)
             ambig_types[ambig_names]+=1
-            for amb_read in to_be_resolved_reads[read.qname].itervalues():
+            for amb_read in dbs.to_be_resolved_reads[read.qname].itervalues():
                 ambig.write(amb_read)
 
     # Clean up the dictionaries
-    to_be_resolved_vals.pop(read.qname)
-    to_be_resolved_counts.pop(read.qname)
-    to_be_resolved_reads.pop(read.qname)
+    dbs.to_be_resolved_vals.pop(read.qname)
+    dbs.to_be_resolved_counts.pop(read.qname)
+    dbs.to_be_resolved_reads.pop(read.qname)
 
 ambig_threshold = 3
 
@@ -106,6 +128,9 @@ for fname in sys.argv[1:]:
     to_be_resolved_reads = defaultdict(dict)
     to_be_resolved_vals = defaultdict(lambda : defaultdict(lambda : 1000))
     to_be_resolved_counts = Counter()
+    to_be_resolved_reads2 = defaultdict(dict)
+    to_be_resolved_vals2 = defaultdict(lambda : defaultdict(lambda : 1000))
+    to_be_resolved_counts2 = Counter()
     species_counts = Counter()
     ambig_counts = Counter()
     ambig_types = Counter()
