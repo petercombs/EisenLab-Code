@@ -162,11 +162,11 @@ for sample, libname in DATA.config_data['sample_to_lib']:
                TEMP.od)
 
     # Figure out Read Group ID
-    f = open(rf1[0])
-    l = f.readline()
-    f.close()
-    TEMP.rgid = l.split(":")[0][1:]
-    TEMP.lane = l.split(":")[1]
+    TEMP.f = open(rf1[0])
+    TEMP.l = TEMP.f.readline()
+    TEMP.f.close()
+    TEMP.rgid = TEMP.l.split(":")[0][1:]
+    TEMP.lane = TEMP.l.split(":")[1]
 
     TEMP.idxfile = join(ARGS.refbase, ARGS.base_species +
                    DATA.config_data['sample_to_carrier'][sample])
