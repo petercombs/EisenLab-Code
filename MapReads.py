@@ -178,10 +178,7 @@ for sample, libname in DATA.config_data['sample_to_lib']:
 
     TEMP.transcriptome = join(ARGS.transbase, ARGS.base_species +
                               DATA.config_data['sample_to_carrier'][sample])
-    if os.path.exists(TEMP.transcriptome + '.1.bt2'):
-        TEMP.transarg = '--transcriptome-index %s '%TEMP.transcriptome
-    else:
-        TEMP.transarg = ' '
+    TEMP.transarg = '--transcriptome-index %s '% TEMP.transcriptome
 
     TEMP.commandstr =  (BASE.tophat_base + '-G %(GTF)s -o %(od)s --rg-library '
                    '%(library)s'
