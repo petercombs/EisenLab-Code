@@ -20,6 +20,7 @@ ARGS = Namespace()
 ARGS.analysis_dir = 'analysis-multi'
 ARGS.base_GTF =  'Reference/AAA/dmel-all-r5.46.gtf'
 ARGS.refbase = 'Reference/AAA/'
+ARGS.transbase = 'Reference/AAA/transcriptome/'
 ARGS.base_species = 'mel'
 ARGS.notificationEmail = 'peter.combs@berkeley.edu'
 ARGS.seq_dir = 'sequence'
@@ -29,7 +30,8 @@ ARGS.config_file = 'RunConfig.cfg'
 
 BASE = Namespace()
 BASE.tophat_base = ('tophat -p8 --no-novel-juncs --read-edit-dist 6 '
-                '--report-secondary-alignments ')
+                '--report-secondary-alignments --keep-tmp ')
+#BASE.tophat_base = ('bowtie2 -p 8 --all --no-mixed --local ')
 BASE.cufflinks_base = 'cufflinks -p 8 -q -u '
 
 
@@ -61,7 +63,7 @@ def process_config_file(cfg_fname):
             print "Continuing..."
     return cfg_data
 
-def get_readfiles(cfg_data):
+def get_readfiles(args, sample, libname):
     " Find the names of the read files, based on configuration"
 
     # Directory structure:
@@ -78,14 +80,13 @@ def get_readfiles(cfg_data):
     #   Sample_MBE_PC_64B_index2
     #     ...
     readnames = {}
-    for sample, libname in cfg_data['sample_to_lib']:
-        print "Finding reads for", sample
-        seq_dir = join(ARGS.seq_dir, 'Sample*' + libname + '*')
-        read_1s = glob(join(seq_dir, "*_R1_*.fastq"))
-        print read_1s
-        read_2s = glob(join(seq_dir, "*_R2_*.fastq"))
-        print read_2s
-        readnames[sample] = [','.join(read_1s), ','.join(read_2s)]
+    print "Finding reads for", sample
+    seq_dir = join(args.seq_dir, 'Sample*' + libname + '*')
+    read_1s = glob(join(seq_dir, "*_R1_*.fastq*"))
+    print read_1s
+    read_2s = glob(join(seq_dir, "*_R2_*.fastq*"))
+    print read_2s
+    readnames[sample] = [sorted(read_1s), sorted(read_2s)]
     return readnames
 
 def count_reads(read_files):
@@ -103,7 +104,7 @@ def count_reads(read_files):
 
 DATA = Namespace()
 DATA.config_data = process_config_file(ARGS.config_file)
-DATA.readnames = get_readfiles(DATA.config_data)
+DATA.readnames = {} #get_readfiles(DATA.config_data)
 
 DATA.samples = DATA.config_data['samples']
 
@@ -115,16 +116,45 @@ TIMES = Namespace()
 TIMES.start = time()
 
 TEMP = Namespace()
+TEMP.rezip_procs = []
 
-for libname, (rf1, rf2) in DATA.readnames.items():
+#for libname, (rf1, rf2) in DATA.readnames.items():
+for sample, libname in DATA.config_data['sample_to_lib']:
+
+
+    TEMP.sample_reads = get_readfiles(ARGS, sample, libname)
+    DATA.readnames.update(TEMP.sample_reads)
+    rf1, rf2 = TEMP.sample_reads[sample]
+
     # Print the name of the files we're going through, as a progress bar
-    print '-'*72, '\n', libname, '\n', '-'*72
+    print '-'*72, '\n', sample, '\n', '-'*72
+    sys.stdout.flush()
+
+    # Unzip anything that's zipped
+    TEMP.to_unzip = []
+    for i, fname in enumerate(rf1):
+        if fname.endswith('.gz'):
+            print "Unzipping", fname
+            TEMP.to_unzip.append(fname)
+            rf1[i] = fname.strip('.gz')
+
+    for i, fname in enumerate(rf2):
+        if fname.endswith('.gz'):
+            print "Unzipping", fname
+            TEMP.to_unzip.append(fname)
+            rf2[i] = fname.strip('.gz')
+
+    if TEMP.to_unzip:
+        Popen(['parallel', '-j', '2', 'gunzip {}', ':::'] + 
+              TEMP.to_unzip).wait()
+
+
 
     # Just grab the first file name (PE have the same number in both)
-    TEMP.rfs = rf1.split(',')
-    DATA.num_reads[libname] = count_reads(TEMP.rfs)
+    TEMP.rfs = rf1
+    DATA.num_reads[sample] = count_reads(TEMP.rfs)
 
-    TEMP.od = join(ARGS.analysis_dir, libname)
+    TEMP.od = join(ARGS.analysis_dir, sample)
     try:
         os.makedirs(TEMP.od)
     except OSError:
@@ -132,39 +162,52 @@ for libname, (rf1, rf2) in DATA.readnames.items():
                TEMP.od)
 
     # Figure out Read Group ID
-    f = open(rf1.split(',')[0])
-    l = f.readline()
-    f.close()
-    TEMP.rgid = l.split(":")[0][1:]
-    TEMP.lane = l.split(":")[1]
+    TEMP.f = open(rf1[0])
+    TEMP.l = TEMP.f.readline()
+    TEMP.f.close()
+    TEMP.rgid = TEMP.l.split(":")[0][1:]
+    TEMP.lane = TEMP.l.split(":")[1]
 
     TEMP.idxfile = join(ARGS.refbase, ARGS.base_species +
-                   DATA.config_data['sample_to_carrier'][libname])
+                   DATA.config_data['sample_to_carrier'][sample])
 
     # Do tophat
     print 'Tophatting...', '\n', '='*30
     TEMP.GTF = join(ARGS.refbase, ARGS.base_species +
-               DATA.config_data['sample_to_carrier'][libname] + '.gtf')
+               DATA.config_data['sample_to_carrier'][sample] + '.gtf')
+
+    TEMP.transcriptome = join(ARGS.transbase, ARGS.base_species +
+                              DATA.config_data['sample_to_carrier'][sample])
+    TEMP.transarg = '--transcriptome-index %s '% TEMP.transcriptome
+
     TEMP.commandstr =  (BASE.tophat_base + '-G %(GTF)s -o %(od)s --rg-library '
                    '%(library)s'
                    ' --rg-center VCGSL --rg-sample %(library)s'
                    ' --rg-platform'
                    ' ILLUMINA --rg-id %(rgid)s  --rg-platform-unit %(lane)s'
+                   ' %(transarg)s'
                 ' %(idxfile)s %(rf1)s %(rf2)s'
            % {'GTF': TEMP.GTF,
               'od': TEMP.od,
               'idxfile': TEMP.idxfile,
-              'rf1': rf1,
-              'rf2': rf2,
-              'library': libname,
+              'rf1': ','.join(rf1),
+              'rf2': ','.join(rf2),
+              'library': sample,
               'rgid': TEMP.rgid,
-              'lane': TEMP.lane})
+              'lane': TEMP.lane,
+              'transarg' : TEMP.transarg})
+
     print TEMP.commandstr
     sys.stdout.flush()
     TEMP.tophat_proc = Popen(str(TEMP.commandstr).split())
     TEMP.tophat_proc.wait()
-    TEMP.commandstr = ['nice' 'python', 'AssignReads2.py',
+
+    TEMP.rezip_procs.append(Popen(['parallel', '-j', '2', 'gzip {}', ':::']
+                                  + rf1 + rf2))
+
+    TEMP.commandstr = ['nice', 'python', 'AssignReads2.py',
                   join(TEMP.od, 'accepted_hits.bam')]
+    print TEMP.commandstr
     DATA.assign_procs.append(Popen(TEMP.commandstr))
 
 
@@ -193,9 +236,9 @@ print "Sorting time", timedelta(seconds = TIMES.sortend - TIMES.sortstart)
 # Figure out how well everything mapped
 DATA.mapped_reads = {}
 DATA.all_bams = [join(ARGS.analysis_dir, sample_dir, 'dmel_sorted.bam')
-            for sample_dir in ARGS.samples]
+            for sample_dir in DATA.samples]
 
-for sample, bam in zip(ARGS.samples, DATA.all_bams):
+for sample, bam in zip(DATA.samples, DATA.all_bams):
     print '='*30
     commandstr = ['samtools', 'flagstat', bam]
     print commandstr
@@ -211,7 +254,7 @@ for sample, bam in zip(ARGS.samples, DATA.all_bams):
 
 
 
-for sample in ARGS.samples:
+for sample in DATA.samples:
     TEMP.od = join(ARGS.analysis_dir, sample)
     TEMP.commandstr = (BASE.cufflinks_base +
                   '-G %(GTF)s -o %(od)s %(hits)s'
@@ -227,3 +270,11 @@ for sample in ARGS.samples:
 
 print "Final time", timedelta(seconds=time() - TIMES.start)
 print "Cufflinks time", timedelta(seconds=time() - TIMES.sortend)
+
+import cPickle as pickle
+
+pickle.dump(dict(data=DATA, args=ARGS, temp=TEMP), 
+            open('mapreads_dump.pkl', 'w'))
+
+for proc in TEMP.rezip_procs:
+    proc.wait()

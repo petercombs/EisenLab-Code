@@ -25,9 +25,10 @@ sequence*
 MemeOutput
 MemeOutput2
 Reference/miso-events
+Reference/AAA
 NonFlyNonHum*
 blaststuff
 *.xml
 StartCheck.py
 WatchDeme.py
-
+dry*run*
