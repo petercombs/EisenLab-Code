@@ -37,7 +37,7 @@ def process_read(read):
         resolve_multiread(read, nh, species)
 
 def resolve_multiread(read, nh, species):
-    nm = [t[1] for t in read.tags if t[0] == 'NM'][0]
+    nm = [t[1] for t in read.tags if t[0].upper() == 'NM'][0]
     has_multi_frags = bool(0x1 & read.flag)
     is_first = bool(0x40 & read.flag)
     is_last = bool(0x80 & read.flag)
