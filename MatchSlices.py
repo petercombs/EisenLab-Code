@@ -192,7 +192,6 @@ if __name__ == "__main__":
 
     exparray, posarray = bdtnp_parser.data_to_arrays()
     if args.pre_calc_data:
-        import cPickle as pickle
         starts = pickle.load(args.pre_calc_data)
         slices = pickle.load(args.pre_calc_data)
     else:
