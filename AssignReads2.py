@@ -15,8 +15,11 @@ class my_defaultdict(dict):
                                                  **self.other_args)
         return value
 
+def get(read, tag):
+    return {tname.upper(): val for tname, val in read.tags}[tag.upper()]
+
 def get_nh(read):
-    return [t[1] for t in read.tags if t[0] == 'NH'][0]
+    return {tag.upper(): val for tag,val in read.tags}['NH']
 
 def get_species(read):
     return references[read.rname].split('_')[0]
@@ -28,7 +31,7 @@ def process_read(read):
         assert False
     nh = get_nh(read)
     species = get_species(read)
-    if nh == 1:
+    if nh == 1 and read.is_proper_pair:
         assigned.write(read)
         specific_files[species].write(read)
         species_counts[species] += 1
@@ -37,11 +40,9 @@ def process_read(read):
         resolve_multiread(read, nh, species)
 
 def resolve_multiread(read, nh, species):
-    nm = [t[1] for t in read.tags if t[0].upper() == 'NM'][0]
+    nm = get(read, 'NM')
     has_multi_frags = bool(0x1 & read.flag)
-    is_first = bool(0x40 & read.flag)
-    is_last = bool(0x80 & read.flag)
-    if has_multi_frags and is_last:
+    if has_multi_frags and read.is_read2:
         to_be_resolved_counts2[read.qname] += 1
         if nm < to_be_resolved_vals2[read.qname][species]:
             to_be_resolved_vals2[read.qname][species] = nm
@@ -54,7 +55,7 @@ def resolve_multiread(read, nh, species):
             dbs.to_be_resolved_reads = to_be_resolved_reads2
             on_last_multiread(dbs, read)
 
-    else:
+    elif has_multi_frags and read.is_read1:
         to_be_resolved_counts[read.qname] += 1
         if nm < to_be_resolved_vals[read.qname][species]:
             to_be_resolved_vals[read.qname][species] = nm
@@ -66,6 +67,9 @@ def resolve_multiread(read, nh, species):
             dbs.to_be_resolved_counts = to_be_resolved_counts
             dbs.to_be_resolved_reads = to_be_resolved_reads
             on_last_multiread(dbs, read)
+    else:
+        assert False
+        # WTF are we doign here?
 
 def on_last_multiread(dbs, read):
     # Sort out the reads

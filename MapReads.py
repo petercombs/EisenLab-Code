@@ -30,7 +30,8 @@ ARGS.config_file = 'RunConfig.cfg'
 
 BASE = Namespace()
 BASE.tophat_base = ('tophat -p8 --no-novel-juncs --read-edit-dist 6 '
-                '--report-secondary-alignments --keep-tmp ')
+                    '--report-secondary-alignments '
+                    '--no-sort-bam ')
 #BASE.tophat_base = ('bowtie2 -p 8 --all --no-mixed --local ')
 BASE.cufflinks_base = 'cufflinks -p 8 -q -u '
 
@@ -273,7 +274,7 @@ print "Cufflinks time", timedelta(seconds=time() - TIMES.sortend)
 
 import cPickle as pickle
 
-pickle.dump(dict(data=DATA, args=ARGS, temp=TEMP), 
+pickle.dump(dict(data=DATA, args=ARGS), 
             open('mapreads_dump.pkl', 'w'))
 
 for proc in TEMP.rezip_procs:
