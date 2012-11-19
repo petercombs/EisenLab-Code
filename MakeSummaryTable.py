@@ -1,3 +1,11 @@
+"""MakeSummaryTable
+
+Takes a collection of fpkm_tracking files and makes a summary table with all of
+the data as a CSV file.  Arguments:
+    1) superdirectory
+    2) -c -- also include confidence intervals
+
+"""
 import pandas
 import os
 from os import path
@@ -5,7 +13,7 @@ from glob import glob
 from sys import argv
 
 
-fnames = glob('analysis-multi/*/genes.fpkm_tracking')
+fnames = glob(path.join(argv[1], '*', 'genes.fpkm_tracking'))
 
 conf = '-c' in argv
 
@@ -29,5 +37,5 @@ for fname in sorted(fnames):
                       table.FPKM_conf_hi - table.FPKM_conf_lo)
     
 
-df.to_csv('analysis-multi/summary.tsv', sep='\t')
+df.to_csv(path.join(argv[1], 'summary.tsv'), sep='\t')
 
