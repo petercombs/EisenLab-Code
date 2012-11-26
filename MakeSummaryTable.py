@@ -25,17 +25,30 @@ for fname in sorted(fnames):
     table = table.drop_duplicates('gene_short_name').dropna(how='any')
     table.set_index('gene_short_name', inplace=True, verify_integrity=True)
     if df is None:
-        df = pandas.DataFrame({dirname: table.FPKM})
+        df = pandas.DataFrame({dirname+"_FPKM": table.FPKM})
         if conf:
+            #df.insert(len(df.columns),
+                      #dirname+"_conf_range", 
+                      #(table.FPKM_conf_hi - table.FPKM_conf_lo))
             df.insert(len(df.columns),
-                      dirname+"_conf_range", 
-                      (table.FPKM_conf_hi - table.FPKM_conf_lo))
+                      dirname+"_conf_lo",
+                      table.FPKM_conf_lo)
+            df.insert(len(df.columns),
+                      dirname+"_conf_hi",
+                      table.FPKM_conf_hi)
     else:
-        df.insert(len(df.columns), dirname, table.FPKM)
+        df.insert(len(df.columns), dirname+"_FPKM", table.FPKM)
         if conf:
-            df.insert(len(df.columns), dirname + "_conf_range",
-                      table.FPKM_conf_hi - table.FPKM_conf_lo)
+            #df.insert(len(df.columns), dirname + "_conf_range",
+                      #table.FPKM_conf_hi - table.FPKM_conf_lo)
+            df.insert(len(df.columns),
+                      dirname+"_conf_lo",
+                      table.FPKM_conf_lo)
+            df.insert(len(df.columns),
+                      dirname+"_conf_hi",
+                      table.FPKM_conf_hi)
     
 
-df.to_csv(path.join(argv[1], 'summary.tsv'), sep='\t')
+df.to_csv(path.join(argv[1], 'summary' + ('_with_conf' * conf) + '.tsv'),
+          sep='\t')
 
