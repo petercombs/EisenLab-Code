@@ -16,6 +16,8 @@ from progressbar import ProgressBar
 import pickle as pkl
 import PointClouds as pc
 
+from matplotlib import pyplot as mpl
+
 def prob(sample, reference):
     sample_mean = 0
     sample_var_lo = 1
@@ -106,6 +108,7 @@ for set in ['CaS1', 'CaS2', 'CaS3', 'Bcd1', 'Bcd2', 'Bcd3']:
         slice_frame.index = bdtnp_parser.get_gene_names()
 
     for ts, slice in enumerate(slice_frames):
+        mpl.figure()
         priors = np.ones((n_pos, len(FPKM_cols))) / n_pos
         progress = ProgressBar()
         for gene in progress(slice.index):
@@ -125,6 +128,11 @@ for set in ['CaS1', 'CaS2', 'CaS3', 'Bcd1', 'Bcd2', 'Bcd3']:
                 updated = bayes(priors[:,i], evidence)
                 assert not sum(np.isnan(updated))
                 priors[:,i] = updated
+            mpl.cla()
+            mpl.plot(priors)
+            mpl.title(gene)
+            mpl.draw()
+
 
         print "In time slice", ts
         print np.argmax(priors, axis=0)
