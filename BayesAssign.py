@@ -15,6 +15,7 @@ from scipy import stats
 from progressbar import ProgressBar
 import pickle as pkl
 import PointClouds as pc
+import sys
 
 from matplotlib import pyplot as mpl
 
@@ -60,7 +61,13 @@ def bayes(priors, probabilities, prob_boost = .001, post_min = 1e-10):
 
 
 
-frame = pd.read_table('merged_genes.fpkm_tracking')
+try:
+    frame = pd.read_table('merged_genes.fpkm_tracking')
+except:
+    if len(sys.argv) > 1:
+        frame = pd.read_table(sys.argv[1])
+    else:
+        frame = pd.read_table(raw_input("File name"))
 frame = frame.dropna(how='any')
 frame.index = frame['gene_short_name']
 
