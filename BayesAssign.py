@@ -23,7 +23,7 @@ def prob(sample, reference):
     sample_var_hi = 1
     n_samples = 0
     for col in sample.index:
-        if col.endswith('FPKM'):
+        if col.endswith('FPKM') or '_' not in col:
             sample_mean += sample[col]
             n_samples += 1
             col_base = col.strip('_FPKM')
@@ -75,8 +75,10 @@ cycles = [pd.read_table(f, index_col = 0) for f in glob('../susan/by_cycle/*')]
 
 whole_frame = frame.select(lambda x: x in cycles[0].index)
 
+mpl.ion()
 
-for set in ['CaS1', 'CaS3']:#['CaS1', 'CaS2', 'CaS3', 'Bcd1', 'Bcd2']:
+for set in ['CaS1', 'CaS2', 'CaS3', 'Bcd1', 'Bcd2', 'Bcd3']:
+    print '-'*60, '\n', set, '\n', '-'*60
     priors = np.ones(len(cycles)) / len(cycles)
     old_priors = np.zeros((len(frame.index), len(priors)))
 
@@ -105,7 +107,7 @@ for set in ['CaS1', 'CaS3']:#['CaS1', 'CaS2', 'CaS3', 'Bcd1', 'Bcd2']:
     slices = pkl.load(pkl_file)
     n_pos, n_genes, n_times = np.shape(slices)
 
-    FPKM_cols = [c for c in frame.columns if c.endswith('FPKM')]
+    FPKM_cols = [c for c in frame.columns if c.endswith('FPKM') or '_' not in c]
     slice_frames = [pd.DataFrame(slices[:,:,i].T) for i in range(n_times)]
     for slice_frame in slice_frames:
         slice_frame.index = bdtnp_parser.get_gene_names()
@@ -121,6 +123,8 @@ for set in ['CaS1', 'CaS3']:#['CaS1', 'CaS2', 'CaS3', 'Bcd1', 'Bcd2']:
             for i, col in enumerate(FPKM_cols):
                 std = (frame[col.replace("FPKM","conf_hi")][gene]
                        - frame[col.replace("FPKM","conf_lo")][gene]) / 2
+                if not std:
+                    std = frame[col + "_conf_range"][gene]
                 evidence = stats.zprob(-np.abs((normed -
                                                 frame[col][gene])/(std+1)))
 
