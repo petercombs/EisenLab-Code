@@ -1,11 +1,30 @@
 from matplotlib import pyplot as mpl
 from matplotlib.colors import hsv_to_rgb
 from matplotlib import cm
-from collections import defaultdict
-from scipy.stats import spearmanr, pearsonr, gaussian_kde
+from scipy.stats import gaussian_kde
 from numpy import log, array, Inf, median, exp, argsort, linspace
 import numpy as np
 
+
+def scatter_heat(x, y, **kwargs):
+    if 's' not in kwargs:
+        kwargs['s'] = 10
+    if 'edgecolors' not in kwargs:
+        kwargs['edgecolors'] = 'none'
+    if 'cmap' not in kwargs:
+        kwargs['cmap'] = cm.jet
+    estimator = gaussian_kde([x, y])
+    density = estimator.evaluate([x, y])
+
+    normdensity = exp(density.clip(median(density), Inf))
+
+    xlim = kwargs.pop('xlim', (min(x), max(x)))
+    ylim = kwargs.pop('ylim', (min(y), max(y)))
+    retval = mpl.scatter(x, y, c=normdensity, **kwargs)
+    ax = mpl.gca()
+    ax.set_xlim(xlim)
+    ax.set_ylim(ylim)
+    return retval
 
 def loglog_heat(x,y, **kwargs):
     if 's' not in kwargs:
