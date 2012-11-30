@@ -96,9 +96,9 @@ if __name__ == "__main__":
 
         except (ValueError,OverflowError,KeyboardInterrupt) as err:
             print "E"*30
+            print err
             print ID
             print counts
             print expect
-            print err
 
 
