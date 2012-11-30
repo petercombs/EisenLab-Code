@@ -12,6 +12,7 @@ import pandas as pd
 import numpy as np
 from glob import glob
 from scipy import stats
+from os import path
 from progressbar import ProgressBar
 import pickle as pkl
 import PointClouds as pc
@@ -62,18 +63,19 @@ def bayes(priors, probabilities, prob_boost = .001, post_min = 1e-10):
 
 
 try:
-    frame = pd.read_table('merged_genes.fpkm_tracking')
-except:
     if len(sys.argv) > 1:
         frame = pd.read_table(sys.argv[1])
     else:
         frame = pd.read_table(raw_input("File name"))
+except:
+    frame = pd.read_table('merged_genes.fpkm_tracking')
 frame = frame.dropna(how='any')
 frame.index = frame['gene_short_name']
 
 
 
-cycles = [pd.read_table(f, index_col = 0) for f in glob('../susan/by_cycle/*')]
+cycnames = glob('../susan/by_cycle/*')
+cycles = [pd.read_table(f, index_col = 0) for f in cycnames]
 
 whole_frame = frame.select(lambda x: x in cycles[0].index)
 
@@ -100,7 +102,7 @@ for set in ['CaS1', 'CaS2', 'CaS3', 'Bcd1', 'Bcd2', 'Bcd3']:
 
 
     best_cycle = cycles[np.argmax(priors)]
-    print "Best hit in ", glob('../susan/by_cycle/*')[np.argmax(priors)]
+    print "Best hit in ", cycnames[np.argmax(priors)]
 
     pkl_file = open('../Slice60u-NaN-std.pkl')
     bdtnp_parser = pc.PointCloudReader(open('../D_mel_wt_atlas_r2.vpc'))
