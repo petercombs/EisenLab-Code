@@ -103,6 +103,7 @@ for set in ['CaS1', 'CaS2', 'CaS3', 'Bcd1', 'Bcd2', 'Bcd3']:
 
     best_cycle = cycles[np.argmax(priors)]
     print "Best hit in ", cycnames[np.argmax(priors)]
+    sys.stdout.flush()
 
     pkl_file = open('../Slice60u-NaN-std.pkl')
     bdtnp_parser = pc.PointCloudReader(open('../D_mel_wt_atlas_r2.vpc'))
@@ -111,7 +112,7 @@ for set in ['CaS1', 'CaS2', 'CaS3', 'Bcd1', 'Bcd2', 'Bcd3']:
     slices = pkl.load(pkl_file)
     n_pos, n_genes, n_times = np.shape(slices)
 
-    FPKM_cols = [c for c in frame.columns if c.endswith('FPKM') or '_' not in c]
+    FPKM_cols = [c for c in frame.columns if c.endswith('FPKM') ]
     slice_frames = [pd.DataFrame(slices[:,:,i].T) for i in range(n_times)]
     for slice_frame in slice_frames:
         slice_frame.index = bdtnp_parser.get_gene_names()
@@ -126,10 +127,15 @@ for set in ['CaS1', 'CaS2', 'CaS3', 'Bcd1', 'Bcd2', 'Bcd3']:
             normed = (slice.ix[gene] / max(slice.ix[gene]) *
                       np.mean(best_cycle.ix[gene], axis=1))
             for i, col in enumerate(FPKM_cols):
-                std = (frame[col.replace("FPKM","conf_hi")][gene]
-                       - frame[col.replace("FPKM","conf_lo")][gene]) / 2
-                if not std:
+                if col.replace("FPKM", "conf_hi") in frame.columns:
+                    std = (frame[col.replace("FPKM","conf_hi")][gene]
+                           - frame[col.replace("FPKM","conf_lo")][gene]) / 2
+                elif col.replace("FPKM", "conf_range"):
                     std = frame[col + "_conf_range"][gene]
+                else:
+                    std = .3 * frame[col][gene]
+                    sys.stderr.write("Warning: Can't find stddev for %s in"
+                                     "%s" % (gene, col))
                 evidence = stats.zprob(-np.abs((normed -
                                                 frame[col][gene])/(std+1)))
 
@@ -145,5 +151,6 @@ for set in ['CaS1', 'CaS2', 'CaS3', 'Bcd1', 'Bcd2', 'Bcd3']:
 
         print "In time slice", ts
         print np.argmax(priors, axis=0)
+        sys.stdout.flush()
 
 
