@@ -169,10 +169,23 @@ for set in args.set:
                 updated = bayes(priors[:,i], evidence)
                 assert not sum(np.isnan(updated))
                 priors[:,i] = updated
-            mpl.cla()
-            mpl.plot(priors)
-            mpl.title(gene)
-            mpl.draw()
+        plots = mpl.plot(priors)
+        ax = mpl.gca()
+        Y = priors.max()
+        dY = 0.25 * Y
+        Y += dY
+        ests = np.argmax(priors, axis=0)
+        for plot, x in zip(plots, ests):
+            ax.add_artist(mpl.Rectangle((x, Y), 60, dY,
+                                        facecolor=plot.get_color()))
+            Y += dY
+
+        ax.set_ylim(0, Y)
+        mpl.title("Slice Position estimates")
+        mpl.xlabel("A/P position ($\\mu$m)")
+        mpl.ylabel("P(start @ $x\\pm1\\mu$m)")
+        mpl.legend(FPKM_cols, loc='right')
+        mpl.draw()
 
 
         print "In time slice", ts
