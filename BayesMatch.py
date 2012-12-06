@@ -17,6 +17,7 @@ from progressbar import ProgressBar
 import pickle as pkl
 import PointClouds as pc
 import sys
+import argparse
 
 from matplotlib import pyplot as mpl
 
@@ -61,28 +62,48 @@ def bayes(priors, probabilities, prob_boost = .001, post_min = 1e-10):
     return posteriors / sum(posteriors)
 
 
+def parse_args():
+    description = ('Takes a set of FPKM values from sliced RNAseq data, and'
+                   'matches those slices to known gold-standards.')
+    parser = argparse.ArgumentParser(description=description)
+    parser.add_argument('fname', type=open, default='merged_genes.fpkm_tracking')
+    parser.add_argument('--rnaseq-standard-dir', '-r',
+                        default='../susan/by_cycle')
+    parser.add_argument('--slice-pickle', '-p', type=open,
+                        default=open('../Slice60u-NaN-std.pkl'))
+    parser.add_argument('--atlas', '-a', type=open,
+                        default=open('../D_mel_wt_atlas_r2.vpc'))
+    parser.add_argument('--set', '-s', action='append',
+                       help='Prefix of columns to use (May include a comma to '
+                        'allow multiple prefixes; e.g. --set A,P)')
 
-try:
-    if len(sys.argv) > 1:
-        frame = pd.read_table(sys.argv[1])
-    else:
-        frame = pd.read_table(raw_input("File name"))
-except:
-    frame = pd.read_table('merged_genes.fpkm_tracking')
+    args = parser.parse_args()
+    print args.set
+    for i, set in enumerate(args.set):
+        args.set[i] = tuple(set.split(','))
+    print args.set
+    return args
+
+
+args = parse_args()
+frame = pd.read_table(args.fname)
 frame = frame.dropna(how='any')
 frame.index = frame['gene_short_name']
 
 
 
-cycnames = glob('../susan/by_cycle/*')
+cycnames = glob(path.join(args.rnaseq_standard_dir, '*'))
 cycles = [pd.read_table(f, index_col = 0) for f in cycnames]
 
 whole_frame = frame.select(lambda x: x in cycles[0].index)
 
 mpl.ion()
 
-for set in ['CaS1', 'CaS2', 'CaS3', 'Bcd1', 'Bcd2', 'Bcd3']:
+# Each set of slices should be treated independently.
+for set in args.set:
+    # Print Header line
     print '-'*60, '\n', set, '\n', '-'*60
+
     priors = np.ones(len(cycles)) / len(cycles)
     old_priors = np.zeros((len(frame.index), len(priors)))
 
@@ -105,8 +126,8 @@ for set in ['CaS1', 'CaS2', 'CaS3', 'Bcd1', 'Bcd2', 'Bcd3']:
     print "Best hit in ", cycnames[np.argmax(priors)]
     sys.stdout.flush()
 
-    pkl_file = open('../Slice60u-NaN-std.pkl')
-    bdtnp_parser = pc.PointCloudReader(open('../D_mel_wt_atlas_r2.vpc'))
+    pkl_file = args.slice_pickle
+    bdtnp_parser = pc.PointCloudReader(args.atlas)
 
     starts = pkl.load(pkl_file)
     slices = pkl.load(pkl_file)
