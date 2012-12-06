@@ -176,9 +176,10 @@ for set in args.set:
         Y += dY
         ests = np.argmax(priors, axis=0)
         for plot, x in zip(plots, ests):
+            mpl.vlines(x, plot.get_data()[1][x], Y+dY,
+                       edgecolor=plot.get_color(), linestyles='dotted')
             ax.add_artist(mpl.Rectangle((x, Y), 60, dY,
-                                        facecolor=plot.get_color()))
-            Y += dY
+                                        facecolor=plot.get_color(), alpha=0.7))
 
         ax.set_ylim(0, Y)
         mpl.title("Slice Position estimates")
