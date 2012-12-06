@@ -13,7 +13,7 @@ import numpy as np
 from glob import glob
 from scipy import stats
 from os import path
-from progressbar import ProgressBar
+from progressbar import ProgressBar, Bar, ETA, Percentage
 import pickle as pkl
 import PointClouds as pc
 import sys
@@ -109,7 +109,10 @@ for set in args.set:
 
     frame = whole_frame.select(lambda x: x.startswith(set), axis=1)
 
-    progress = ProgressBar()
+    # Match to the correct time-slice
+    widgets = ['Susan: ' + str(set) + ':', Percentage(), Bar(), ETA()]
+    progress = ProgressBar(widgets=widgets)
+
     for i, gene in enumerate(progress(frame.index)):
         all_probs = [prob(frame.ix[gene], cycle.ix[gene]) for cycle in cycles]
         if 0 not in all_probs and np.nan not in all_probs:
@@ -140,8 +143,10 @@ for set in args.set:
 
     for ts, slice in enumerate(slice_frames):
         mpl.figure()
+        slice = slice.dropna(how='any')
         priors = np.ones((n_pos, len(FPKM_cols))) / n_pos
-        progress = ProgressBar()
+        widgets = ['Time %s:'%ts, Percentage(), Bar(), ETA()]
+        progress = ProgressBar(widgets=widgets)
         for gene in progress(slice.index):
             if gene not in frame.index: continue
             if sum(np.isnan(slice.ix[gene])): continue
@@ -171,7 +176,8 @@ for set in args.set:
 
 
         print "In time slice", ts
-        print np.argmax(priors, axis=0)
+        print "Mode position", np.argmax(priors, axis=0)
+        print "Mean position", [sum(np.arange(475) * priors[:,i]) for i in range(6)]
         sys.stdout.flush()
 
 
