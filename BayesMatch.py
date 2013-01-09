@@ -12,13 +12,18 @@ import pandas as pd
 import numpy as np
 from glob import glob
 from scipy import stats
-from os import path
-from progressbar import ProgressBar
+from os import path, makedirs
+from progressbar import ProgressBar, Bar, ETA, Percentage
 import pickle as pkl
 import PointClouds as pc
 import sys
+import argparse
 
 from matplotlib import pyplot as mpl
+import matplotlib
+
+matplotlib.rcParams['pdf.fonttype'] = 42
+matplotlib.rcParams['font.sans-serif'] = ['Arial']
 
 def prob(sample, reference):
     sample_mean = 0
@@ -51,99 +56,190 @@ def prob(sample, reference):
 def bayes(priors, probabilities, prob_boost = .001, post_min = 1e-10):
     # P(H|E) = P(E|H) * P(H) / P(E)
     #        = P(E|H) * P(H) / sum(P(E|H_i) * P(H_i))
+    priors = np.array(priors)
     probabilities = np.array(probabilities)
     probabilities += prob_boost/len(priors)
-    posteriors = [P*H / sum(Pi*Hi for Pi, Hi in zip(probabilities, priors))
-                  for P,H in zip(probabilities, priors)]
-
+    denom = sum(probabilities * priors)
+    posteriors = probabilities * priors / denom
     # Divide to prevent slow divergence from sum(P_i) == 1
     posteriors = np.array(posteriors).clip(post_min, 1)
     return posteriors / sum(posteriors)
 
-
-
-try:
-    if len(sys.argv) > 1:
-        frame = pd.read_table(sys.argv[1])
+def get_std(column, data):
+    if column.replace("FPKM", "conf_hi") in data.columns:
+        std = (data[col.replace("FPKM","conf_hi")][gene]
+               - data[col.replace("FPKM","conf_lo")][gene]) / 2
+    elif column.replace("FPKM", "conf_range") in data.columns:
+        std = data[col + "_conf_range"][gene]
     else:
-        frame = pd.read_table(raw_input("File name"))
-except:
-    frame = pd.read_table('merged_genes.fpkm_tracking')
+        std = .3 * data[col][gene]
+        sys.stderr.write("Warning: Can't find stddev for %s in"
+                         "%s" % (gene, col))
+    return std
+
+def parse_args():
+    description = ('Takes a set of FPKM values from sliced RNAseq data, and'
+                   'matches those slices to known gold-standards.')
+    parser = argparse.ArgumentParser(description=description)
+    parser.add_argument('fname', type=open, default='merged_genes.fpkm_tracking')
+    parser.add_argument('--rnaseq-standard-dir', '-r',
+                        default='../susan/by_cycle')
+    parser.add_argument('--slice-pickle', '-p', type=open,
+                        default=open('../Slice60u-NaN-std.pkl'))
+    parser.add_argument('--atlas', '-a', type=open,
+                        default=open('../D_mel_wt_atlas_r2.vpc'))
+    parser.add_argument('--set', '-s', action='append',
+                       help='Prefix of columns to use (May include a comma to '
+                        'allow multiple prefixes; e.g. --set A,P)')
+    parser.add_argument('--figdir', '-f', default='figures',
+                       help='Directory for writing figures into')
+    parser.add_argument('--colormap', '-c', default='jet',
+                        help='Colormap for plotting')
+    parser.add_argument('--figwidth', '-W', default=4, type=float)
+    parser.add_argument('--figheight', '-H', default=3, type=float)
+    parser.add_argument('--dpi', '-d', default=300, type=int)
+
+    args = parser.parse_args()
+    print args.set
+    for i, set in enumerate(args.set):
+        args.set[i] = tuple(set.split(','))
+    print args.set
+    return args
+
+
+args = parse_args()
+frame = pd.read_table(args.fname)
 frame = frame.dropna(how='any')
 frame.index = frame['gene_short_name']
 
 
+pkl_file = args.slice_pickle
+bdtnp_parser = pc.PointCloudReader(args.atlas)
 
-cycnames = glob('../susan/by_cycle/*')
+starts = pkl.load(pkl_file)
+slices = pkl.load(pkl_file)
+slices = slices[0:400,:,:]
+n_pos, n_genes, n_times = np.shape(slices)
+
+cycnames = glob(path.join(args.rnaseq_standard_dir, '*'))
 cycles = [pd.read_table(f, index_col = 0) for f in cycnames]
 
 whole_frame = frame.select(lambda x: x in cycles[0].index)
 
 mpl.ion()
 
-for set in ['CaS1', 'CaS2', 'CaS3', 'Bcd1', 'Bcd2', 'Bcd3']:
+# Each set of slices should be treated independently.
+for set in args.set:
+    # Print Header line
     print '-'*60, '\n', set, '\n', '-'*60
+
     priors = np.ones(len(cycles)) / len(cycles)
     old_priors = np.zeros((len(frame.index), len(priors)))
 
     frame = whole_frame.select(lambda x: x.startswith(set), axis=1)
 
-    progress = ProgressBar()
+    FPKM_cols = [c for c in frame.columns if c.endswith('FPKM') ]
+    print "Found columns: ", FPKM_cols
+
+    # ==============================================================
+    # Match to the correct time-slice
+    # ==============================================================
+    widgets = ['Susan: ' + str(set) + ':', Percentage(), Bar(), ETA()]
+    progress = ProgressBar(widgets=widgets)
+
     for i, gene in enumerate(progress(frame.index)):
         all_probs = [prob(frame.ix[gene], cycle.ix[gene]) for cycle in cycles]
         if 0 not in all_probs and np.nan not in all_probs:
             posterior = bayes(priors, all_probs)
-            assert not sum(np.isnan(posterior))
-            assert all(posterior)
+            #assert not sum(np.isnan(posterior))
+            #assert all(posterior)
             old_priors[i,:] = priors
             priors = posterior
         else:
             old_priors[i,:] = old_priors[i-1,:]
 
 
+
     best_cycle = cycles[np.argmax(priors)]
     print "Best hit in ", cycnames[np.argmax(priors)]
+    sys.stdout.flush()
 
-    pkl_file = open('../Slice60u-NaN-std.pkl')
-    bdtnp_parser = pc.PointCloudReader(open('../D_mel_wt_atlas_r2.vpc'))
+    #==============================================================
+    # Match each slice to the correct positions
+    #==============================================================
 
-    starts = pkl.load(pkl_file)
-    slices = pkl.load(pkl_file)
-    n_pos, n_genes, n_times = np.shape(slices)
-
-    FPKM_cols = [c for c in frame.columns if c.endswith('FPKM') or '_' not in c]
     slice_frames = [pd.DataFrame(slices[:,:,i].T) for i in range(n_times)]
     for slice_frame in slice_frames:
         slice_frame.index = bdtnp_parser.get_gene_names()
 
     for ts, slice in enumerate(slice_frames):
-        mpl.figure()
+        mpl.figure(figsize=(args.figwidth, args.figheight))
+        slice = slice.dropna(how='any')
         priors = np.ones((n_pos, len(FPKM_cols))) / n_pos
-        progress = ProgressBar()
+        widgets = ['Time %s:'%ts, Percentage(), Bar(), ETA()]
+        progress = ProgressBar(widgets=widgets)
         for gene in progress(slice.index):
             if gene not in frame.index: continue
-            if sum(np.isnan(slice.ix[gene])): continue
+            #if sum(np.isnan(slice.ix[gene])):
+            #    assert False
+            #    continue
             normed = (slice.ix[gene] / max(slice.ix[gene]) *
                       np.mean(best_cycle.ix[gene], axis=1))
             for i, col in enumerate(FPKM_cols):
-                std = (frame[col.replace("FPKM","conf_hi")][gene]
-                       - frame[col.replace("FPKM","conf_lo")][gene]) / 2
-                if not std:
-                    std = frame[col + "_conf_range"][gene]
+                std = get_std(col, frame)
+
                 evidence = stats.zprob(-np.abs((normed -
                                                 frame[col][gene])/(std+1)))
 
-
                 updated = bayes(priors[:,i], evidence)
-                assert not sum(np.isnan(updated))
+                #assert not sum(np.isnan(updated))
                 priors[:,i] = updated
-            mpl.cla()
-            mpl.plot(priors)
-            mpl.title(gene)
-            mpl.draw()
+        my_cm = mpl.cm.__getattribute__(args.colormap)
+        n_pos, n_samples = np.shape(priors)
+        plots = []
+        for i in range(n_samples):
+            plots.extend(mpl.plot(priors[:,i],
+                                  label=FPKM_cols[i].replace('_FPKM', ''),
+                                  color = my_cm(i * 256 / (n_samples-1))))
+        ax = mpl.gca()
+        Y = priors.max()
+        dY = 0.25 * Y
+        Y += dY
+        ests = np.argmax(priors, axis=0)
+        for plot, x in zip(plots, ests):
+            mpl.vlines(x, plot.get_data()[1][x], Y+dY,
+                       edgecolor=plot.get_color(), linestyles='dotted')
+            ax.add_artist(mpl.Rectangle((x, Y), 60, dY,
+                                        facecolor=plot.get_color(), alpha=0.7))
+
+        ax.set_ylim(0, Y+dY)
+        ax.set_xlim(0, n_pos + 60)
+        mpl.title("Slice Position estimates for %s" % str(set))
+        mpl.xlabel("A/P position ($\\mu$m)")
+        mpl.ylabel("P(start @ $x\\pm1\\mu$m)")
+        mpl.tight_layout()
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+
+        # Put a legend to the right of the current axis
+        ax.legend(loc='center left', bbox_to_anchor=(1.0, 0.5))
+        mpl.draw()
+        try:
+            makedirs(args.figdir)
+        except OSError:
+            pass
+        filename = "Sample_%s_T%s.pdf" % (str(set).translate(None,
+                                                             ' \'(),"'),
+                                          ts)
+        print "Saving to: ", path.abspath(path.join(args.figdir, filename))
+        mpl.savefig(path.join(args.figdir,filename),
+                   dpi=args.dpi)
 
 
         print "In time slice", ts
-        print np.argmax(priors, axis=0)
+        print "Mode position", np.argmax(priors, axis=0)
+        print "Mean position", [sum(np.arange(n_pos) * priors[:,i])
+                                for i in range(n_samples)]
+        sys.stdout.flush()
 
 

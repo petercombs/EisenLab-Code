@@ -5,6 +5,24 @@ from scipy.stats import gaussian_kde
 from numpy import log, array, Inf, median, exp, argsort, linspace
 import numpy as np
 
+import urllib, time
+from os import path
+def imget(imname):
+    """ Use cached, or fetch an image from FlyExpress
+
+Assumes that the image name is one from BDGP, in which case
+it's pretty easy to look at the source of the FlyExpress
+report pages and see what the format is.
+
+"""
+    im_basename = path.splitext(path.basename(imname))[0]
+    filename = path.join('figures', 'BDGP', im_basename+'.bmp')
+    if not path.exists(filename):
+        base_web = "http://www.flyexpress.net/ZOOX4_DBImages/BDGP/thumbnails/%s_s.bmp"
+        print "1 second delay to avoid spamming server"
+        time.sleep(1)
+        urllib.urlretrieve(base_web % im_basename, filename)
+    return mpl.imread(filename)
 
 def scatter_heat(x, y, **kwargs):
     if 's' not in kwargs:
