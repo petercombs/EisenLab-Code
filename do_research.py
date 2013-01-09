@@ -19,8 +19,8 @@ def make_multi():
               'wil', 'moj', 'vir']).wait()
     #btb = sp.Popen(['bowtie-build', 'multi.fa', 'multi'])
     #bt2b = sp.Popen(['bowtie2-build', 'multi.fa', 'multi'])
-    btb.wait()
-    bt2b.wait()
+    #btb.wait()
+    #bt2b.wait()
 
 def make_gtfs():
     "Make GTF files from all flybase GFF files"
@@ -29,7 +29,7 @@ def make_gtfs():
 
     for fname in glob('d*.gff'):
         print "Converting %s to GTF" % fname
-        sp.Popen(['gffread', out_name, '-E', '-T', '-o', 
+        sp.Popen(['gffread', fname, '-E', '-T', '-o',
                   fname.replace('gff', 'gtf')]).wait()
 
     os.chdir(root)
