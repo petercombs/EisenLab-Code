@@ -31,4 +31,5 @@ blaststuff
 *.xml
 StartCheck.py
 WatchDeme.py
+GEO_*
 dry*run*
