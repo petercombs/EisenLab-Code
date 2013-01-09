@@ -12,7 +12,7 @@ import pandas as pd
 import numpy as np
 from glob import glob
 from scipy import stats
-from os import path
+from os import path, makedirs
 from progressbar import ProgressBar, Bar, ETA, Percentage
 import pickle as pkl
 import PointClouds as pc
@@ -20,6 +20,10 @@ import sys
 import argparse
 
 from matplotlib import pyplot as mpl
+import matplotlib
+
+matplotlib.rcParams['pdf.fonttype'] = 42
+matplotlib.rcParams['font.sans-serif'] = ['Arial']
 
 def prob(sample, reference):
     sample_mean = 0
@@ -76,6 +80,13 @@ def parse_args():
     parser.add_argument('--set', '-s', action='append',
                        help='Prefix of columns to use (May include a comma to '
                         'allow multiple prefixes; e.g. --set A,P)')
+    parser.add_argument('--figdir', '-f', default='figures',
+                       help='Directory for writing figures into')
+    parser.add_argument('--colormap', '-c', default='jet',
+                        help='Colormap for plotting')
+    parser.add_argument('--figwidth', '-W', default=4, type=float)
+    parser.add_argument('--figheight', '-H', default=3, type=float)
+    parser.add_argument('--dpi', '-d', default=300, type=int)
 
     args = parser.parse_args()
     print args.set
@@ -91,6 +102,13 @@ frame = frame.dropna(how='any')
 frame.index = frame['gene_short_name']
 
 
+pkl_file = args.slice_pickle
+bdtnp_parser = pc.PointCloudReader(args.atlas)
+
+starts = pkl.load(pkl_file)
+slices = pkl.load(pkl_file)
+slices = slices[0:400,:,:]
+n_pos, n_genes, n_times = np.shape(slices)
 
 cycnames = glob(path.join(args.rnaseq_standard_dir, '*'))
 cycles = [pd.read_table(f, index_col = 0) for f in cycnames]
@@ -109,7 +127,12 @@ for set in args.set:
 
     frame = whole_frame.select(lambda x: x.startswith(set), axis=1)
 
+    FPKM_cols = [c for c in frame.columns if c.endswith('FPKM') ]
+    print "Found columns: ", FPKM_cols
+
+    # ==============================================================
     # Match to the correct time-slice
+    # ==============================================================
     widgets = ['Susan: ' + str(set) + ':', Percentage(), Bar(), ETA()]
     progress = ProgressBar(widgets=widgets)
 
@@ -117,39 +140,38 @@ for set in args.set:
         all_probs = [prob(frame.ix[gene], cycle.ix[gene]) for cycle in cycles]
         if 0 not in all_probs and np.nan not in all_probs:
             posterior = bayes(priors, all_probs)
-            assert not sum(np.isnan(posterior))
-            assert all(posterior)
+            #assert not sum(np.isnan(posterior))
+            #assert all(posterior)
             old_priors[i,:] = priors
             priors = posterior
         else:
             old_priors[i,:] = old_priors[i-1,:]
 
 
+
     best_cycle = cycles[np.argmax(priors)]
     print "Best hit in ", cycnames[np.argmax(priors)]
     sys.stdout.flush()
 
-    pkl_file = args.slice_pickle
-    bdtnp_parser = pc.PointCloudReader(args.atlas)
+    #==============================================================
+    # Match each slice to the correct positions
+    #==============================================================
 
-    starts = pkl.load(pkl_file)
-    slices = pkl.load(pkl_file)
-    n_pos, n_genes, n_times = np.shape(slices)
-
-    FPKM_cols = [c for c in frame.columns if c.endswith('FPKM') ]
     slice_frames = [pd.DataFrame(slices[:,:,i].T) for i in range(n_times)]
     for slice_frame in slice_frames:
         slice_frame.index = bdtnp_parser.get_gene_names()
 
     for ts, slice in enumerate(slice_frames):
-        mpl.figure()
+        mpl.figure(figsize=(args.figwidth, args.figheight))
         slice = slice.dropna(how='any')
         priors = np.ones((n_pos, len(FPKM_cols))) / n_pos
         widgets = ['Time %s:'%ts, Percentage(), Bar(), ETA()]
         progress = ProgressBar(widgets=widgets)
         for gene in progress(slice.index):
             if gene not in frame.index: continue
-            if sum(np.isnan(slice.ix[gene])): continue
+            #if sum(np.isnan(slice.ix[gene])):
+            #    assert False
+            #    continue
             normed = (slice.ix[gene] / max(slice.ix[gene]) *
                       np.mean(best_cycle.ix[gene], axis=1))
             for i, col in enumerate(FPKM_cols):
@@ -165,11 +187,16 @@ for set in args.set:
                 evidence = stats.zprob(-np.abs((normed -
                                                 frame[col][gene])/(std+1)))
 
-
                 updated = bayes(priors[:,i], evidence)
-                assert not sum(np.isnan(updated))
+                #assert not sum(np.isnan(updated))
                 priors[:,i] = updated
-        plots = mpl.plot(priors)
+        my_cm = mpl.cm.__getattribute__(args.colormap)
+        n_pos, n_samples = np.shape(priors)
+        plots = []
+        for i in range(n_samples):
+            plots.extend(mpl.plot(priors[:,i],
+                                  label=FPKM_cols[i].replace('_FPKM', ''),
+                                  color = my_cm(i * 256 / (n_samples-1))))
         ax = mpl.gca()
         Y = priors.max()
         dY = 0.25 * Y
@@ -181,17 +208,34 @@ for set in args.set:
             ax.add_artist(mpl.Rectangle((x, Y), 60, dY,
                                         facecolor=plot.get_color(), alpha=0.7))
 
-        ax.set_ylim(0, Y)
-        mpl.title("Slice Position estimates")
+        ax.set_ylim(0, Y+dY)
+        ax.set_xlim(0, n_pos + 60)
+        mpl.title("Slice Position estimates for %s" % str(set))
         mpl.xlabel("A/P position ($\\mu$m)")
         mpl.ylabel("P(start @ $x\\pm1\\mu$m)")
-        mpl.legend(FPKM_cols, loc='right')
+        mpl.tight_layout()
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+
+        # Put a legend to the right of the current axis
+        ax.legend(loc='center left', bbox_to_anchor=(1.0, 0.5))
         mpl.draw()
+        try:
+            makedirs(args.figdir)
+        except OSError:
+            pass
+        filename = "Sample_%s_T%s.pdf" % (str(set).translate(None,
+                                                             ' \'(),"'),
+                                          ts)
+        print "Saving to: ", path.abspath(path.join(args.figdir, filename))
+        mpl.savefig(path.join(args.figdir,filename),
+                   dpi=args.dpi)
 
 
         print "In time slice", ts
         print "Mode position", np.argmax(priors, axis=0)
-        print "Mean position", [sum(np.arange(475) * priors[:,i]) for i in range(6)]
+        print "Mean position", [sum(np.arange(n_pos) * priors[:,i])
+                                for i in range(n_samples)]
         sys.stdout.flush()
 
 
