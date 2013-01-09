@@ -56,15 +56,26 @@ def prob(sample, reference):
 def bayes(priors, probabilities, prob_boost = .001, post_min = 1e-10):
     # P(H|E) = P(E|H) * P(H) / P(E)
     #        = P(E|H) * P(H) / sum(P(E|H_i) * P(H_i))
+    priors = np.array(priors)
     probabilities = np.array(probabilities)
     probabilities += prob_boost/len(priors)
-    posteriors = [P*H / sum(Pi*Hi for Pi, Hi in zip(probabilities, priors))
-                  for P,H in zip(probabilities, priors)]
-
+    denom = sum(probabilities * priors)
+    posteriors = probabilities * priors / denom
     # Divide to prevent slow divergence from sum(P_i) == 1
     posteriors = np.array(posteriors).clip(post_min, 1)
     return posteriors / sum(posteriors)
 
+def get_std(column, data):
+    if column.replace("FPKM", "conf_hi") in data.columns:
+        std = (data[col.replace("FPKM","conf_hi")][gene]
+               - data[col.replace("FPKM","conf_lo")][gene]) / 2
+    elif column.replace("FPKM", "conf_range") in data.columns:
+        std = data[col + "_conf_range"][gene]
+    else:
+        std = .3 * data[col][gene]
+        sys.stderr.write("Warning: Can't find stddev for %s in"
+                         "%s" % (gene, col))
+    return std
 
 def parse_args():
     description = ('Takes a set of FPKM values from sliced RNAseq data, and'
@@ -175,15 +186,8 @@ for set in args.set:
             normed = (slice.ix[gene] / max(slice.ix[gene]) *
                       np.mean(best_cycle.ix[gene], axis=1))
             for i, col in enumerate(FPKM_cols):
-                if col.replace("FPKM", "conf_hi") in frame.columns:
-                    std = (frame[col.replace("FPKM","conf_hi")][gene]
-                           - frame[col.replace("FPKM","conf_lo")][gene]) / 2
-                elif col.replace("FPKM", "conf_range"):
-                    std = frame[col + "_conf_range"][gene]
-                else:
-                    std = .3 * frame[col][gene]
-                    sys.stderr.write("Warning: Can't find stddev for %s in"
-                                     "%s" % (gene, col))
+                std = get_std(col, frame)
+
                 evidence = stats.zprob(-np.abs((normed -
                                                 frame[col][gene])/(std+1)))
 
