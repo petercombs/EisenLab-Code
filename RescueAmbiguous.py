@@ -13,20 +13,30 @@ is_aligned = 0x2            #each fragment properly aligned according to the ali
 is_unmapped = 0x4           #fragment unmapped
 is_next_unmapped = 0x8      #next fragment in the template unmapped
 is_revcomp = 0x10           #SEQ being reverse complemented
-is_next_reversed = 0x20     #SEQ of the next fragment in the template being reversed 
+is_next_reversed = 0x20     #SEQ of the next fragment in the template being reversed
 is_read1 = 0x40             #the first fragment in the template
 is_read2 = 0x80             #the last fragment in the template
 is_secondary = 0x100        #secondary alignment
-is_failqc = 0x200           #not passing quality controls 
+is_failqc = 0x200           #not passing quality controls
 is_dupe = 0x400             #PCR or optical duplicate
 
+def reheader(in_sam, keepstr = 'dmel'):
+    new_header = in_sam.header.copy()
+    new_SQ = [sub_dict for sub_dict in new_header['SQ']
+              if keepstr in sub_dict['SN']]
+    new_header['SQ'] = new_SQ
+    return new_header
 
+
+#Operate on each file independently
 for fname in sys.argv[1:]:
     data = defaultdict(lambda : [None, None])
     infile = pysam.Samfile(fname)
     outfile = pysam.Samfile(fname[:-4] + '_rescued_unsorted.bam', 'wb',
-                            template=infile)
-    maxval, start = get_bam_length(infile)
+                            header=reheader(infile))
+    irefs = infile.references
+    orefs = outfile.references
+    maxval, start = get_bam_length(infile) # For progress bar goodness
 
 
     pbar = ProgressBar(maxval=maxval - start,
@@ -34,11 +44,15 @@ for fname in sys.argv[1:]:
                                   ETA(), ' '])
     pbar.start()
 
+    # Load up all the read pairs that mapped
     for read in infile:
         pbar.update(infile.tell() - start)
         qname = read.qname
+        read.rname = orefs.index(irefs[read.rname])
         data[qname][read.is_read2] = read
 
+        # When we have both ends of the read,
+        # fix all the SAM tags
         if None not in data[qname]:
             read1, read2 = data.pop(qname)
             is_same = read1.rname == read2.rname
@@ -49,13 +63,13 @@ for fname in sys.argv[1:]:
             dist = abs(read2.pos - read1.pos) if is_same else 0
             read1.tlen = dist
             read2.tlen = -dist
-            read1.flag = (is_multiple + is_aligned + 
+            read1.flag = (is_multiple + is_aligned +
                           read1.is_reverse * is_revcomp +
-                          read2.is_reverse * is_next_reversed + 
+                          read2.is_reverse * is_next_reversed +
                           is_read1)
-            read2.flag = (is_multiple + is_aligned + 
+            read2.flag = (is_multiple + is_aligned +
                           read2.is_reverse * is_revcomp +
-                          read1.is_reverse * is_next_reversed + 
+                          read1.is_reverse * is_next_reversed +
                           is_read2)
             assert read1.flag & 0x1
             outfile.write(read1)
@@ -63,7 +77,7 @@ for fname in sys.argv[1:]:
 
     pbar.finish()
 
-    irefs = infile.references
+    # Now load in the ambiguous reads for rescue
     ambig = pysam.Samfile(path.join(path.dirname(fname) , 'ambiguous.bam'))
     arefs = ambig.references
 
@@ -79,11 +93,15 @@ for fname in sys.argv[1:]:
         pbar.update(ambig.tell() - start)
 
         qname = read.qname
-        if ((arefs[read.rname] in irefs) and 
+        if ((arefs[read.rname] in orefs) and
             (read.qname in data) and
-            (irefs[data[qname][read.is_read1].rname] == arefs[read.rname])):
+            (orefs[data[qname][read.is_read1].rname] == arefs[read.rname])):
 
+            read.rname = orefs.index(arefs[read.rname])
             data[qname][read.is_read2] = read
+
+            # When we have both ends,
+            # fix all the sam tags
             if None not in data[qname]:
                 read1, read2 = data.pop(qname)
                 is_same = read1.rname == read2.rname
@@ -94,13 +112,13 @@ for fname in sys.argv[1:]:
                 dist = abs(read2.pos - read1.pos) if is_same else 0
                 read1.tlen = dist
                 read2.tlen = -dist
-                read1.flag = (is_multiple + is_aligned + 
+                read1.flag = (is_multiple + is_aligned +
                               read1.is_reverse * is_revcomp +
-                              read2.is_reverse * is_next_reversed + 
+                              read2.is_reverse * is_next_reversed +
                               is_read1)
-                read2.flag = (is_multiple + is_aligned + 
+                read2.flag = (is_multiple + is_aligned +
                               read2.is_reverse * is_revcomp +
-                              read1.is_reverse * is_next_reversed + 
+                              read1.is_reverse * is_next_reversed +
                               is_read2)
                 assert read1.flag & 0x1
                 outfile.write(read1)
