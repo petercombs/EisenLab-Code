@@ -111,7 +111,7 @@ DATA.samples = DATA.config_data['samples']
 
 
 TEMP.assign_procs = []
-DATA.num_reads = {}
+#DATA.num_reads = {}
 
 TIMES = Namespace()
 TIMES.start = time()
@@ -131,29 +131,31 @@ for sample, libname in DATA.config_data['sample_to_lib']:
     print '-'*72, '\n', sample, '\n', '-'*72
     sys.stdout.flush()
 
-    # Unzip anything that's zipped
-    TEMP.to_unzip = []
-    for i, fname in enumerate(rf1):
-        if fname.endswith('.gz'):
-            print "Unzipping", fname
-            TEMP.to_unzip.append(fname)
-            rf1[i] = fname.strip('.gz')
+    # Skip dealing with the gzipped files... this has been in Tophat
+    # since version 1.3.0
+    ## Unzip anything that's zipped
+    #TEMP.to_unzip = []
+    #for i, fname in enumerate(rf1):
+        #if fname.endswith('.gz'):
+            #print "Unzipping", fname
+            #TEMP.to_unzip.append(fname)
+            #rf1[i] = fname.strip('.gz')
+#
+    #for i, fname in enumerate(rf2):
+        #if fname.endswith('.gz'):
+            #print "Unzipping", fname
+            #TEMP.to_unzip.append(fname)
+            #rf2[i] = fname.strip('.gz')
+#
+    #if TEMP.to_unzip:
+        #Popen(['parallel', '-j', '2', 'gunzip {}', ':::'] +
+              #TEMP.to_unzip).wait()
 
-    for i, fname in enumerate(rf2):
-        if fname.endswith('.gz'):
-            print "Unzipping", fname
-            TEMP.to_unzip.append(fname)
-            rf2[i] = fname.strip('.gz')
-
-    if TEMP.to_unzip:
-        Popen(['parallel', '-j', '2', 'gunzip {}', ':::'] + 
-              TEMP.to_unzip).wait()
 
 
-
-    # Just grab the first file name (PE have the same number in both)
-    TEMP.rfs = rf1
-    DATA.num_reads[sample] = count_reads(TEMP.rfs)
+    ## Just grab the first file name (PE have the same number in both)
+    #TEMP.rfs = rf1
+    ##DATA.num_reads[sample] = count_reads(TEMP.rfs)
 
     TEMP.od = join(ARGS.analysis_dir, sample)
     try:
@@ -163,11 +165,11 @@ for sample, libname in DATA.config_data['sample_to_lib']:
                TEMP.od)
 
     # Figure out Read Group ID
-    TEMP.f = open(rf1[0])
-    TEMP.l = TEMP.f.readline()
-    TEMP.f.close()
-    TEMP.rgid = TEMP.l.split(":")[0][1:]
-    TEMP.lane = TEMP.l.split(":")[1]
+    #TEMP.f = open(rf1[0])
+    #TEMP.l = TEMP.f.readline()
+    #TEMP.f.close()
+    #TEMP.rgid = TEMP.l.split(":")[0][1:]
+    #TEMP.lane = TEMP.l.split(":")[1]
 
     TEMP.idxfile = join(ARGS.refbase, ARGS.base_species +
                    DATA.config_data['sample_to_carrier'][sample])
@@ -184,8 +186,8 @@ for sample, libname in DATA.config_data['sample_to_lib']:
     TEMP.commandstr =  (BASE.tophat_base + '-G %(GTF)s -o %(od)s --rg-library '
                    '%(library)s'
                    ' --rg-center VCGSL --rg-sample %(library)s'
-                   ' --rg-platform'
-                   ' ILLUMINA --rg-id %(rgid)s  --rg-platform-unit %(lane)s'
+                   ' --rg-platform ILLUMINA '
+                   #' --rg-id %(rgid)s --rg-platform-unit %(lane)s'
                    ' %(transarg)s'
                 ' %(idxfile)s %(rf1)s %(rf2)s'
            % {'GTF': TEMP.GTF,
@@ -194,8 +196,8 @@ for sample, libname in DATA.config_data['sample_to_lib']:
               'rf1': ','.join(rf1),
               'rf2': ','.join(rf2),
               'library': sample,
-              'rgid': TEMP.rgid,
-              'lane': TEMP.lane,
+              #'rgid': TEMP.rgid,
+              #'lane': TEMP.lane,
               'transarg' : TEMP.transarg})
 
     print TEMP.commandstr
@@ -203,8 +205,8 @@ for sample, libname in DATA.config_data['sample_to_lib']:
     TEMP.tophat_proc = Popen(str(TEMP.commandstr).split())
     TEMP.tophat_proc.wait()
 
-    TEMP.rezip_procs.append(Popen(['parallel', '-j', '2', 'gzip {}', ':::']
-                                  + rf1 + rf2))
+    #TEMP.rezip_procs.append(Popen(['parallel', '-j', '2', 'gzip {}', ':::']
+                                  #+ rf1 + rf2))
 
     TEMP.commandstr = ['nice', 'python', 'AssignReads2.py',
                   join(TEMP.od, 'accepted_hits.bam')]
@@ -274,8 +276,8 @@ print "Cufflinks time", timedelta(seconds=time() - TIMES.sortend)
 
 import cPickle as pickle
 
-pickle.dump(dict(data=DATA, args=ARGS), 
+pickle.dump(dict(data=DATA, args=ARGS),
             open('mapreads_dump.pkl', 'w'))
 
-for proc in TEMP.rezip_procs:
-    proc.wait()
+#for proc in TEMP.rezip_procs:
+    #proc.wait()
