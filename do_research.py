@@ -40,10 +40,26 @@ def map_reads():
 
 def assign_multireads():
     """Assign reads to species, using appropriate cutoff"""
+    # Note that map reads currently does this!
 
     commandstr = ['python', 'AssignReads2.py']
-    files = glob('analysis/*/accepted_hits.bam')
+    files = glob('analysis-multi/*/accepted_hits.bam')
     sp.Popen(commandstr + files).wait()
+
+def rescue_reads():
+    """Rescue ambiguous reads and filter/reassign BAM tags
+
+    For instance, reads where one end clearly maps to one species, but the other
+    end may be ambiguous.
+
+    More importantly, it fiddles with the BAM flags so that they are correct,
+    based on what we have
+    """
+
+    commandstr = ['python', 'RescueAmbiguous.py']
+    files = glob('analysis-multi/*/assigned_dmel.bam')
+    sp.Popen(commandstr + files).wait()
+
 
 def main(args):
     """ Run all the sub-processing code"""
@@ -56,6 +72,12 @@ def main(args):
 
     if not('map_reads' in args.skiplist or '3' in args.skiplist):
         map_reads()
+
+    #if not ('assign_reads' in args.skiplist or '4' in args.skiplist):
+        #assign_multireads()
+
+    if not ('rescue_reads' in args.skiplist or '5' in args.skiplist):
+        rescue_reads()
 
 
 def parse_args():
