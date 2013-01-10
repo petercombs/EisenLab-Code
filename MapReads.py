@@ -110,7 +110,7 @@ DATA.readnames = {} #get_readfiles(DATA.config_data)
 DATA.samples = DATA.config_data['samples']
 
 
-DATA.assign_procs = []
+TEMP.assign_procs = []
 DATA.num_reads = {}
 
 TIMES = Namespace()
@@ -209,7 +209,7 @@ for sample, libname in DATA.config_data['sample_to_lib']:
     TEMP.commandstr = ['nice', 'python', 'AssignReads2.py',
                   join(TEMP.od, 'accepted_hits.bam')]
     print TEMP.commandstr
-    DATA.assign_procs.append(Popen(TEMP.commandstr))
+    TEMP.assign_procs.append(Popen(TEMP.commandstr))
 
 
 
@@ -218,7 +218,7 @@ for sample, libname in DATA.config_data['sample_to_lib']:
 TIMES.end = time()
 print "Mapping elapsed time", timedelta(seconds = TIMES.end - TIMES.start)
 
-for proc in DATA.assign_procs:
+for proc in TEMP.assign_procs:
     proc.wait()
 
 print "Assignment extra time", timedelta(seconds = time() - TIMES.end)
