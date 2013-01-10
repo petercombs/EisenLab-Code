@@ -163,8 +163,8 @@ for fname in sys.argv[1:]:
         else:
             print "How did we get here?"
             assert False
+    filename = outfile.filename
     outfile.close()
 
-    filename = outfile.filename
     sorted_filename = filename[:filename.index('_unsorted')]
     pysam.sort('-m', "%d" % 3e9, filename, sorted_filename)

@@ -7,7 +7,7 @@ files = defaultdict(list)
 for ix, row in design_file.iterrows():
     files[row['condition']].append(path.join('analysis-multi',
                                           row['Sample'],
-                                          'dmel_reheadered_rescued_sorted.bam')
+                                          'assigned_dmel_rescued.bam')
                                 )
 conditions = sorted(files.keys())
 
