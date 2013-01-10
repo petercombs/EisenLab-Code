@@ -225,54 +225,54 @@ for proc in TEMP.assign_procs:
 
 print "Assignment extra time", timedelta(seconds = time() - TIMES.end)
 
-TIMES.sortstart = time()
-DATA.fs = glob(join(ARGS.analysis_dir, '*', 'assigned_dmel.bam'))
-TEMP.sort = Popen(['parallel',
-              'samtools sort {} -m %d {//}/dmel_sorted' %3e9, # 3GB of memory
-              ':::'] + DATA.fs)
-
-TEMP.sort.wait()
-
-TIMES.sortend = time()
-print "Sorting time", timedelta(seconds = TIMES.sortend - TIMES.sortstart)
-
-# Figure out how well everything mapped
-DATA.mapped_reads = {}
-DATA.all_bams = [join(ARGS.analysis_dir, sample_dir, 'dmel_sorted.bam')
-            for sample_dir in DATA.samples]
-
-for sample, bam in zip(DATA.samples, DATA.all_bams):
-    print '='*30
-    commandstr = ['samtools', 'flagstat', bam]
-    print commandstr
-    samtools_proc = Popen(commandstr, stdout=PIPE)
-    samout, samerr = samtools_proc.communicate()
-
-    for line in str(samout).splitlines():
-        if "mapped" in line:
-            DATA.mapped_reads[sample] = float(line.split()[0])
-            print "% reads dmel in ", sample,
-            print DATA.mapped_reads[sample] / DATA.num_reads[sample] * 100
-            break
-
-
-
-for sample in DATA.samples:
-    TEMP.od = join(ARGS.analysis_dir, sample)
-    TEMP.commandstr = (BASE.cufflinks_base +
-                  '-G %(GTF)s -o %(od)s %(hits)s'
-                  % dict(GTF=ARGS.base_GTF,
-                         od=TEMP.od,
-                         hits=join(TEMP.od, 'dmel_sorted.bam')))
-
-    print TEMP.commandstr
-    sys.stdout.flush()
-    TEMP.cufflinks_proc = Popen(str(TEMP.commandstr).split())
-
-    TEMP.cufflinks_proc.wait()
-
+#TIMES.sortstart = time()
+#DATA.fs = glob(join(ARGS.analysis_dir, '*', 'assigned_dmel.bam'))
+#TEMP.sort = Popen(['parallel',
+              #'samtools sort {} -m %d {//}/dmel_sorted' %3e9, # 3GB of memory
+              #':::'] + DATA.fs)
+#
+#TEMP.sort.wait()
+#
+#TIMES.sortend = time()
+#print "Sorting time", timedelta(seconds = TIMES.sortend - TIMES.sortstart)
+#
+## Figure out how well everything mapped
+#DATA.mapped_reads = {}
+#DATA.all_bams = [join(ARGS.analysis_dir, sample_dir, 'dmel_sorted.bam')
+            #for sample_dir in DATA.samples]
+#
+#for sample, bam in zip(DATA.samples, DATA.all_bams):
+    #print '='*30
+    #commandstr = ['samtools', 'flagstat', bam]
+    #print commandstr
+    #samtools_proc = Popen(commandstr, stdout=PIPE)
+    #samout, samerr = samtools_proc.communicate()
+#
+    #for line in str(samout).splitlines():
+        #if "mapped" in line:
+            #DATA.mapped_reads[sample] = float(line.split()[0])
+            #print "% reads dmel in ", sample,
+            #print DATA.mapped_reads[sample] / DATA.num_reads[sample] * 100
+            #break
+#
+#
+#
+#for sample in DATA.samples:
+    #TEMP.od = join(ARGS.analysis_dir, sample)
+    #TEMP.commandstr = (BASE.cufflinks_base +
+                  #'-G %(GTF)s -o %(od)s %(hits)s'
+                  #% dict(GTF=ARGS.base_GTF,
+                         #od=TEMP.od,
+                         #hits=join(TEMP.od, 'dmel_sorted.bam')))
+#
+    #print TEMP.commandstr
+    #sys.stdout.flush()
+    #TEMP.cufflinks_proc = Popen(str(TEMP.commandstr).split())
+#
+    #TEMP.cufflinks_proc.wait()
+#
 print "Final time", timedelta(seconds=time() - TIMES.start)
-print "Cufflinks time", timedelta(seconds=time() - TIMES.sortend)
+#print "Cufflinks time", timedelta(seconds=time() - TIMES.sortend)
 
 import cPickle as pickle
 
