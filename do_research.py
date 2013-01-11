@@ -78,12 +78,16 @@ def main(args):
 
     if not ('rescue_reads' in args.skiplist or '5' in args.skiplist):
         rescue_reads()
+    
+    if not ('calculate_abundances' in args.skiplist or '6' in args.skiplist):
+        sp.Popen(['python', 'CalculateAbundances.py'])
 
 
 def parse_args():
     """ Parse arguments from the commandline"""
     parser = ap.ArgumentParser()
-    parser.add_argument('--skip', '-s', dest='skiplist', action='append')
+    parser.add_argument('--skip', '-s', dest='skiplist', action='append',
+                        default=[])
     args = parser.parse_args()
     return args
 
