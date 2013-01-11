@@ -34,6 +34,7 @@ BASE.tophat_base = ('tophat -p8 --no-novel-juncs --read-edit-dist 6 '
                     '--no-sort-bam ')
 #BASE.tophat_base = ('bowtie2 -p 8 --all --no-mixed --local ')
 BASE.cufflinks_base = 'cufflinks -p 8 -q -u '
+BASE.assign_base = 'nice python AssignReads2.py {fname}'
 
 
 ########################################################################
@@ -208,8 +209,8 @@ for sample, libname in DATA.config_data['sample_to_lib']:
     #TEMP.rezip_procs.append(Popen(['parallel', '-j', '2', 'gzip {}', ':::']
                                   #+ rf1 + rf2))
 
-    TEMP.commandstr = ['nice', 'python', 'AssignReads2.py',
-                  join(TEMP.od, 'accepted_hits.bam')]
+    TEMP.commandstr = BASE.assign_base.format(fname = join(TEMP.od,
+                                                           'accepted_hits.bam'))
     print TEMP.commandstr
     TEMP.assign_procs.append(Popen(TEMP.commandstr))
 
