@@ -13,6 +13,7 @@ import os
 from glob import glob
 import argparse as ap
 from sys import stdout
+import time
 
 def make_multi():
     "Make a multi-genome fasta file"
@@ -69,6 +70,7 @@ def main(args):
         print '-'*72
         print "Making GTF files"
         print '-'*72
+        print time.strftime("%Y-%m-%d %H:%M:%S -- %s since epoch")
         stdout.flush()
         make_gtfs()
 
@@ -76,6 +78,7 @@ def main(args):
         print '-'*72
         print "Making Genome Mashups"
         print '-'*72
+        print time.strftime("%Y-%m-%d %H:%M:%S -- %s since epoch")
         stdout.flush()
         make_multi()
 
@@ -83,6 +86,7 @@ def main(args):
         print '-'*72
         print "Mapping reads"
         print '-'*72
+        print time.strftime("%Y-%m-%d %H:%M:%S -- %s since epoch")
         stdout.flush()
         map_reads()
 
@@ -93,6 +97,7 @@ def main(args):
         print '-'*72
         print "Rescuing ambiguous reads"
         print '-'*72
+        print time.strftime("%Y-%m-%d %H:%M:%S -- %s since epoch")
         stdout.flush()
         rescue_reads()
     
@@ -100,6 +105,7 @@ def main(args):
         print '-'*72
         print "Calculating FPKM values"
         print '-'*72
+        print time.strftime("%Y-%m-%d %H:%M:%S -- %s since epoch")
         stdout.flush()
         sp.Popen(['python', 'CalculateAbundances.py'])
 

@@ -111,13 +111,13 @@ DATA.readnames = {} #get_readfiles(DATA.config_data)
 DATA.samples = DATA.config_data['samples']
 
 
-TEMP.assign_procs = []
 #DATA.num_reads = {}
 
 TIMES = Namespace()
 TIMES.start = time()
 
 TEMP = Namespace()
+TEMP.assign_procs = []
 TEMP.rezip_procs = []
 
 #for libname, (rf1, rf2) in DATA.readnames.items():

@@ -39,7 +39,9 @@ for other in rest:
                 rec.id = specname + '_' + rec.id
                 SeqIO.write(rec, out_fh, 'fasta')
     out_fh.close()
-    bowtie_build_procs.append(Popen(['bowtie2-build', out_fh.name, base+other]))
+    bowtie_build_procs.append(Popen(['bowtie2-build', out_fh.name, base+other],
+                                   stdout = open(base+other+'_bowtiebuild.log',
+                                                'w')))
 
 ## Make the BASE_only gtf file
 only_out_fh = open(base + '_only.gtf', 'w')
