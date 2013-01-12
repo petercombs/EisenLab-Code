@@ -12,6 +12,7 @@ import subprocess as sp
 import os
 from glob import glob
 import argparse as ap
+from sys import stdout
 
 def make_multi():
     "Make a multi-genome fasta file"
@@ -65,21 +66,41 @@ def main(args):
     """ Run all the sub-processing code"""
 
     if not('make_gtfs' in args.skiplist or '1' in args.skiplist):
+        print '-'*72
+        print "Making GTF files"
+        print '-'*72
+        stdout.flush()
         make_gtfs()
 
     if not('make_genome' in args.skiplist or '2' in args.skiplist):
+        print '-'*72
+        print "Making Genome Mashups"
+        print '-'*72
+        stdout.flush()
         make_multi()
 
     if not('map_reads' in args.skiplist or '3' in args.skiplist):
+        print '-'*72
+        print "Mapping reads"
+        print '-'*72
+        stdout.flush()
         map_reads()
 
     #if not ('assign_reads' in args.skiplist or '4' in args.skiplist):
         #assign_multireads()
 
     if not ('rescue_reads' in args.skiplist or '5' in args.skiplist):
+        print '-'*72
+        print "Rescuing ambiguous reads"
+        print '-'*72
+        stdout.flush()
         rescue_reads()
     
     if not ('calculate_abundances' in args.skiplist or '6' in args.skiplist):
+        print '-'*72
+        print "Calculating FPKM values"
+        print '-'*72
+        stdout.flush()
         sp.Popen(['python', 'CalculateAbundances.py'])
 
 
