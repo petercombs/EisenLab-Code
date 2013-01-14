@@ -45,4 +45,6 @@ for condition in files:
                            fasta = fasta_ref,
                            gtf = gtf_ref,
                            bamfile = file)
+        print '-'*30
+        print cl
         call(cl.split())

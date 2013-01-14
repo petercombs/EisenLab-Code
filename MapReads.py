@@ -212,7 +212,7 @@ for sample, libname in DATA.config_data['sample_to_lib']:
     TEMP.commandstr = BASE.assign_base.format(fname = join(TEMP.od,
                                                            'accepted_hits.bam'))
     print TEMP.commandstr
-    TEMP.assign_procs.append(Popen(TEMP.commandstr))
+    TEMP.assign_procs.append(Popen(TEMP.commandstr.split()))
 
 
 
