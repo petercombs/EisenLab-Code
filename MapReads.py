@@ -153,6 +153,7 @@ for sample, libname in DATA.config_data['sample_to_lib']:
     TEMP.commandstr =  (BASE.tophat_base + '-G %(GTF)s -o %(od)s --rg-library '
                    '%(library)s'
                    ' --rg-center VCGSL --rg-sample %(library)s'
+                   ' --rg-id %(library)s '
                    ' --rg-platform ILLUMINA '
                    ' %(transarg)s'
                 ' %(idxfile)s %(rf1)s %(rf2)s'
