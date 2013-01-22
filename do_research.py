@@ -17,8 +17,8 @@ import time
 
 def make_multi():
     "Make a multi-genome fasta file"
-    sp.Popen(['python', 'MakeMultigenome.py', 'Reference/AAA', 'mel', 'per',
-              'wil', 'moj', 'vir']).wait()
+    sp.call(['python', 'MakeMultigenome.py', 'Reference/AAA', 'mel', 'per',
+              'wil', 'moj', 'vir'])
     #btb = sp.Popen(['bowtie-build', 'multi.fa', 'multi'])
     #bt2b = sp.Popen(['bowtie2-build', 'multi.fa', 'multi'])
     #btb.wait()
@@ -31,14 +31,14 @@ def make_gtfs():
 
     for fname in glob('d*.gff'):
         print "Converting %s to GTF" % fname
-        sp.Popen(['gffread', fname, '-E', '-T', '-o',
-                  fname.replace('gff', 'gtf')]).wait()
+        sp.call(['gffread', fname, '-E', '-T', '-o',
+                  fname.replace('gff', 'gtf')])
 
     os.chdir(root)
 
 def map_reads():
     "Call the do_tux program to run the tuxedo suite"
-    sp.Popen(['python', 'MapReads.py']).wait()
+    sp.call(['python', 'MapReads.py'])
 
 def assign_multireads():
     """Assign reads to species, using appropriate cutoff"""
@@ -46,7 +46,7 @@ def assign_multireads():
 
     commandstr = ['python', 'AssignReads2.py']
     files = glob('analysis-multi/*/accepted_hits.bam')
-    sp.Popen(commandstr + files).wait()
+    sp.call(commandstr + files)
 
 def rescue_reads():
     """Rescue ambiguous reads and filter/reassign BAM tags
@@ -60,7 +60,7 @@ def rescue_reads():
 
     commandstr = ['python', 'RescueAmbiguous.py']
     files = glob('analysis-multi/*/assigned_dmel.bam')
-    sp.Popen(commandstr + files).wait()
+    sp.call(commandstr + files)
 
 
 def main(args):
@@ -107,7 +107,7 @@ def main(args):
         print '-'*72
         print time.strftime("%Y-%m-%d %H:%M:%S -- %s since epoch")
         stdout.flush()
-        sp.Popen(['python', 'CalculateAbundances.py'])
+        sp.call(['python', 'CalculateAbundances.py'])
 
 
 def parse_args():
