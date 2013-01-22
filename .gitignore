@@ -33,3 +33,9 @@ StartCheck.py
 WatchDeme.py
 GEO_*
 dry*run*
+
+*.tiff
+*.eps
+*.png
+*.bmp
+*.pdf
