@@ -167,4 +167,5 @@ for fname in sys.argv[1:]:
     outfile.close()
 
     sorted_filename = filename[:filename.index('_unsorted')]
+    print "Sorting into", sorted_filename
     pysam.sort('-m', "%d" % 3e9, filename, sorted_filename)
