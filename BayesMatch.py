@@ -136,12 +136,14 @@ for set in args.set:
     # Print Header line
     print '-'*60, '\n', set, '\n', '-'*60
 
-    priors = np.ones(len(cycles)) / len(cycles)
-    old_priors = np.zeros((len(frame.index), len(priors)))
 
     frame = whole_frame.select(lambda x: x.startswith(set), axis=1)
 
+    priors = np.ones(len(cycles)) / len(cycles)
+    old_priors = np.zeros((len(frame.index), len(priors)))
     FPKM_cols = [c for c in frame.columns if c.endswith('FPKM') ]
+    FPKM_cols = sorted(FPKM_cols, key= lambda x: x.count('P') - x.count('A'))
+
     print "Found columns: ", FPKM_cols
 
     # ==============================================================
@@ -150,18 +152,19 @@ for set in args.set:
     widgets = ['Susan: ' + str(set) + ':', Percentage(), Bar(), ETA()]
     progress = ProgressBar(widgets=widgets)
 
+    mpl.figure()
     for i, gene in enumerate(progress(frame.index)):
-        all_probs = [prob(frame.ix[gene], cycle.ix[gene]) for cycle in cycles]
+        all_probs = np.array([prob(frame.ix[gene], cycle.ix[gene])
+                              for cycle in cycles])
         if 0 not in all_probs and np.nan not in all_probs:
-            posterior = bayes(priors, all_probs)
+            posterior = bayes(priors, all_probs, post_min=0)
             #assert not sum(np.isnan(posterior))
             #assert all(posterior)
             old_priors[i,:] = priors
             priors = posterior
         else:
             old_priors[i,:] = old_priors[i-1,:]
-
-
+    mpl.plot(old_priors)
 
     best_cycle = cycles[np.argmax(priors)]
     print "Best hit in ", cycnames[np.argmax(priors)]
