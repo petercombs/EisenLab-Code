@@ -9,10 +9,14 @@ design_fname = 'analysis-multi/design.tab'
 analysis_dir = 'analysis-multi'
 
 bamfile_base = 'assigned_dmel_rescued.bam'
-cd_base = 'cuffdiff -p 8 -L {conditions} -o {outdir} -u -N -b {fasta} {gtf} {bams}'
-cl_base = 'cufflinks -p 8 -o {outdir} -u -N -b {fasta} -G {gtf} {bamfile}'
-cuffcmp = 'cuffcompare -o {cuffname} -s {fasta} -CG -r {gtf} {gtf}'
-cuffname = path.join(path.dirname(gtf_ref), 'cuffcmp')
+cd_base = ('cuffdiff --num-threads 8 -L {conditions} --output-dir {outdir}'
+           ' -u --upper-quartile-norm --frag-bias-correct {fasta} '
+           ' {gtf} {bams}')
+cl_base = ('cufflinks --num-threads 8 --output-dir {outdir} -u'
+           ' --upper-quartile-norm --frag-bias-correct {fasta} '
+           ' -G {gtf} {bamfile}')
+cuffcmp = ('cuffcompare --output-dir {cuffname} -s {fasta} -CG -r {gtf} {gtf}')
+cuffname = path.join(path.dirname(gtf_ref), 'cuffcmp.')
 
 runstr = cuffcmp.format(cuffname = cuffname,
                         fasta = fasta_ref,
