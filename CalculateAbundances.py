@@ -10,12 +10,12 @@ analysis_dir = 'analysis-multi'
 
 bamfile_base = 'assigned_dmel_rescued.bam'
 cd_base = ('cuffdiff --num-threads 8 -L {conditions} --output-dir {outdir}'
-           ' -u --upper-quartile-norm --frag-bias-correct {fasta} '
+           ' -u --frag-bias-correct {fasta} '
            ' {gtf} {bams}')
 cl_base = ('cufflinks --num-threads 8 --output-dir {outdir} -u'
-           ' --upper-quartile-norm --frag-bias-correct {fasta} '
+           ' --frag-bias-correct {fasta} '
            ' -G {gtf} {bamfile}')
-cuffcmp = ('cuffcompare --output-dir {cuffname} -s {fasta} -CG -r {gtf} {gtf}')
+cuffcmp = ('cuffcompare -o {cuffname} -s {fasta} -CG -r {gtf} {gtf}')
 cuffname = path.join(path.dirname(gtf_ref), 'cuffcmp.')
 
 runstr = cuffcmp.format(cuffname = cuffname,
