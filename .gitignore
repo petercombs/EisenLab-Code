@@ -40,3 +40,6 @@ dry*run*
 *.bmp
 *.pdf
 FlyExpressMaternal
+*.txt
+*.expr
+*.vpc
