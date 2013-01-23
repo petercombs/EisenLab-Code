@@ -32,7 +32,6 @@ BASE = Namespace()
 BASE.tophat_base = ('tophat -p8 --no-novel-juncs --read-edit-dist 6 '
                     '--report-secondary-alignments '
                     '--no-sort-bam ')
-#BASE.tophat_base = ('bowtie2 -p 8 --all --no-mixed --local ')
 BASE.cufflinks_base = 'cufflinks -p 8 -q -u '
 BASE.assign_base = 'nice python AssignReads2.py {fname}'
 
@@ -110,9 +109,6 @@ DATA.readnames = {} #get_readfiles(DATA.config_data)
 
 DATA.samples = DATA.config_data['samples']
 
-
-#DATA.num_reads = {}
-
 TIMES = Namespace()
 TIMES.start = time()
 
@@ -134,29 +130,6 @@ for sample, libname in DATA.config_data['sample_to_lib']:
 
     # Skip dealing with the gzipped files... this has been in Tophat
     # since version 1.3.0
-    ## Unzip anything that's zipped
-    #TEMP.to_unzip = []
-    #for i, fname in enumerate(rf1):
-        #if fname.endswith('.gz'):
-            #print "Unzipping", fname
-            #TEMP.to_unzip.append(fname)
-            #rf1[i] = fname.strip('.gz')
-#
-    #for i, fname in enumerate(rf2):
-        #if fname.endswith('.gz'):
-            #print "Unzipping", fname
-            #TEMP.to_unzip.append(fname)
-            #rf2[i] = fname.strip('.gz')
-#
-    #if TEMP.to_unzip:
-        #Popen(['parallel', '-j', '2', 'gunzip {}', ':::'] +
-              #TEMP.to_unzip).wait()
-
-
-
-    ## Just grab the first file name (PE have the same number in both)
-    #TEMP.rfs = rf1
-    ##DATA.num_reads[sample] = count_reads(TEMP.rfs)
 
     TEMP.od = join(ARGS.analysis_dir, sample)
     try:
@@ -164,13 +137,6 @@ for sample, libname in DATA.config_data['sample_to_lib']:
     except OSError:
         print ("Directory '%s' already exists... shouldn't be a problem" %
                TEMP.od)
-
-    # Figure out Read Group ID
-    #TEMP.f = open(rf1[0])
-    #TEMP.l = TEMP.f.readline()
-    #TEMP.f.close()
-    #TEMP.rgid = TEMP.l.split(":")[0][1:]
-    #TEMP.lane = TEMP.l.split(":")[1]
 
     TEMP.idxfile = join(ARGS.refbase, ARGS.base_species +
                    DATA.config_data['sample_to_carrier'][sample])
@@ -187,8 +153,8 @@ for sample, libname in DATA.config_data['sample_to_lib']:
     TEMP.commandstr =  (BASE.tophat_base + '-G %(GTF)s -o %(od)s --rg-library '
                    '%(library)s'
                    ' --rg-center VCGSL --rg-sample %(library)s'
+                   ' --rg-id %(library)s '
                    ' --rg-platform ILLUMINA '
-                   #' --rg-id %(rgid)s --rg-platform-unit %(lane)s'
                    ' %(transarg)s'
                 ' %(idxfile)s %(rf1)s %(rf2)s'
            % {'GTF': TEMP.GTF,
@@ -197,8 +163,6 @@ for sample, libname in DATA.config_data['sample_to_lib']:
               'rf1': ','.join(rf1),
               'rf2': ','.join(rf2),
               'library': sample,
-              #'rgid': TEMP.rgid,
-              #'lane': TEMP.lane,
               'transarg' : TEMP.transarg})
 
     print TEMP.commandstr
@@ -206,13 +170,10 @@ for sample, libname in DATA.config_data['sample_to_lib']:
     TEMP.tophat_proc = Popen(str(TEMP.commandstr).split())
     TEMP.tophat_proc.wait()
 
-    #TEMP.rezip_procs.append(Popen(['parallel', '-j', '2', 'gzip {}', ':::']
-                                  #+ rf1 + rf2))
-
     TEMP.commandstr = BASE.assign_base.format(fname = join(TEMP.od,
                                                            'accepted_hits.bam'))
     print TEMP.commandstr
-    TEMP.assign_procs.append(Popen(TEMP.commandstr))
+    TEMP.assign_procs.append(Popen(TEMP.commandstr.split()))
 
 
 
@@ -226,59 +187,10 @@ for proc in TEMP.assign_procs:
 
 print "Assignment extra time", timedelta(seconds = time() - TIMES.end)
 
-#TIMES.sortstart = time()
-#DATA.fs = glob(join(ARGS.analysis_dir, '*', 'assigned_dmel.bam'))
-#TEMP.sort = Popen(['parallel',
-              #'samtools sort {} -m %d {//}/dmel_sorted' %3e9, # 3GB of memory
-              #':::'] + DATA.fs)
-#
-#TEMP.sort.wait()
-#
-#TIMES.sortend = time()
-#print "Sorting time", timedelta(seconds = TIMES.sortend - TIMES.sortstart)
-#
-## Figure out how well everything mapped
-#DATA.mapped_reads = {}
-#DATA.all_bams = [join(ARGS.analysis_dir, sample_dir, 'dmel_sorted.bam')
-            #for sample_dir in DATA.samples]
-#
-#for sample, bam in zip(DATA.samples, DATA.all_bams):
-    #print '='*30
-    #commandstr = ['samtools', 'flagstat', bam]
-    #print commandstr
-    #samtools_proc = Popen(commandstr, stdout=PIPE)
-    #samout, samerr = samtools_proc.communicate()
-#
-    #for line in str(samout).splitlines():
-        #if "mapped" in line:
-            #DATA.mapped_reads[sample] = float(line.split()[0])
-            #print "% reads dmel in ", sample,
-            #print DATA.mapped_reads[sample] / DATA.num_reads[sample] * 100
-            #break
-#
-#
-#
-#for sample in DATA.samples:
-    #TEMP.od = join(ARGS.analysis_dir, sample)
-    #TEMP.commandstr = (BASE.cufflinks_base +
-                  #'-G %(GTF)s -o %(od)s %(hits)s'
-                  #% dict(GTF=ARGS.base_GTF,
-                         #od=TEMP.od,
-                         #hits=join(TEMP.od, 'dmel_sorted.bam')))
-#
-    #print TEMP.commandstr
-    #sys.stdout.flush()
-    #TEMP.cufflinks_proc = Popen(str(TEMP.commandstr).split())
-#
-    #TEMP.cufflinks_proc.wait()
-#
 print "Final time", timedelta(seconds=time() - TIMES.start)
-#print "Cufflinks time", timedelta(seconds=time() - TIMES.sortend)
 
 import cPickle as pickle
 
 pickle.dump(dict(data=DATA, args=ARGS),
             open('mapreads_dump.pkl', 'w'))
 
-#for proc in TEMP.rezip_procs:
-    #proc.wait()

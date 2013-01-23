@@ -1,9 +1,9 @@
 import pandas as pd
 from collections import defaultdict
 from os import path
-from subprocess import Popen
+from subprocess import Popen, call
 
-fasta_ref = 'Reference/AAA/mel_only.fa',
+fasta_ref = 'Reference/AAA/mel_only.fa'
 gtf_ref = 'Reference/AAA/mel_only.gtf'
 design_fname = 'analysis-multi/design.tab'
 analysis_dir = 'analysis-multi'
@@ -18,11 +18,13 @@ cl_base = ('cufflinks --num-threads 8 --output-dir {outdir} -u'
 cuffcmp = ('cuffcompare --output-dir {cuffname} -s {fasta} -CG -r {gtf} {gtf}')
 cuffname = path.join(path.dirname(gtf_ref), 'cuffcmp.')
 
-Popen(cuffcmp.format(cuffname = cuffname,
-                     fasta = fasta_ref,
-                     gtf = gtf_ref)).wait()
+runstr = cuffcmp.format(cuffname = cuffname,
+                        fasta = fasta_ref,
+                        gtf = gtf_ref)
+print runstr
+call(runstr.split())
 
-gtf_ref =  cuffname + 'combined.gtf'
+gtf_ref =  cuffname + '.combined.gtf'
 
 design_file = pd.read_table(design_fname)
 files = defaultdict(list)
@@ -40,11 +42,13 @@ cd = cd_base.format(conditions = ','.join(conditions),
                     bams = ' '.join([','.join(files[key]) for key in conditions]))
 
 print cd
-Popen(cd).wait()
+call(cd.split())
 for condition in files:
     for file in files[condition]:
         cl = cl_base.format(outdir = path.dirname(file),
                            fasta = fasta_ref,
                            gtf = gtf_ref,
                            bamfile = file)
-        Popen(cl).wait()
+        print '-'*30
+        print cl
+        call(cl.split())
