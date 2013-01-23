@@ -81,7 +81,7 @@ def parse_args():
     description = ('Takes a set of FPKM values from sliced RNAseq data, and'
                    'matches those slices to known gold-standards.')
     parser = argparse.ArgumentParser(description=description)
-    parser.add_argument('fname', type=open, default='merged_genes.fpkm_tracking')
+    parser.add_argument('fname', type=open)
     parser.add_argument('--rnaseq-standard-dir', '-r',
                         default='../susan/by_cycle')
     parser.add_argument('--slice-pickle', '-p', type=open,
@@ -90,7 +90,8 @@ def parse_args():
                         default=open('../D_mel_wt_atlas_r2.vpc'))
     parser.add_argument('--set', '-s', action='append',
                        help='Prefix of columns to use (May include a comma to '
-                        'allow multiple prefixes; e.g. --set A,P)')
+                        'allow multiple prefixes; e.g. --set A,P)',
+                       default=[])
     parser.add_argument('--figdir', '-f', default='figures',
                        help='Directory for writing figures into')
     parser.add_argument('--colormap', '-c', default='jet',
@@ -103,6 +104,8 @@ def parse_args():
     print args.set
     for i, set in enumerate(args.set):
         args.set[i] = tuple(set.split(','))
+    if args.set == []:
+        args.set.append('')
     print args.set
     return args
 
