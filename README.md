@@ -7,6 +7,40 @@ noted) is released under the CRAPL v0 license.  Please contact me direclty
 (peter.combs@berkeley.edu) for any data I've generated, as it's most likely too
 large to fit on github anyways.
 
+The Fall2012 Branch is used for RNA-seq analysis of sliced single _Drosophila_
+embryos, in particular for the submission of the paper "Sequencing mRNA from
+cryo-siced _Drosophila_ embryos to determine genome-wide spatial patterns of
+gene expression".  With the right configuration and data files[\*], everything from
+raw reads to final figures should be able to be accomplished with a run of
+
+    $ python do_research.py
+
+The data for that paper is available at the Gene Expression Omnibus, under
+accession GSE43506
+
+[\*] As much as possible, these data files will be publicly available, standardized sets.  Known dependencies are:
+
+ * FlyBase FASTA and GFF files for all species.  I believe they have to be unzipped. 
+ * `journal.pbio.1000590.s002.txt`, the supplementary data file from Lott, et al 2011
+ * `RunConfig.cfg` A tab-delimited file indicating, for each sample, the carrier
+   species and sequencing index, among other statistics.  Please contact me for
+   my copy if there's any trouble
+ * `analysis-multi/design.tab` A file indicating which samples are to be pooled
+   together as replicates in cuffdiff.
+ * `fig2_list.txt` A list of genes for making the table comparing FlyExpress
+   thumbnails to the sliced expression patterns.
+
+AssignReads2.py
+---------------
+
+Utility to demultiplex reads from a pooled RNA-seq sample.  Given a list of
+`accepted_hits.bam` files from Tophat, this will assign the reads into bam
+files for uniquely mapping to either species, or to an `ambiguous.bam` file,
+all in the same directory as the original bam file.  There is a variable
+`ambig_threshold` that determines what is counted as uniquely mapping, and is
+currently set to 3, meaning that reads require 4 or more mismatches to prefer
+one species over another.
+
 CheckCoverage.py
 ----------------
 
@@ -19,10 +53,11 @@ of PCR duplication in the sample.
 
 Usage:
 
-   $ python CheckCoverage.py GTF-file bamfile.bam [bamfile.bam ...]
+    $ python CheckCoverage.py GTF-file bamfile.bam [bamfile.bam ...]
 
 The GTF file works best when using a FlyBase derived file, and assumes the
 following order of annotation types:
+
  * mRNA: Should have both the FBtr ID and the FBgn ID in the annotation field
 
  * exon: One or more exons per transcript, containingi the FBtr ID in the
@@ -82,7 +117,7 @@ Other than those lines, it expects the following:
 
  * Two FASTQ files corresponding to the reads (any name should work)
 
- * A number of files with names matching  Genes*.txt, containing lists of genes
+ * A number of files with names matching  Genes\*.txt, containing lists of genes
    to plot on the loglog graph.
 
 FB2name.py
