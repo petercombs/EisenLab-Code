@@ -124,7 +124,7 @@ slices = pkl.load(pkl_file)
 slices = slices[0:400,:,:]
 n_pos, n_genes, n_times = np.shape(slices)
 
-cycnames = glob(path.join(args.rnaseq_standard_dir, '*'))
+cycnames = sorted(glob(path.join(args.rnaseq_standard_dir, '*')))
 cycles = [pd.read_table(f, index_col = 0) for f in cycnames]
 
 whole_frame = frame.select(lambda x: x in cycles[0].index)
@@ -132,6 +132,7 @@ whole_frame = frame.select(lambda x: x in cycles[0].index)
 mpl.ion()
 
 # Each set of slices should be treated independently.
+print cycnames
 for set in args.set:
     # Print Header line
     print '-'*60, '\n', set, '\n', '-'*60
@@ -244,7 +245,12 @@ for set in args.set:
 
         print "In time slice", ts
         print "Mode position", np.argmax(priors, axis=0)
-        print "Mean position", [sum(np.arange(n_pos) * priors[:,i])
+        means = [sum(np.arange(n_pos) * priors[:,i]) for i in range(n_samples)]
+        print "Mean position", means
+        posns = np.arange(len(priors[:,0]))
+        print "Std deviation", [np.sqrt(sum(priors[j,i] 
+                                            * (posns[j] - means[i])**2
+                                           for j in posns))
                                 for i in range(n_samples)]
         sys.stdout.flush()
 
