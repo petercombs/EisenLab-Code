@@ -166,6 +166,17 @@ for set in args.set:
         else:
             old_priors[i,:] = old_priors[i-1,:]
     mpl.plot(old_priors)
+    ax = mpl.gca()
+    ax.set_xlim(0, 100)
+    ax.set_ylim(0, 1.1)
+    ax.set_yticks([0,0.25,0.5,0.75,1])
+    ax.set_xlabel('Genes examined')
+    ax.set_ylabel('Posterior probability')
+    mpl.legend([path.splitext(path.basename(name))[0]
+                for name in cycnames])
+    mpl.savefig(path.join(args.figdir, 
+                          str(set).translate(None, ' \'(),"')
+                          + 'stageassign.pdf'), dpi=300)
 
     best_cycle = cycles[np.argmax(priors)]
     print "Best hit in ", cycnames[np.argmax(priors)]
@@ -216,17 +227,20 @@ for set in args.set:
         for plot, x in zip(plots, ests):
             mpl.vlines(x, plot.get_data()[1][x], Y+dY,
                        edgecolor=plot.get_color(), linestyles='dotted')
-            ax.add_artist(mpl.Rectangle((x, Y), 60, dY,
+            # Bars equal to one sixth of the embryo
+            ax.add_artist(mpl.Rectangle((x, Y), 460/6.0, dY,
                                         facecolor=plot.get_color(), alpha=0.7))
 
         ax.set_ylim(0, Y+dY)
-        ax.set_xlim(0, n_pos + 60)
-        mpl.title("Slice Position estimates for %s" % str(set))
+        ax.set_xlim(0, n_pos + 460/6.0)
+        mpl.title("Slice Position estimates for %s" % 
+                  str(set).translate(None, ' \'(),"'))
         mpl.xlabel("A/P position ($\\mu$m)")
         mpl.ylabel("P(start @ $x\\pm1\\mu$m)")
         mpl.tight_layout()
         box = ax.get_position()
         ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+        ax.set_yticks(ax.get_yticks()[::3])
 
         # Put a legend to the right of the current axis
         ax.legend(loc='center left', bbox_to_anchor=(1.0, 0.5))
