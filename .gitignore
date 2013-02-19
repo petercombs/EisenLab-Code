@@ -24,6 +24,7 @@ analysis*
 sequence*
 MemeOutput
 MemeOutput2
+Reference
 Reference/miso-events
 Reference/AAA
 NonFlyNonHum*
@@ -33,8 +34,10 @@ StartCheck.py
 WatchDeme.py
 GEO_*
 dry*run*
+figures*
 
 *.tiff
+*.tif
 *.eps
 *.png
 *.bmp
