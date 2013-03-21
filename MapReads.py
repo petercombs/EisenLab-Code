@@ -9,21 +9,20 @@ on the given indices.
 import sys
 
 from glob import glob
-from os.path import join
+from os.path import join, abspath
 import os
 from time import time
 from datetime import timedelta
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, call
 from argparse import Namespace
 
 ARGS = Namespace()
-ARGS.analysis_dir = 'analysis-multi'
+ARGS.analysis_dir = abspath('analysis-multi')
 ARGS.base_GTF =  'Reference/AAA/dmel-all-r5.46.gtf'
 ARGS.refbase = 'Reference/AAA/'
 ARGS.transbase = 'Reference/AAA/transcriptome/'
 ARGS.base_species = 'mel'
-ARGS.notificationEmail = 'peter.combs@berkeley.edu'
-ARGS.seq_dir = 'sequence'
+ARGS.seq_dir = abspath('sequence')
 ARGS.config_file = 'RunConfig.cfg'
 
 ########################################################################
@@ -105,7 +104,7 @@ def count_reads(read_files):
 
 DATA = Namespace()
 DATA.config_data = process_config_file(ARGS.config_file)
-DATA.readnames = {} #get_readfiles(DATA.config_data)
+DATA.readnames = {} 
 
 DATA.samples = DATA.config_data['samples']
 
@@ -167,13 +166,11 @@ for sample, libname in DATA.config_data['sample_to_lib']:
 
     print TEMP.commandstr
     sys.stdout.flush()
-    TEMP.tophat_proc = Popen(str(TEMP.commandstr).split())
-    TEMP.tophat_proc.wait()
 
     TEMP.commandstr = BASE.assign_base.format(fname = join(TEMP.od,
                                                            'accepted_hits.bam'))
     print TEMP.commandstr
-    TEMP.assign_procs.append(Popen(TEMP.commandstr.split()))
+    call(str(TEMP.commandstr).split())
 
 
 
