@@ -20,9 +20,9 @@ import pandas as pd
 
 ARGS = Namespace()
 ARGS.analysis_dir = abspath('analysis-multi')
-ARGS.base_species = 'mel'
+ARGS.base_species = 'Dmel'
 ARGS.seq_dir = abspath('sequence')
-ARGS.config_file = abspath('Parameters/DummyConfig.cfg')
+ARGS.config_file = abspath('Parameters/RunConfig.cfg')
 ARGS.ref_base = abspath('Reference/AAA/')
 ARGS.star_params = abspath('Parameters/STAR_params.in')
 
@@ -63,7 +63,7 @@ def get_readfiles(args, mbepc, index):
     #     ...
     print "Finding reads for", mbepc, 'index', index
     seq_dir = join(args.seq_dir, 
-                   'Sample_MBE_PC_{}*_index{}'.format(mbepc, index))
+                   'Sample_MBEPC{}*_index{}'.format(mbepc, index))
     read_1s = glob(join(seq_dir, "*_R1_*.fastq*"))
     print read_1s
     read_2s = glob(join(seq_dir, "*_R2_*.fastq*"))
