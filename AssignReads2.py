@@ -31,8 +31,8 @@ def process_read(read):
         assert False
     nh = get_nh(read)
     species = get_species(read)
-    if nh == 1 and read.is_proper_pair:
-        assigned.write(read)
+    if nh == 1:
+        #assigned.write(read)
         specific_files[species].write(read)
         species_counts[species] += 1
         return
@@ -42,6 +42,7 @@ def process_read(read):
 def resolve_multiread(read, nh, species):
     nm = get(read, 'NM')
     has_multi_frags = bool(0x1 & read.flag)
+    has_multi_frags = True
     if has_multi_frags and read.is_read2:
         to_be_resolved_counts2[read.qname] += 1
         if nm < to_be_resolved_vals2[read.qname][species]:
@@ -68,7 +69,12 @@ def resolve_multiread(read, nh, species):
             dbs.to_be_resolved_reads = to_be_resolved_reads
             on_last_multiread(dbs, read)
     else:
-        assert False
+        pass
+        #print "didi we not have multiple frags?"
+        #print has_multi_frags
+        #print read.is_read1, read.is_read2
+        #print read.qname
+        #assert False
         # WTF are we doign here?
 
 def on_last_multiread(dbs, read):
@@ -78,7 +84,7 @@ def on_last_multiread(dbs, read):
         # Report the best, or if equal quality, the first (which
         # tophat would've given anyways)
         species = get_species(read)
-        assigned.write(read)
+        #assigned.write(read)
         specific_files[species].write(read)
         species_counts[species] += 1
     else:
@@ -90,7 +96,7 @@ def on_last_multiread(dbs, read):
         if diff_val > ambig_threshold:
             species = vals[0][1]
             best_read = dbs.to_be_resolved_reads[read.qname][species]
-            assigned.write(best_read)
+            #assigned.write(best_read)
             specific_files[species].write(best_read)
             species_counts[species] += 1
         else:
@@ -120,8 +126,8 @@ for fname in sys.argv[1:]:
     samfile = pysam.Samfile(fname, 'rb')
     references = samfile.references
     dir = path.dirname(fname)
-    assigned = pysam.Samfile(path.join(dir, 'assigned.bam'), 'wb',
-                             template=samfile)
+    #assigned = pysam.Samfile(path.join(dir, 'assigned.bam'), 'wb',
+                             #template=samfile)
     ambig = pysam.Samfile(path.join(dir, 'ambiguous.bam'), 'wb',
                              template=samfile)
     specific_files = my_defaultdict(pysam.Samfile,
