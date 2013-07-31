@@ -31,8 +31,11 @@ def scatter_heat(x, y, **kwargs):
         kwargs['edgecolors'] = 'none'
     if 'cmap' not in kwargs:
         kwargs['cmap'] = cm.jet
-    estimator = gaussian_kde([x, y])
-    density = estimator.evaluate([x, y])
+    if 'density' not in kwargs:
+        estimator = gaussian_kde([x, y])
+        density = estimator.evaluate([x, y])
+    else:
+        density = kwargs['density']
 
     normdensity = exp(density.clip(median(density), Inf))
 
@@ -42,7 +45,7 @@ def scatter_heat(x, y, **kwargs):
     ax = mpl.gca()
     ax.set_xlim(xlim)
     ax.set_ylim(ylim)
-    return retval
+    return retval, density
 
 def loglog_heat(x,y, **kwargs):
     if 's' not in kwargs:
