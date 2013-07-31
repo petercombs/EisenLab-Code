@@ -1,0 +1,40 @@
+#!/usr/bin/env python
+
+import pandas as pd
+from os import path
+from glob import glob
+
+config_file = pd.read_table('Parameters/RunConfig.cfg')
+
+out = open('config.make', 'w')
+targets = ' '.join(path.join('$(ANALYSIS_DIR)',
+                             label,
+                             'genes.fpkm_tracking')
+                   for label in config_file['Label'])
+
+out.write("FPKMS = " + targets + "\n")
+
+for i, row in config_file.iterrows():
+    label = row['Label']
+    index = row['Index']
+    rf1 = glob('sequence/*_{id}?_*index{index}/*_R1_*.fastq*'
+               .format(index=index, id=row['MBEPC']))
+    print ('sequence/*_{id}?_*index{index}_*/*_R1_*.fastq*'
+               .format(index=index, id=row['MBEPC']))
+    rf2 = glob('sequence/*_{id}?_*_index{index}_*/*_R2_*.fastq*'
+               .format(index=index, id=row['MBEPC']))
+
+    out.write('$(ANALYSIS_DIR)/{label}: | $(ANALYSIS_DIR)\n'
+              '\tmkdir$(ANALYSIS_DIR)/{label}\n'.format(label=label))
+    out.write('$(ANALYSIS_DIR)/{label}/Aligned.out.sam: |'
+              '$(ANALYSIS_DIR)/{label}\n'
+              '\t@echo {label} \n'
+              '\tSTAR --parametersFiles $(STARCONFIG) '
+              '--genomeDir Reference/{genome} '
+              '--outFileNamePrefix $(ANALYSIS_DIR)/{label}/ '
+              '--readFilesIn {rf1} {rf2}\n'
+             .format(rf1=','.join(rf1),
+                     rf2=','.join(rf2),
+                     label=label,
+                     genome='DmelScer'
+                    ))
