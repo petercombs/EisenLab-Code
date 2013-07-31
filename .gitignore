@@ -19,6 +19,8 @@ __pycache__
 *.fb
 *dump*
 *.cfg
+*.make
+*.mk
 
 analysis*
 sequence*
