@@ -19,14 +19,12 @@ for i, row in config_file.iterrows():
     index = row['Index']
     rf1 = glob('sequence/*_{id}?_*index{index}/*_R1_*.fastq*'
                .format(index=index, id=row['MBEPC']))
-    print ('sequence/*_{id}?_*index{index}_*/*_R1_*.fastq*'
-               .format(index=index, id=row['MBEPC']))
     rf2 = glob('sequence/*_{id}?_*_index{index}_*/*_R2_*.fastq*'
                .format(index=index, id=row['MBEPC']))
 
     out.write('$(ANALYSIS_DIR)/{label}: | $(ANALYSIS_DIR)\n'
-              '\tmkdir$(ANALYSIS_DIR)/{label}\n'.format(label=label))
-    out.write('$(ANALYSIS_DIR)/{label}/accepted_hits.bam: AssignReads2.py |'
+              '\t mkdir$(ANALYSIS_DIR)/{label}\n'.format(label=label))
+    out.write('$(ANALYSIS_DIR)/{label}/accepted_hits.bam: |'
               '$(ANALYSIS_DIR)/{label}\n'
               '\t@echo {label} \n'
               '\tSTAR --parametersFiles $(STARCONFIG) '
