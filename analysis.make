@@ -1,2 +1,2 @@
 current_analysis:
-	echo "Nothing deeper yet"
+	@echo "Nothing deeper yet"

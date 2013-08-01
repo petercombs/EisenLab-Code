@@ -27,24 +27,20 @@ $(ANALYSIS_DIR)/summary.tsv : MakeSummaryTable.py $(FPKMS)
 	@echo '============================='
 	@echo 'Making summary table'
 	@echo '============================='
-
 	python MakeSummaryTable.py $(ANALYSIS_DIR) 
 
 $(ANALYSIS_DIR)/%/genes.fpkm_tracking : $(ANALYSIS_DIR)/%/assigned_dmel.bam $(MELGTF)
 	@echo '============================='
 	@echo 'Calculating Abundances'
 	@echo '============================='
-
 	cufflinks --num-threads 8 --output-dir $(ANALYSIS_DIR)/$* -u \
 		--frag-bias-correct $(MELFASTA) -G $(MELGTF) $<
 
-	#python CalculateAbundances.py | tee logs/CalcAbund.log
-	#cp logs/CalcAbund.log logs/CalcAbund`date +%Y%m%d`.log
 
-$(ANALYSIS_DIR)/%/accepted_hits.bam : $(ANALYSIS_DIR)/%/Aligned.out.sam 
-	samtools view -bS  -o $@  $<
-	rm $(ANALYSIS_DIR)/$*/Aligned.out.sam
-	# This sam file is big, let's get rid of it
+# $(ANALYSIS_DIR)/%/accepted_hits.bam : $(ANALYSIS_DIR)/%/Aligned.out.sam 
+#	samtools view -bS  -o $@  $<
+#	rm $(ANALYSIS_DIR)/$*/Aligned.out.sam
+#	# This sam file is big, let's get rid of it
 
 $(ANALYSIS_DIR)/%/assigned_dmel.bam : $(ANALYSIS_DIR)/%/accepted_hits.bam AssignReads2.py
 	samtools view -H $< | grep -Pv 'SN:(?!dmel)' > $(ANALYSIS_DIR)/$*/mel_only.header.sam
