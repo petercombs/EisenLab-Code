@@ -54,6 +54,7 @@ $(ANALYSIS_DIR)/%/assigned_dmel.bam : $(ANALYSIS_DIR)/%/accepted_hits.bam Assign
 
 $(MELGTF): $(MELGFF)
 	gffread $< -E -T -o- | \
+		awk '{print dmel_$0}' | \
 		grep -vP '(snoRNA|tRNA|unsRNA|snRNA|snmRNA|scaRNA|rRNA|RNA:|mt:)' > \
 		$@
 
