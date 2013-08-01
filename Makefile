@@ -42,6 +42,7 @@ $(ANALYSIS_DIR)/%/genes.fpkm_tracking : $(ANALYSIS_DIR)/%/assigned_dmel.bam $(ME
 	#cp logs/CalcAbund.log logs/CalcAbund`date +%Y%m%d`.log
 
 $(ANALYSIS_DIR)/%/accepted_hits.bam : $(ANALYSIS_DIR)/%/Aligned.out.sam 
+	@echo "Making" $@
 	samtools view -bS  -o $@  $<
 	rm $(ANALYSIS_DIR)/$*/Aligned.out.sam
 	# This sam file is big, let's get rid of it
