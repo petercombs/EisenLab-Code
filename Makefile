@@ -13,7 +13,7 @@ MELGTF   = Reference/mel_good.gtf
 CERGFF   = Reference/saccharomyces_cerevisiae_R64-1-1_20110208.gff
 
 all : $(ANALYSIS_DIR)/summary.tsv
-	make -f analysis.make
+	make -f analyze.make
 
 # Read the per-project make-file
 include config.make
@@ -55,7 +55,7 @@ $(ANALYSIS_DIR)/%/assigned_dmel.bam : $(ANALYSIS_DIR)/%/accepted_hits.bam Assign
 $(MELGTF): $(MELGFF)
 	gffread $< -E -T -o- | \
 		awk '{print "dmel_"$$0}' | \
-		grep -vP '(snoRNA|tRNA|unsRNA|snRNA|snmRNA|scaRNA|rRNA|RNA:|mt:)' > \
+		grep -vP '(snoRNA|CR[0-9]{4}|tRNA|unsRNA|snRNA|snmRNA|scaRNA|rRNA|RNA:|mt:)' > \
 		$@
 
 Reference/DmelScer/Genome : Reference/scer.fa Reference/dmel.fa
