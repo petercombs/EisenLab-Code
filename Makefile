@@ -7,6 +7,7 @@ ANALYSIS_DIR = analysis
 
 # Reference FASTA and GFF files from FlyBase and SGD
 MELFASTA = Reference/dmel-all-chromosome-r5.52.fasta
+MELFASTA2= Reference/dmel_prepend.fasta
 CERFASTA = Reference/S288C_reference_sequence_R64-1-1_20110203.fsa
 MELGFF   = Reference/dmel-all-r5.52.gff
 MELGTF   = Reference/mel_good.gtf
@@ -29,12 +30,12 @@ $(ANALYSIS_DIR)/summary.tsv : MakeSummaryTable.py $(FPKMS)
 	@echo '============================='
 	python MakeSummaryTable.py $(ANALYSIS_DIR) 
 
-$(ANALYSIS_DIR)/%/genes.fpkm_tracking : $(ANALYSIS_DIR)/%/assigned_dmel.bam $(MELGTF)
+$(ANALYSIS_DIR)/%/genes.fpkm_tracking : $(ANALYSIS_DIR)/%/assigned_dmel.bam $(MELGTF) $(MELFASTA2)
 	@echo '============================='
 	@echo 'Calculating Abundances'
 	@echo '============================='
 	cufflinks --num-threads 8 --output-dir $(ANALYSIS_DIR)/$* -u \
-		--frag-bias-correct $(MELFASTA) -G $(MELGTF) $<
+		--frag-bias-correct $(MELFASTA2) -G $(MELGTF) $<
 
 
 # $(ANALYSIS_DIR)/%/accepted_hits.bam : $(ANALYSIS_DIR)/%/Aligned.out.sam 
@@ -57,6 +58,9 @@ $(MELGTF): $(MELGFF)
 		awk '{print "dmel_"$$0}' | \
 		grep -vP '(snoRNA|CR[0-9]{4}|tRNA|unsRNA|snRNA|snmRNA|scaRNA|rRNA|RNA:|mt:)' > \
 		$@
+
+$(MELFASTA2): $(MELFASTA)
+	perl -pe 's/>/>dmel_/' $(MELFASTA) > $@
 
 Reference/DmelScer/Genome : Reference/scer.fa Reference/dmel.fa
 	
