@@ -24,11 +24,11 @@ include config.make
 $(ANALYSIS_DIR) :
 	mkdir $(ANALYSIS_DIR)
 
-$(ANALYSIS_DIR)/summary.tsv : MakeSummaryTable.py $(FPKMS) 
+$(ANALYSIS_DIR)/summary.tsv : MakeSummaryTable.py $(FPKMS) $(RUNCONFIG)
 	@echo '============================='
 	@echo 'Making summary table'
 	@echo '============================='
-	python MakeSummaryTable.py $(ANALYSIS_DIR) 
+	python MakeSummaryTable.py $(ANALYSIS_DIR) $(RUNCONFIG)
 
 $(ANALYSIS_DIR)/%/genes.fpkm_tracking : $(ANALYSIS_DIR)/%/assigned_dmel.bam $(MELGTF) $(MELFASTA2)
 	@echo '============================='
