@@ -12,3 +12,10 @@ analysis/results/complexity:
 
 analysis/results:
 	mkdir analysis/results
+
+Website: analysis/summary.tsv
+	cp analysis/summary.tsv Website/genes.cuff
+	python Website/draw_to_gene.py 
+	echo $(MELGFF) > Website/versions.txt
+	echo $(MELFASTA) >> Website/versions.txt
+
