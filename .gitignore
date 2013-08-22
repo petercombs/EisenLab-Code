@@ -22,8 +22,10 @@ __pycache__
 *.make
 *.mk
 
+prereqs*
 analysis*
 sequence*
+Website*
 MemeOutput
 MemeOutput2
 Reference
