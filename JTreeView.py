@@ -18,7 +18,7 @@ def make_treeview_files(basename, data, clusters=None, do_cluster = False):
     make_gtr_file(basename + '.gtr', clusters)
 
 
-def make_cdt_file(basename, data, clusters, sep_col = True):
+def make_cdt_file(basename, data, clusters=None, sep_col = True):
 
     data = data.copy()
     if sep_col:
@@ -49,7 +49,8 @@ def make_cdt_file(basename, data, clusters, sep_col = True):
             data.ix[row, 'POSITION'] = int(pos)
 
 
-    data = data.ix[hierarchy.leaves_list(clusters)]
+    if clusters is not None:
+        data = data.ix[hierarchy.leaves_list(clusters)]
     data.to_csv(basename, sep='\t', index=False, float_format='%.5f')
 
 def make_gtr_file(basename, clusters):
