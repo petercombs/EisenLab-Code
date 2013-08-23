@@ -38,7 +38,7 @@ for fname in sorted(fnames):
     table.set_index('gene_short_name', inplace=True, verify_integrity=True)
 
     if has_params:
-        new_dirname = "cyc{stage}_{num:02}".format(
+        new_dirname = "cyc{stage}_sl{num:02}".format(
             stage=params.ix[dirname]['Stage'],
             num=get_stagenum(dirname, params.index,
                              params.ix[dirname]['Direction']))

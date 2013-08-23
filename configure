@@ -32,8 +32,9 @@ for i, row in config_file.iterrows():
 
     out.write('$(ANALYSIS_DIR)/{label}: | $(ANALYSIS_DIR)\n'
               '\t mkdir$(ANALYSIS_DIR)/{label}\n'.format(label=label))
-    out.write('$(ANALYSIS_DIR)/{label}/accepted_hits.bam: |'
-              '$(ANALYSIS_DIR)/{label}\n'
+    out.write('$(ANALYSIS_DIR)/{label}/accepted_hits.bam: '
+              ' Reference/DmelScer/Genome'
+              ' | $(ANALYSIS_DIR)/{label}\n'
               '\t@echo {label} \n'
               '\tSTAR --parametersFiles $(STARCONFIG) '
               '--genomeDir Reference/{genome} '

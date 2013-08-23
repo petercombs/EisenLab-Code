@@ -62,5 +62,13 @@ $(MELGTF): $(MELGFF)
 $(MELFASTA2): $(MELFASTA)
 	perl -pe 's/>/>dmel_/' $(MELFASTA) > $@
 
-Reference/DmelScer/Genome : Reference/scer.fa Reference/dmel.fa
-	
+$(CERFASTA2): $(CERFASTA)
+	perl -pe 's/>/>scer_/' $(CERFASTA) > $@
+
+Reference/DmelScer/Genome : $(MELFASTA2) $(CERFASTA2) $(MELGTF) | Reference/DmelScer
+	STAR --runMode genomeGenerate --genomeDir Reference/DmelScer \
+		--genomeFastaFiles $(MELFASTA2) $(CERFASTA2) \
+		--sjdbGTFfile $(MELGTF)
+
+Reference/DmelScer:
+	mkdir $@
