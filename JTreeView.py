@@ -100,14 +100,21 @@ if __name__ == "__main__":
     wt = wt[sort_emb.max(axis=1) > 10]
     sort_emb = sort_emb[sort_emb.max(axis=1) > 10]
     print "Precalculating distances"
-    dist_mat = DistributionDifference.pdist(sort_emb,
-                                            DistributionDifference.tang_stat)
-                                            #hierarchy.distance.euclidean)
-    Z = hierarchy.linkage(dist_mat, method='complete')
+    #metric = DistributionDifference.tang_stat
+    metric = DistributionDifference.diff_stat
+    #metric = hierarchy.distance.euclidean
+    dist_mat = DistributionDifference.pdist(sort_emb, metric)
+    Z = hierarchy.linkage(dist_mat, method='weighted')
 
     wt_lognorm = np.log(wt+1).divide(np.log(sort_emb.mean( axis=1)+1), axis=0)
-    make_treeview_files("analysis/results/wt_all_log_normed", wt_lognorm, Z)
+    make_treeview_files("analysis/results/wt_all_log_normed_"+metric.__name__, wt_lognorm, Z)
 
+    zld = pd.read_table('analysis/summary.tsv', index_col=0)
+    zld = zld.ix[wt_lognorm.index]
+    zld_lognorm = np.log(zld+1).divide(np.log(sort_emb.mean( axis=1)+1), axis=0)
+
+    make_treeview_files("analysis/results/zld_all_log_normed_"+metric.__name__,
+                        zld_lognorm, Z)
 
 
 
