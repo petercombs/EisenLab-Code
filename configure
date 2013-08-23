@@ -18,7 +18,7 @@ yeasts = ' '.join(path.join('$(ANALYSIS_DIR)',
 
 out.write("FPKMS = " + targets + "\n")
 out.write("yeasts : " + yeasts + 
-          "\n\ttar -cvzf $(ANALYSIS_DIR)/yeast.tgz"
+          "\n\ttar -cvf $(ANALYSIS_DIR)/yeast.tar"
           "      $(ANALYSIS_DIR)/*/Y*.bam"
           "\n\t@echo 'Done making yeast'\n")
 
@@ -56,12 +56,15 @@ for i, row in config_file.iterrows():
               ' $(ANALYSIS_DIR)/{label}/assigned_scer_sorted \n'
               # Make new header
               "\tsamtools view -H $(ANALYSIS_DIR)/{label}/assigned_scer.bam"
-              " | grep -Pv 'SN(?!scer)' >"
+              " | grep -Pv 'SN:(?!scer)' >"
               " $(ANALYSIS_DIR)/{label}/cer_only.header.sam\n"
-              # Apply new header
-              "\tsamtools reheader "
-              " $(ANALYSIS_DIR)/{label}/cer_only.header.sam"
-              " $(ANALYSIS_DIR)/{label}/assigned_scer_sorted.bam > $@ \n"
+              # Apply new header e.g.
+              # samtools view analysis/ZE15/assigned_scer_sorted.bam \
+              #  | cat analysis/ZE15/cer_only.header.sam - \
+              #  | samtools view -bS -o analysis/ZE15/Y22.bam -
+              "\tsamtools view $(ANALYSIS_DIR)/{label}/assigned_scer_sorted.bam"
+              " | cat  $(ANALYSIS_DIR)/{label}/cer_only.header.sam -"
+              " | samtools view -bS -o $@ - \n"
               # Remove temporary
               "\t rm $(ANALYSIS_DIR)/{label}/assigned_scer_sorted.bam\n"
               .format(label=label, yeast=row['CarrierID']))
