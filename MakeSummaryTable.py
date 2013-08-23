@@ -24,6 +24,7 @@ fnames = glob(path.join(argv[1], '*', 'genes.fpkm_tracking'))
 if len(argv) > 2 and argv[2] != '-c':
     has_params = argv[2]
     params = pandas.read_table(has_params, index_col='Label')
+    params = params.dropna(how='any')
 else:
     has_params = False
 
@@ -36,6 +37,8 @@ for fname in sorted(fnames):
     basedir, dirname = path.split(alldir)
     table = table.drop_duplicates('gene_short_name').dropna(how='any')
     table.set_index('gene_short_name', inplace=True, verify_integrity=True)
+    if has_params and dirname not in params.index:
+        continue
 
     if has_params:
         new_dirname = "cyc{stage}_sl{num:02}".format(
