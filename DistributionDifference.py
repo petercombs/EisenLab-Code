@@ -59,25 +59,25 @@ def tang_stat(points1, points2):
     points1 = points1 / np.mean(points1)
     points2 = points2 / np.mean(points2)
 
-#    va = np.reshape(np.repeat(points1, len(points2)), (len(points2), -1),
-#                    order='C')
-#    vb = np.reshape(np.repeat(points2, len(points1)), (-1, len(points2)),
-#                    order='F')
+    va = np.reshape(np.repeat(points1, len(points2)), (len(points2), -1),
+                    order='C')
+    vb = np.reshape(np.repeat(points2, len(points1)), (-1, len(points2)),
+                    order='F')
+
+    global divmat
+    if np.shape(divmat) != (len(points1), len(points2)):
+        x, y = np.mgrid[0:len(points1), 0:len(points2)]
+        divmat = 1/(np.abs(x - y) + 1)
+    return np.sqrt(np.sum(np.triu((va - vb)**2 * divmat)))
+
+#    stat = 0
+#    for i in range(len(points1)):
+#        for j in range(len(points2)):
+#            stat += (points1[i] - points2[j])**2 / (np.abs(i - j)+1)
+#            if i == j:
+#                break
 #
-#    global divmat
-#    if np.shape(divmat) != (len(points1), len(points2)):
-#        x, y = np.mgrid[0:len(points1), 0:len(points2)]
-#        divmat = 1/(np.abs(x - y) + 1)
-#    return np.sqrt(np.sum(np.triu((va - vb)**2 * divmat)))
-
-    stat = 0
-    for i in range(len(points1)):
-        for j in range(len(points2)):
-            stat += (points1[i] - points2[j])**2 / (np.abs(i - j)+1)
-            if i == j:
-                break
-
-    return np.sqrt(stat)
+#    return np.sqrt(stat)
 
 
 
