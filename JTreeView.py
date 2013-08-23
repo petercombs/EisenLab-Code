@@ -3,10 +3,12 @@ import pandas as pd
 from scipy.cluster import hierarchy
 import sys
 
+bad_cols = {'25u_emb4_sl10_FPKM', '25u_emb7_sl08_FPKM', '25u_emb7_sl09_FPKM'}
+
 fbgn_data = pd.read_table('prereqs/gene_map_table_fb_2013_04.tsv', index_col=0,
                             skiprows=5).dropna(how='all')
-fbgn_lookup = dict(fbgn_data['primary_FBid'])
-fbgn_map = dict(fbgn_data['sequence_loc'])
+fbgn_lookup = dict(fbgn_data['primary_FBid'].dropna())
+fbgn_map = dict(fbgn_data['sequence_loc'].dropna())
 
 def make_treeview_files(basename, data, clusters=None, do_cluster = False):
     if clusters is None and do_cluster:
@@ -91,6 +93,7 @@ if __name__ == "__main__":
     else:
         step = 1
     wt = pd.read_table('prereqs/journal.pone.0071820.s008.txt', index_col=0)[::step]
+    wt.drop(bad_cols, axis=1)
     sort_emb = '25u_emb3'
     sort_emb = wt.select(lambda x: x.startswith(sort_emb), axis=1)
     wt = wt[sort_emb.max(axis=1) > 10]
