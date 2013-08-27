@@ -60,4 +60,5 @@ for gene in pbar(genes):
                               'imgs',
                               gene+'.png')
         plt.savefig(out_path, format='png')
+        plt.clf()
         chmod(out_path, 0644)
