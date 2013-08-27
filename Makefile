@@ -14,12 +14,12 @@ MELGFF   = prereqs/dmel-all-r5.52.gff
 MELGTF   = Reference/mel_good.gtf
 CERGFF   = prereqs/saccharomyces_cerevisiae_R64-1-1_20110208.gff
 
-all : $(ANALYSIS_DIR)/summary.tsv
-	make -f analyze.make
+
+all : $(ANALYSIS_DIR)/summary.tsv current-analysis
 
 # Read the per-project make-file
 include config.make
-
+include analyze.make
 
 
 $(ANALYSIS_DIR) :
