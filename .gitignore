@@ -23,6 +23,7 @@ __pycache__
 *.mk
 
 analysis*
+prereqs*
 sequence*
 MemeOutput
 MemeOutput2

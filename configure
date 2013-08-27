@@ -11,8 +11,16 @@ targets = ' '.join(path.join('$(ANALYSIS_DIR)',
                              label,
                              'genes.fpkm_tracking')
                    for label in config_file['Label'])
+yeasts = ' '.join(path.join('$(ANALYSIS_DIR)',
+                            row['Label'],
+                            row['CarrierID']+'.bam')
+                  for i, row in config_file.iterrows())
 
 out.write("FPKMS = " + targets + "\n")
+out.write("yeasts : " + yeasts + 
+          "\n\ttar -cvf $(ANALYSIS_DIR)/yeast.tar"
+          "      $(ANALYSIS_DIR)/*/Y*.bam"
+          "\n\t@echo 'Done making yeast'\n")
 
 for i, row in config_file.iterrows():
     label = row['Label']
@@ -24,8 +32,9 @@ for i, row in config_file.iterrows():
 
     out.write('$(ANALYSIS_DIR)/{label}: | $(ANALYSIS_DIR)\n'
               '\t mkdir$(ANALYSIS_DIR)/{label}\n'.format(label=label))
-    out.write('$(ANALYSIS_DIR)/{label}/accepted_hits.bam: |'
-              '$(ANALYSIS_DIR)/{label}\n'
+    out.write('$(ANALYSIS_DIR)/{label}/accepted_hits.bam: '
+              ' Reference/DmelScer/Genome'
+              ' | $(ANALYSIS_DIR)/{label}\n'
               '\t@echo {label} \n'
               '\tSTAR --parametersFiles $(STARCONFIG) '
               '--genomeDir Reference/{genome} '
@@ -39,3 +48,23 @@ for i, row in config_file.iterrows():
                      label=label,
                      genome='DmelScer'
                     ))
+    out.write('$(ANALYSIS_DIR)/{label}/{yeast}.bam:  '
+              '$(ANALYSIS_DIR)/{label}/assigned_scer.bam\n'
+              '\t@echo {yeast} \n'
+              # Sort
+              '\tsamtools sort $(ANALYSIS_DIR)/{label}/assigned_scer.bam '
+              ' $(ANALYSIS_DIR)/{label}/assigned_scer_sorted \n'
+              # Make new header
+              "\tsamtools view -H $(ANALYSIS_DIR)/{label}/assigned_scer.bam"
+              " | grep -Pv 'SN:(?!scer)' >"
+              " $(ANALYSIS_DIR)/{label}/cer_only.header.sam\n"
+              # Apply new header e.g.
+              # samtools view analysis/ZE15/assigned_scer_sorted.bam \
+              #  | cat analysis/ZE15/cer_only.header.sam - \
+              #  | samtools view -bS -o analysis/ZE15/Y22.bam -
+              "\tsamtools view $(ANALYSIS_DIR)/{label}/assigned_scer_sorted.bam"
+              " | cat  $(ANALYSIS_DIR)/{label}/cer_only.header.sam -"
+              " | samtools view -bS -o $@ - \n"
+              # Remove temporary
+              "\t rm $(ANALYSIS_DIR)/{label}/assigned_scer_sorted.bam\n"
+              .format(label=label, yeast=row['CarrierID']))

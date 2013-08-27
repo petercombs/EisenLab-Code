@@ -6,12 +6,13 @@ STARCONFIG = Parameters/STAR_params.in
 ANALYSIS_DIR = analysis
 
 # Reference FASTA and GFF files from FlyBase and SGD
-MELFASTA = Reference/dmel-all-chromosome-r5.52.fasta
+MELFASTA = prereqs/dmel-all-chromosome-r5.52.fasta
 MELFASTA2= Reference/dmel_prepend.fasta
-CERFASTA = Reference/S288C_reference_sequence_R64-1-1_20110203.fsa
-MELGFF   = Reference/dmel-all-r5.52.gff
+CERFASTA = prereqs/S288C_reference_sequence_R64-1-1_20110203.fsa
+CERFASTA2= Reference/scer_prepend.fasta
+MELGFF   = prereqs/dmel-all-r5.52.gff
 MELGTF   = Reference/mel_good.gtf
-CERGFF   = Reference/saccharomyces_cerevisiae_R64-1-1_20110208.gff
+CERGFF   = prereqs/saccharomyces_cerevisiae_R64-1-1_20110208.gff
 
 all : $(ANALYSIS_DIR)/summary.tsv
 	make -f analyze.make
@@ -24,11 +25,11 @@ include config.make
 $(ANALYSIS_DIR) :
 	mkdir $(ANALYSIS_DIR)
 
-$(ANALYSIS_DIR)/summary.tsv : MakeSummaryTable.py $(FPKMS) 
+$(ANALYSIS_DIR)/summary.tsv : MakeSummaryTable.py $(FPKMS) $(RUNCONFIG)
 	@echo '============================='
 	@echo 'Making summary table'
 	@echo '============================='
-	python MakeSummaryTable.py $(ANALYSIS_DIR) 
+	python MakeSummaryTable.py $(ANALYSIS_DIR) $(RUNCONFIG)
 
 $(ANALYSIS_DIR)/%/genes.fpkm_tracking : $(ANALYSIS_DIR)/%/assigned_dmel.bam $(MELGTF) $(MELFASTA2)
 	@echo '============================='
@@ -56,11 +57,19 @@ $(ANALYSIS_DIR)/%/assigned_dmel.bam : $(ANALYSIS_DIR)/%/accepted_hits.bam Assign
 $(MELGTF): $(MELGFF)
 	gffread $< -E -T -o- | \
 		awk '{print "dmel_"$$0}' | \
-		grep -vP '(snoRNA|CR[0-9]{4}|tRNA|unsRNA|snRNA|snmRNA|scaRNA|rRNA|RNA:|mt:)' > \
+		grep -vP '(snoRNA|CR[0-9]{4}|Rp[ILS]|mir-|tRNA|unsRNA|snRNA|snmRNA|scaRNA|rRNA|RNA:|mt:)' > \
 		$@
 
 $(MELFASTA2): $(MELFASTA)
 	perl -pe 's/>/>dmel_/' $(MELFASTA) > $@
 
-Reference/DmelScer/Genome : Reference/scer.fa Reference/dmel.fa
-	
+$(CERFASTA2): $(CERFASTA)
+	perl -pe 's/>/>scer_/' $(CERFASTA) > $@
+
+Reference/DmelScer/Genome : $(MELFASTA2) $(CERFASTA2) $(MELGTF) | Reference/DmelScer
+	STAR --runMode genomeGenerate --genomeDir Reference/DmelScer \
+		--genomeFastaFiles $(MELFASTA2) $(CERFASTA2) \
+		--sjdbGTFfile $(MELGTF)
+
+Reference/DmelScer:
+	mkdir $@
