@@ -120,3 +120,71 @@ def plot_likelihoods(likelihoods, starts, column_headers):
     return plots
 
 
+def svg_heatmap(data, filename, row_labels=None, boxsize=4,
+               cmap=cm.Blues, norm_rows_by = None, draw_row_labels=False):
+    """
+    """
+    import svgwrite as svg
+    import pandas as pd
+
+    dwg = svg.Drawing(filename)
+    if not isinstance(data, tuple):
+        data = (data,)
+
+    rows, cols = np.shape(data[0])
+    if row_labels is None:
+        if hasattr(data[0], 'index'):
+            row_labels = data[0].index
+        else:
+            row_labels = ['' for row in range(rows)]
+
+
+
+    if not hasattr(cmap, "__len__"):
+        cmap = [cmap for frame in data]
+
+    x_start = 0
+    for frame, c_cmap in zip(data, cmap):
+        frame = pd.DataFrame(frame)
+        if norm_rows_by is None:
+            norm_data = frame.copy()
+        elif norm_rows_by is 'mean':
+            norm_data = frame.divide(frame.mean(axis=1), axis=0)
+        elif norm_rows_by is 'max':
+            norm_data = frame.divide(frame.max(axis=1), axis=0)
+        elif hasattr(norm_rows_by, "__len__") and len(norm_rows_by) == rows:
+            norm_data = frame.divide(norm_rows_by, axis=0)
+
+        else:
+            raise TypeError("norm_rows_by should be the same shape "
+                            "as the number of rows")
+        new_rows, new_cols = np.shape(frame)
+        if hasattr(frame, 'index'):
+            col_labels = frame.columns
+        else:
+            col_labels = ['' for col in range(new_cols)]
+        if new_rows != rows:
+            raise ValueError("All input elements must have the same number of"
+                             " rows (and same row meanings --unchecked)")
+
+        for i in range(rows):
+            for j in range(new_cols):
+                g = dwg.g()
+                g.add(svg.base.Title("{}, {}: {:.2f}".format(row_labels[i],
+                                                             col_labels[j],
+                                                             frame.ix[i,j])))
+                g.add(dwg.rect((x_start + boxsize*j, i*boxsize),
+                               (boxsize, boxsize),
+                               style="fill:#{:02x}{:02x}{:02x}"
+                                .format(*[int(255*x) for x in
+                                          c_cmap(norm_data.ix[i,j])])))
+                dwg.add(g)
+        print x_start
+        x_start += new_cols * boxsize + boxsize
+
+
+    print x_start
+    if draw_row_labels:
+        for i in range(rows):
+            dwg.add(dwg.text(row_labels[i], (x_start, i*boxsize+boxsize),))
+    dwg.saveas(filename)
