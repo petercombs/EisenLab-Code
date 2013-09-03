@@ -124,6 +124,30 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
                cmap=cm.Blues, norm_rows_by = None, draw_row_labels=False,
                col_sep = '', box_height=None, total_width=None):
     """
+    Draw heatmap as an SVG file stored in filename
+
+    *data* can be either a 2D array-like type (list of lists, numpy array,
+    pandas DataFrame, etc), or a tuple of 2D array-likes, in which case a
+    separator will be added between each one in the output
+
+    *cmap* is a matplotlib-like colormap (i.e. a callable that expects floats in
+    the range 0.0-1.0.), or an iterable of the same length as the tuple *data*
+    containing colormaps
+
+    *row_labels* can be supplied, otherwise they will detected from the first
+    item in *data*, if available, and if not they will be blank.
+
+    If *total_width* is supplied, width of each dataset in *data* will be scaled
+    to that constant. If *box_height* is supplied, the height of each row will be
+    *box_height*, otherwise it will be equal to the width of each element. If
+    neither are supplied, elements will be squares equal to *box_size*. IT IS
+    STRONGLY RECOMMENDED that if if supplying *total_width*, *box_height* also be
+    specified, but this is not enforced. 
+
+    *draw_row_labels*, if True, will label the rows on the right hand side. As
+    of 2013/09/03, this won't scale the SVG properly, so including the resulting
+    file in an html element won't display properly.
+
     """
     import svgwrite as svg
     import pandas as pd
@@ -145,6 +169,9 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
 
     if not hasattr(cmap, "__len__"):
         cmap = [cmap for frame in data]
+
+    if len(cmap) != len(data):
+        raise ValueError("cmap and data should be the same length")
 
     x_start = 0
     for frame, c_cmap in zip(data, cmap):
