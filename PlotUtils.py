@@ -179,11 +179,9 @@ def svg_heatmap(data, filename, row_labels=None, boxsize=4,
                                 .format(*[int(255*x) for x in
                                           c_cmap(norm_data.ix[i,j])])))
                 dwg.add(g)
-        print x_start
         x_start += new_cols * boxsize + boxsize
 
 
-    print x_start
     if draw_row_labels:
         for i in range(rows):
             dwg.add(dwg.text(row_labels[i], (x_start, i*boxsize+boxsize),))
