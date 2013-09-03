@@ -120,9 +120,9 @@ def plot_likelihoods(likelihoods, starts, column_headers):
     return plots
 
 
-def svg_heatmap(data, filename, row_labels=None, boxsize=4,
+def svg_heatmap(data, filename, row_labels=None, box_size=4,
                cmap=cm.Blues, norm_rows_by = None, draw_row_labels=False,
-               col_sep = ''):
+               col_sep = '', box_height=None, total_width=None):
     """
     """
     import svgwrite as svg
@@ -140,7 +140,8 @@ def svg_heatmap(data, filename, row_labels=None, boxsize=4,
         else:
             row_labels = ['' for row in range(rows)]
 
-
+    if box_height is None:
+        box_height = box_size
 
     if not hasattr(cmap, "__len__"):
         cmap = [cmap for frame in data]
@@ -169,6 +170,9 @@ def svg_heatmap(data, filename, row_labels=None, boxsize=4,
             raise ValueError("All input elements must have the same number of"
                              " rows (and same row meanings --unchecked)")
 
+        if total_width is not None:
+            box_size = total_width / float(new_cols)
+
         for i in range(rows):
             prefix = col_labels[0][:col_labels[0].find(col_sep)]
             for j in range(new_cols):
@@ -176,8 +180,8 @@ def svg_heatmap(data, filename, row_labels=None, boxsize=4,
                 g.add(svg.base.Title("{}, {}: {:.2f}".format(row_labels[i],
                                                              col_labels[j],
                                                              frame.ix[i,j])))
-                g.add(dwg.rect((x_start + boxsize*j, i*boxsize),
-                               (boxsize, boxsize),
+                g.add(dwg.rect((x_start + box_size*j, i*box_height),
+                               (box_size, box_height),
                                style="fill:#{:02x}{:02x}{:02x}"
                                 .format(*[int(255*x) for x in
                                           c_cmap(norm_data.ix[i,j])])))
@@ -185,14 +189,14 @@ def svg_heatmap(data, filename, row_labels=None, boxsize=4,
                 col_base = col_labels[j][:col_labels[j].find(col_sep)] 
                 if col_base != prefix:
                     prefix = col_base
-                    g.add(dwg.line((x_start+boxsize*j, i*boxsize),
-                                   (x_start+boxsize*j, (i+1)*boxsize),
+                    g.add(dwg.line((x_start+box_size*j, i*box_height),
+                                   (x_start+box_size*j, (i+1)*box_height),
                                    style="stroke-width:{}; stroke:#000000"
-                                   .format(.1 * boxsize)))
-        x_start += new_cols * boxsize + boxsize
+                                   .format(.1 * box_size)))
+        x_start += new_cols * box_size + box_size
 
 
     if draw_row_labels:
         for i in range(rows):
-            dwg.add(dwg.text(row_labels[i], (x_start, i*boxsize+boxsize),))
+            dwg.add(dwg.text(row_labels[i], (x_start, i*box_size+box_height),))
     dwg.saveas(filename)
