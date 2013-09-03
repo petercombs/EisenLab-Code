@@ -122,7 +122,9 @@ def plot_likelihoods(likelihoods, starts, column_headers):
 
 def svg_heatmap(data, filename, row_labels=None, box_size=4,
                cmap=cm.Blues, norm_rows_by = None, draw_row_labels=False,
-               col_sep = '', box_height=None, total_width=None):
+               col_sep='', box_height=None, total_width=None,
+               draw_box=False, draw_name=False, data_names=None,
+               first_col='', last_col=''):
     """
     Draw heatmap as an SVG file stored in filename
 
@@ -170,11 +172,14 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
     if not hasattr(cmap, "__len__"):
         cmap = [cmap for frame in data]
 
+    if data_names is None:
+        data_names = ["" for frame in data]
+
     if len(cmap) != len(data):
         raise ValueError("cmap and data should be the same length")
 
     x_start = 0
-    for frame, c_cmap in zip(data, cmap):
+    for frame, c_cmap, name in zip(data, cmap, data_names):
         frame = pd.DataFrame(frame)
         if norm_rows_by is None:
             norm_data = frame.copy()
@@ -220,6 +225,19 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
                                    (x_start+box_size*j, (i+1)*box_height),
                                    style="stroke-width:{}; stroke:#000000"
                                    .format(.1 * box_size)))
+        dwg.add(dwg.text(first_col, (x_start,
+                                     (i+2)*box_height))) 
+        dwg.add(dwg.text(last_col, (x_start + (new_cols - 1) * box_size,
+                                     (i+2)*box_height))) 
+        if draw_box:
+            dwg.add(dwg.rect((x_start, 0), 
+                             (new_cols*box_size, rows*box_height),
+                             style="stroke-width:1; stroke:#000000; fill:none"))
+        if draw_name:
+            dwg.add(dwg.text(name,
+                             (x_start + box_size*new_cols/2.0,
+                              box_height*(rows+1)),
+                             style="text-anchor: middle;"))
         x_start += new_cols * box_size + box_size
 
 
