@@ -44,6 +44,7 @@ for clustfn in sorted(clust_pairs.keys()):
     norm_col = wt_tmp.max(axis=1)
     svg_heatmap((wt_tmp, zld_tmp), 'analysis/results/{}.svg'.format(clustfn),
                 norm_rows_by=norm_col,
+                col_sep='_sl',
                 cmap=(mpl.cm.Blues, mpl.cm.Reds), boxsize=10,
                 draw_row_labels=True)
 
