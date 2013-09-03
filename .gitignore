@@ -19,9 +19,13 @@ __pycache__
 *.fb
 *dump*
 *.cfg
+*.make
+*.mk
 
+prereqs*
 analysis*
 sequence*
+Website*
 MemeOutput
 MemeOutput2
 Reference
