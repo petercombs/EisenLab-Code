@@ -190,9 +190,12 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
         elif hasattr(norm_rows_by, "__len__") and len(norm_rows_by) == rows:
             norm_data = frame.divide(norm_rows_by, axis=0)
 
-        else:
+        elif hasattr(norm_rows_by, "__len__"):
             raise TypeError("norm_rows_by should be the same shape "
                             "as the number of rows")
+        else:
+            norm_data = frame.divide(norm_rows_by, axis=0)
+
         new_rows, new_cols = np.shape(frame)
         if hasattr(frame, 'index'):
             col_labels = frame.columns
