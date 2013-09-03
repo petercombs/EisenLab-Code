@@ -25,15 +25,19 @@ out.write("yeasts : " + yeasts +
 for i, row in config_file.iterrows():
     label = row['Label']
     index = row['Index']
-    rf1_str = ('sequence/*{id}?_*index{index}/*_R1_*.fastq*'
+    rf1_str = ('sequence*/*{id}?_*index{index}/*_R1_*.fastq*'
                .format(index=index, id=row['MBEPC']) )
     rf1 = glob(rf1_str)
-    rf2 = glob('sequence/*{id}?_*_index{index}_*/*_R2_*.fastq*'
+    rf2_str = ('sequence*/*{id}?_*index{index}/*_R2_*.fastq*'
                .format(index=index, id=row['MBEPC']))
+    rf2 = glob(rf2_str)
 
     if rf1 == []:
         print "No sequence files found. Looking for string:'",
         print rf1_str, "'"
+    if rf2 == []:
+        print "No second read end found. Looking for string:'",
+        print rf2_str, "'"
 
     out.write('$(ANALYSIS_DIR)/{label}: | $(ANALYSIS_DIR)\n'
               '\t mkdir $(ANALYSIS_DIR)/{label}\n'.format(label=label))
@@ -48,8 +52,8 @@ for i, row in config_file.iterrows():
               '\tsamtools view -bS -o $(ANALYSIS_DIR)/{label}/accepted_hits.bam'
               ' $(ANALYSIS_DIR)/{label}/Aligned.out.sam\n'
               '\trm $(ANALYSIS_DIR)/{label}/Aligned.out.sam\n'
-             .format(rf1=','.join(rf1),
-                     rf2=','.join(rf2),
+             .format(rf1=','.join(sorted(rf1)),
+                     rf2=','.join(sorted(rf2)),
                      label=label,
                      genome='DmelScer'
                     ))
