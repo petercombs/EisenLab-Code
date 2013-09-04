@@ -34,6 +34,11 @@ if no_imgs:
     procs.append(Popen(['./draw_to_gene.py']
                        + no_imgs))
 
+print """<tr><td></td>
+<td><embed src="header.svg" width="750" height="50" /></td>
+<td></td></tr>
+"""
+
 gene_index = {}
 for gene in data.index:
     max_val = max(data.ix[gene])
@@ -49,7 +54,8 @@ for gene in  genes:
     if gene in gene_index:
         img = ''.join((l + '_' if l.isupper() else l) for l in gene)
 
-        print '<embed src="'+path.join('imgs', img + '.png.svg')+'" width="750" />' 
+        print '<embed src="'+path.join('imgs', img + '.png.svg')+'"'
+        print 'width="750" height="50" />' 
         print '</td>'
         print '<td>%s</td>' % gene_index[gene]
     else:
@@ -58,7 +64,9 @@ for gene in  genes:
 
 print "</table>"
 print """
-Data is shown with Anterior to the left and Posterior to the right.
+Data is shown with Anterior to the left and Posterior to the right. Heatmaps are
+normalized to maximum expression in any timepoint for each gene. Hover to
+display Cufflinks' FPKM value in each slice datapoint.
 """
 print "</body>"
 
