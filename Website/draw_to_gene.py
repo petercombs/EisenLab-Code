@@ -41,7 +41,7 @@ fig = plt.figure(figsize=(len(headers)+1,1))
 for gene in pbar(genes):
     if gene not in gene_index:
         continue
-    all_max = min(max(data.ix[gene_index[gene]]), 1000)
+    all_max = min(max(data.ix[gene_index[gene]]), 10000)
     dats = []
     for emb, cyc in enumerate(headers):
         ax = plt.subplot(1,len(headers),emb+1)
