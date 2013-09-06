@@ -16,8 +16,8 @@ analysis/results:
 Website: analysis/summary.tsv | Website/imgs
 	cp analysis/summary.tsv Website/genes.cuff
 	python Website/draw_to_gene.py Website/genes.cuff
-	echo $(MELGFF) > Website/versions.txt
-	echo $(MELFASTA) >> Website/versions.txt
+	echo `basename $(MELGFF)` > Website/versions.txt
+	echo `basename $(MELFASTA)` >> Website/versions.txt
 
 Website/imgs:
 	mkdir Website/imgs

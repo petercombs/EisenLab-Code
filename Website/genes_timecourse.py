@@ -70,7 +70,7 @@ display Cufflinks' FPKM value in each slice datapoint.
 """
 print "</body>"
 
-print "Data calculated based on flybase files: "
+print "Data calculated based on <a href="http://flybase.org/">FlyBase</a> files: "
 print open("versions.txt").read()
 
 print "</html>"
