@@ -31,7 +31,7 @@ $(ANALYSIS_DIR)/summary.tsv : MakeSummaryTable.py $(FPKMS) $(RUNCONFIG)
 	@echo '============================='
 	python MakeSummaryTable.py $(ANALYSIS_DIR) $(RUNCONFIG)
 
-$(ANALYSIS_DIR)/%/genes.fpkm_tracking : $(ANALYSIS_DIR)/%/assigned_dmel.bam $(MELGTF) $(MELFASTA2)
+$(ANALYSIS_DIR)/%/genes.fpkm_tracking : $(ANALYSIS_DIR)/%/assigned_dmelR.bam $(MELGTF) $(MELFASTA2)
 	@echo '============================='
 	@echo 'Calculating Abundances'
 	@echo '============================='
@@ -44,7 +44,7 @@ $(ANALYSIS_DIR)/%/genes.fpkm_tracking : $(ANALYSIS_DIR)/%/assigned_dmel.bam $(ME
 #	rm $(ANALYSIS_DIR)/$*/Aligned.out.sam
 #	# This sam file is big, let's get rid of it
 
-$(ANALYSIS_DIR)/%/assigned_dmel.bam : $(ANALYSIS_DIR)/%/accepted_hits.bam AssignReads2.py
+$(ANALYSIS_DIR)/%/assigned_dmelR.bam : $(ANALYSIS_DIR)/%/accepted_hits.bam AssignReads2.py
 	samtools view -H $< | grep -Pv 'SN:(?!dmel)' > $(ANALYSIS_DIR)/$*/mel_only.header.sam
 	python AssignReads2.py $(ANALYSIS_DIR)/$*/accepted_hits.bam
 	samtools sort $(ANALYSIS_DIR)/$*/assigned_dmel.bam \
