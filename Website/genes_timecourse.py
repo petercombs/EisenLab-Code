@@ -7,6 +7,9 @@ from os import path, environ
 from subprocess import Popen
 
 data = pd.read_table('genes.cuff', index_col=0)
+fbgns = {line.split()[1]: line.split()[0] 
+         for line in open('gene_table.tsv') 
+         if (not line.startswith('#')) and (line.strip())}
 procs = []
 
 print "Content-Type: text/html"     # HTML is following
@@ -22,14 +25,13 @@ print "<td>Max FPKM</td></tr></thead>"
 
 genes = [gene.strip() for gene in cgi.FieldStorage().getfirst('genes').split()
          if gene.strip()]
+for i, gene in enumerate(genes):
+    if gene.startswith('FBgn') and gene in fbgns:
+        genes[i] = fbgns[gene]
+
 no_imgs = [gene for gene in genes
            if not path.exists(path.join('imgs', gene+'.png.svg'))
            and gene in data.index]
-outfh = open('searches.log', 'a')
-outfh.write(str(environ['REMOTE_ADDR']))
-outfh.write(str(genes))
-outfh.write('\n')
-outfh.close()
 if no_imgs:
     procs.append(Popen(['./draw_to_gene.py']
                        + no_imgs))
@@ -70,9 +72,16 @@ display Cufflinks' FPKM value in each slice datapoint.
 """
 print "</body>"
 
-print "Data calculated based on <a href="http://flybase.org/">FlyBase</a> files: "
+print 'Data calculated based on <a href="http://flybase.org/">FlyBase</a> files: '
 print open("versions.txt").read()
 
 print "</html>"
 for proc in procs:
     proc.wait()
+
+
+outfh = open('searches.log', 'a')
+outfh.write(str(environ['REMOTE_ADDR']))
+outfh.write(str(genes))
+outfh.write('\n')
+outfh.close()

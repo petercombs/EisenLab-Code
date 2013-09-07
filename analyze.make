@@ -1,3 +1,5 @@
+GENETABLE = prereqs/gene_map_table_fb_2013_04.tsv
+
 current_analysis: analysis/results/fpkm_sum Website 
 	@echo "Nothing deeper yet"
 
@@ -15,9 +17,11 @@ analysis/results:
 
 Website: analysis/summary.tsv | Website/imgs
 	cp analysis/summary.tsv Website/genes.cuff
-	python Website/draw_to_gene.py Website/genes.cuff
 	echo `basename $(MELGFF)` > Website/versions.txt
 	echo `basename $(MELFASTA)` >> Website/versions.txt
+	echo `basename $(GENETABLE)` >> Website/versions.txt
+	cut -f -2 $(GENETABLE) > Website/gene_table.tsv
+	python Website/draw_to_gene.py Website/genes.cuff
 
 Website/imgs:
 	mkdir Website/imgs
