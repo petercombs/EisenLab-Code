@@ -20,6 +20,8 @@ Website: analysis/summary.tsv | Website/imgs
 	echo `basename $(MELGFF)` > Website/versions.txt
 	echo `basename $(MELFASTA)` >> Website/versions.txt
 	echo `basename $(GENETABLE)` >> Website/versions.txt
+	echo 'Made on' >> Website/versions.txt
+	date >> Website/versions.txt
 	cut -f -2 $(GENETABLE) > Website/gene_table.tsv
 	python Website/draw_to_gene.py Website/genes.cuff
 
