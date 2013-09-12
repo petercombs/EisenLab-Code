@@ -154,7 +154,7 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
     import svgwrite as svg
     import pandas as pd
 
-    dwg = svg.Drawing(filename)
+    dwg = svg.Drawing(filename,size=(751,85))
     dwg.add(svg.base.Title(path.basename(filename)))
     if not isinstance(data, tuple):
         data = (data,)

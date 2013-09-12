@@ -59,10 +59,10 @@ for gene in pbar(genes):
         #plt.tight_layout()
 
     for gene in gene.split(','):
-        gene = ''.join((l+'_' if l.isupper() else l) for l in gene)
+        gene = ''.join((l+'' if l.isupper() else l) for l in gene)
         out_path = path.join(path.dirname(argv[1]),
                               'imgs',
-                              gene+'.png')
+                              gene)
         #plt.savefig(out_path, format='png')
         #plt.clf()
         #chmod(out_path, 0644)
@@ -70,5 +70,9 @@ for gene in pbar(genes):
                               norm_rows_by=all_max,
                               box_height=40, total_width=100,
                               draw_box=True,
+                              draw_name=True,
+                              data_names=['Stage 2', 'Stage 4', 'Stage 5A',
+                                          'Stage 5B', 'Stage 5C', 'Stage 5D',
+                                          'Stage 5E', ],
                               first_col='', last_col='')
         chmod(out_path+'.svg', 0644)

@@ -35,8 +35,8 @@ for fname in sorted(fnames):
     table = pandas.read_table(fname)
     alldir, fname = path.split(fname)
     basedir, dirname = path.split(alldir)
-    table = table.drop_duplicates('gene_short_name').dropna(how='any')
-    table.set_index('gene_short_name', inplace=True, verify_integrity=True)
+    table = table.drop_duplicates('tracking_id').dropna(how='any')
+    table.set_index('tracking_id', inplace=True, verify_integrity=True)
     if has_params and dirname not in params.index:
         continue
 
