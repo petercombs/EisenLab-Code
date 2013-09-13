@@ -15,7 +15,7 @@ analysis/results/complexity:
 analysis/results:
 	mkdir analysis/results
 
-Website: analysis/summary.tsv | Website/imgs
+Website: analysis/summary.tsv Website/draw_to_gene.py | Website/imgs
 	cp analysis/summary.tsv Website/genes.cuff
 	echo `basename $(MELGFF)` > Website/versions.txt
 	echo `basename $(MELFASTA)` >> Website/versions.txt

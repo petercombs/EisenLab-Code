@@ -68,9 +68,10 @@ for gene in pbar(genes):
         #chmod(out_path, 0644)
         PlotUtils.svg_heatmap(tuple(dats), out_path+'.svg',
                               norm_rows_by=all_max,
-                              box_height=40, total_width=100,
+                              box_height=80, total_width=190,
                               draw_box=True,
                               draw_name=True,
+                              max_width=600,
                               data_names=['Stage 2', 'Stage 4', 'Stage 5A',
                                           'Stage 5B', 'Stage 5C', 'Stage 5D',
                                           'Stage 5E', ],

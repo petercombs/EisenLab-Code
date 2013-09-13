@@ -1,3 +1,4 @@
+from __future__ import division
 from matplotlib import pyplot as mpl
 from matplotlib.colors import hsv_to_rgb
 from matplotlib import cm
@@ -124,6 +125,7 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
                cmap=cm.Blues, norm_rows_by = None, draw_row_labels=False,
                col_sep='', box_height=None, total_width=None,
                draw_box=False, draw_name=False, data_names=None,
+               max_width=np.inf,
                first_col='', last_col=''):
     """
     Draw heatmap as an SVG file stored in filename
@@ -154,10 +156,20 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
     import svgwrite as svg
     import pandas as pd
 
-    dwg = svg.Drawing(filename,size=(751,85))
-    dwg.add(svg.base.Title(path.basename(filename)))
     if not isinstance(data, tuple):
         data = (data,)
+
+    if box_height is None:
+        box_height = box_size
+
+    if total_width is not None and max_width is not np.inf:
+        dwg = svg.Drawing(filename,
+                          size=(max_width + 10,
+                                np.ceil((len(data) * total_width)/max_width)
+                                * (box_height+30)))
+    else:
+        dwg = svg.Drawing(filename)
+    dwg.add(svg.base.Title(path.basename(filename)))
 
     rows, cols = np.shape(data[0])
     if row_labels is None:
@@ -166,8 +178,6 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
         else:
             row_labels = ['' for row in range(rows)]
 
-    if box_height is None:
-        box_height = box_size
 
     if not hasattr(cmap, "__len__"):
         cmap = [cmap for frame in data]
@@ -179,6 +189,7 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
         raise ValueError("cmap and data should be the same length")
 
     x_start = 0
+    y_start = 0
     for frame, c_cmap, name in zip(data, cmap, data_names):
         frame = pd.DataFrame(frame)
         if norm_rows_by is None:
@@ -215,7 +226,7 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
                 g.add(svg.base.Title("{}, {}: {:.2f}".format(row_labels[i],
                                                              col_labels[j],
                                                              frame.ix[i,j])))
-                g.add(dwg.rect((x_start + box_size*j, i*box_height),
+                g.add(dwg.rect((x_start + box_size*j, y_start + i*box_height),
                                (box_size, box_height),
                                style="fill:#{:02x}{:02x}{:02x}"
                                 .format(*[int(255*x) for x in
@@ -224,27 +235,37 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
                 col_base = col_labels[j][:col_labels[j].find(col_sep)] 
                 if col_base != prefix:
                     prefix = col_base
-                    g.add(dwg.line((x_start+box_size*j, i*box_height),
-                                   (x_start+box_size*j, (i+1)*box_height),
+                    g.add(dwg.line((x_start+box_size*j, y_start + i*box_height),
+                                   (x_start+box_size*j, y_start + (i+1)*box_height),
                                    style="stroke-width:{}; stroke:#000000"
                                    .format(.1 * box_size)))
         dwg.add(dwg.text(first_col, (x_start,
-                                     (i+2)*box_height))) 
+                                     y_start + (i+1)*box_height))) 
         dwg.add(dwg.text(last_col, (x_start + (new_cols - 1) * box_size,
-                                     (i+2)*box_height))) 
+                                     y_start + (i+1)*box_height))) 
         if draw_box:
-            dwg.add(dwg.rect((x_start, 0), 
+            dwg.add(dwg.rect((x_start, y_start + 0), 
                              (new_cols*box_size, rows*box_height),
                              style="stroke-width:1; stroke:#000000; fill:none"))
         if draw_name:
             dwg.add(dwg.text(name,
                              (x_start + box_size*new_cols/2.0,
-                              box_height*(rows+1)),
+                              y_start + box_height*(rows)+ 13),
                              style="text-anchor: middle;"))
-        x_start += new_cols * box_size + box_size
+
+        if total_width is not None:
+            x_start += total_width * 1.1
+        else:
+            x_start += new_cols * box_size + box_size
+
+        if x_start > max_width:
+            x_start = 0
+            y_start += new_rows*box_height + 30
+
+
 
 
     if draw_row_labels:
         for i in range(rows):
-            dwg.add(dwg.text(row_labels[i], (x_start, i*box_size+box_height),))
+            dwg.add(dwg.text(row_labels[i], (x_start, y_start + i*box_size+box_height),))
     dwg.saveas(filename)
