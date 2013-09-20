@@ -29,7 +29,7 @@ $(ANALYSIS_DIR)/summary.tsv : MakeSummaryTable.py $(FPKMS) $(RUNCONFIG)
 	@echo '============================='
 	@echo 'Making summary table'
 	@echo '============================='
-	python MakeSummaryTable.py $(ANALYSIS_DIR) $(RUNCONFIG)
+	python MakeSummaryTable.py --params $(RUNCONFIG) $(ANALYSIS_DIR) 
 
 $(ANALYSIS_DIR)/%/genes.fpkm_tracking : $(ANALYSIS_DIR)/%/assigned_dmelR.bam $(MELGTF) $(MELFASTA2)
 	@echo '============================='
