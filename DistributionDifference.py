@@ -56,8 +56,8 @@ divmat = np.zeros([0,0])
 
 def tang_stat(points1, points2):
     assert len(points1) == len(points2)
-    points1 = points1 / np.mean(points1)
-    points2 = points2 / np.mean(points2)
+    points1 = np.array(points1 / np.mean(points1))
+    points2 = np.array(points2 / np.mean(points2))
 
     va = np.reshape(np.repeat(points1, len(points2)), (len(points2), -1),
                     order='C')
