@@ -1,6 +1,6 @@
 GENETABLE = prereqs/gene_map_table_fb_2013_04.tsv
 
-current_analysis: analysis/results/fpkm_sum Website 
+current-analysis: analysis/results/fpkm_sum Website 
 	@echo "Nothing deeper yet"
 
 analysis/results/fpkm_sum: analysis/summary.tsv | analysis/results
