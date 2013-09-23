@@ -6,11 +6,11 @@ STARCONFIG = Parameters/STAR_params.in
 ANALYSIS_DIR = analysis
 
 # Reference FASTA and GFF files from FlyBase and SGD
-MELFASTA = prereqs/dmel-all-chromosome-r5.52.fasta
+MELFASTA = prereqs/dmel-all-chromosome-r5.53.fasta
 MELFASTA2= Reference/dmel_prepend.fasta
 CERFASTA = prereqs/S288C_reference_sequence_R64-1-1_20110203.fsa
 CERFASTA2= Reference/scer_prepend.fasta
-MELGFF   = prereqs/dmel-all-r5.52.gff
+MELGFF   = prereqs/dmel-all-r5.53.gff
 MELGTF   = Reference/mel_good.gtf
 CERGFF   = prereqs/saccharomyces_cerevisiae_R64-1-1_20110208.gff
 
@@ -66,7 +66,7 @@ $(MELFASTA2): $(MELFASTA)
 $(CERFASTA2): $(CERFASTA)
 	perl -pe 's/>/>scer_/' $(CERFASTA) > $@
 
-Reference/DmelScer/Genome : $(MELFASTA2) $(CERFASTA2) | $(MELGTF) Reference/DmelScer
+Reference/DmelScer/Genome : | $(MELFASTA2) $(CERFASTA2)  $(MELGTF) Reference/DmelScer
 	STAR --runMode genomeGenerate --genomeDir Reference/DmelScer \
 		--genomeFastaFiles $(MELFASTA2) $(CERFASTA2) \
 		--sjdbGTFfile $(MELGTF)
