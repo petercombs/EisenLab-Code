@@ -50,3 +50,4 @@ FlyExpressMaternal
 *.txt
 *.expr
 *.vpc
+FlyBase*

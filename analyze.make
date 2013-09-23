@@ -25,5 +25,34 @@ Website: analysis/summary.tsv Website/draw_to_gene.py | Website/imgs
 	cut -f -2 $(GENETABLE) > Website/gene_table.tsv
 	python Website/draw_to_gene.py Website/genes.cuff
 
+FlyBase/FlyBase.tgz: analysis/summary_flybase.tsv | FlyBase FlyBase/imgs
+	cp analysis/summary_flybase.tsv FlyBase
+	echo `basename $(MELGFF)` > FlyBase/versions.txt
+	echo `basename $(MELFASTA)` >> FlyBase/versions.txt
+	echo `basename $(GENETABLE)` >> FlyBase/versions.txt
+	echo 'Made on' >> FlyBase/versions.txt
+	date >> FlyBase/versions.txt
+	rm -r FlyBase/imgs
+	mkdir FlyBase/imgs
+	python Website/draw_to_gene.py FlyBase/summary_flybase.tsv
+	tar -cvzf FlyBase/FlyBase.tgz \
+		FlyBase/imgs FlyBase/versions.txt FlyBase/summary_flybase.tsv
+
+analysis/summary_flybase.tsv:
+	if [ -a analysis/summary.tsv]; \
+		then mv analysis/summary.tsv analysis/tmptmptmp.tmp; fi;
+	python MakeSummaryTable.py --params $(RUNCONFIG) --key tracking_id \
+		$(ANALYSIS_DIR)
+	mv analysis/summary.tsv analysis/summary_flybase.tsv
+	if [ -a analysis/tmptmptmp.tmp]; \
+		then mv analysis/tmptmptmp.tmp analysis/summary.tsv; fi;
+
+
+FlyBase:
+	mkdir FlyBase
+
+FlyBase/imgs: | FlyBase
+	mkdir FlyBase/imgs
+
 Website/imgs:
 	mkdir Website/imgs
