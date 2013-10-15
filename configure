@@ -4,7 +4,8 @@ import pandas as pd
 from os import path
 from glob import glob
 
-config_file = pd.read_table('Parameters/RunConfig.cfg')
+config_file = pd.read_table('Parameters/RunConfig.cfg',
+                            comment='#').dropna(how='all')
 
 out = open('config.make', 'w')
 targets = ' '.join(path.join('$(ANALYSIS_DIR)',
