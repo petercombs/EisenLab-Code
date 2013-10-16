@@ -64,13 +64,15 @@ for label in reads:
               ' $(ANALYSIS_DIR)/{label}/assigned_scer_sorted \n'
               # Make new header
               "\tsamtools view -H $(ANALYSIS_DIR)/{label}/assigned_scer.bam"
-              " | python ReheaderYeast.py >"
-              " $(ANALYSIS_DIR)/{label}/cer_only.header.sam\n"
+              " | grep -Pv 'SN:(?!scer)' "
+              " | python ReheaderYeast.py "
+              " > $(ANALYSIS_DIR)/{label}/cer_only.header.sam\n"
               # Apply new header e.g.
               # samtools view analysis/ZE15/assigned_scer_sorted.bam \
               #  | cat analysis/ZE15/cer_only.header.sam - \
               #  | samtools view -bS -o analysis/ZE15/Y22.bam -
               "\tsamtools view $(ANALYSIS_DIR)/{label}/assigned_scer_sorted.bam"
+              " | python ReheaderYeast.py "
               " | cat  $(ANALYSIS_DIR)/{label}/cer_only.header.sam -"
               " | samtools view -bS -o $@ - \n"
               # Remove temporary

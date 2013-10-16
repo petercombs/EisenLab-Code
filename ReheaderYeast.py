@@ -22,15 +22,7 @@ chroms = {'scer_ref|NC_001133|': 'chrI',
          }
 
 for line in stdin:
-    if '@SQ' in line and 'scer' not in line:
-        # Drop out non-yeast sequence lines
-        continue
-    if '@SQ' not in line:
-        print line.strip()
-        continue
-    columns = line.strip().split('\t')
-    SN = columns[1][3:]
-    columns[1] = 'SN:'+chroms[SN]
-
-    print '\t'.join(columns)
+    for old, new in chroms.iteritems():
+        line = line.replace(old, new)
+    print line.strip()
 
