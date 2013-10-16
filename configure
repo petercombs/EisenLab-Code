@@ -13,23 +13,16 @@ targets = ' '.join(path.join('$(ANALYSIS_DIR)',
                              label,
                              'genes.fpkm_tracking')
                    for label in config_file['Label'])
-yeasts = ' '.join(path.join('$(ANALYSIS_DIR)',
-                            row['Label'],
-                            row['CarrierID']+'.bam')
-                  for i, row in config_file.iterrows())
 
 out.write("FPKMS = " + targets + "\n")
-out.write("yeasts : " + yeasts +
-          "\n\ttar -cvf $(ANALYSIS_DIR)/yeast.tar "
-          #"      $(ANALYSIS_DIR)/*/Y*.bam"
-          + yeasts +
-          "\n\t@echo 'Done making yeast'\n")
 
 reads = defaultdict(lambda : ([], []))
+carriers = defaultdict(list)
 for i, row in config_file.iterrows():
     label = row['Label']
     index = int(row['Index'])
     mbepc = int(row['MBEPC'])
+    carrier = row['CarrierID']
     glob_spec = ('sequence/*{id}*index{index}/*_R1_*.fastq*'
                .format(index=index, id=int(row['MBEPC'])))
     rf1 = glob(glob_spec)
@@ -41,6 +34,7 @@ for i, row in config_file.iterrows():
 
     reads[label][0].extend(rf1)
     reads[label][1].extend(rf2)
+    carriers[label].append(carrier)
 
 for label in reads:
     reads1, reads2 = reads[label]
@@ -70,7 +64,7 @@ for label in reads:
               ' $(ANALYSIS_DIR)/{label}/assigned_scer_sorted \n'
               # Make new header
               "\tsamtools view -H $(ANALYSIS_DIR)/{label}/assigned_scer.bam"
-              " | grep -Pv 'SN:(?!scer)' >"
+              " | python ReheaderYeast.py >"
               " $(ANALYSIS_DIR)/{label}/cer_only.header.sam\n"
               # Apply new header e.g.
               # samtools view analysis/ZE15/assigned_scer_sorted.bam \
@@ -81,4 +75,15 @@ for label in reads:
               " | samtools view -bS -o $@ - \n"
               # Remove temporary
               "\t rm $(ANALYSIS_DIR)/{label}/assigned_scer_sorted.bam\n"
-              .format(label=label, yeast=row['CarrierID']))
+              .format(label=label, yeast='+'.join(carriers[label])))
+
+
+yeasts = ' '.join(path.join('$(ANALYSIS_DIR)',
+                            label,
+                            '+'.join(carriers)+'.bam')
+                  for label, carriers in carriers.iteritems())
+
+out.write("yeasts : " + yeasts +
+          "\n\ttar -cvf $(ANALYSIS_DIR)/yeast.tar "
+          + yeasts +
+          "\n\t@echo 'Done making yeast'\n")
