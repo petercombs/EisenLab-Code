@@ -23,7 +23,10 @@ def get_stagenum(name, series, dir):
 fnames = glob(path.join(argv[1], '*', 'genes.fpkm_tracking'))
 if len(argv) > 2 and argv[2] != '-c':
     has_params = argv[2]
-    params = pandas.read_table(has_params, index_col='Label')
+    params = pandas.read_table(has_params, index_col='Label',
+                               comment="#").dropna(how='all')
+    params['Label'] = params.index
+    params.drop_duplicates('Label', inplace=True)
 else:
     has_params = False
 
@@ -38,6 +41,8 @@ for fname in sorted(fnames):
     table.set_index('gene_short_name', inplace=True, verify_integrity=True)
 
     if has_params:
+        if dirname not in params.Stage:
+            continue
         new_dirname = "cyc{stage}_sl{num:02}".format(
             stage=params.ix[dirname]['Stage'],
             num=get_stagenum(dirname, params.index,
