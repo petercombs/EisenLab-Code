@@ -1,5 +1,5 @@
 # Configuration files for the experiment
-RUNCONFIG  = Parameters/RunConfig.cfg
+RUNCONFIG  = Parameters/RunConfigAdjacentMerged.cfg
 STARCONFIG = Parameters/STAR_params.in
 
 # Other random variables
