@@ -12,11 +12,11 @@ from os import path
 from glob import glob
 from sys import argv
 
-def get_stagenum(name, series, dir):
+def get_stagenum(name, series, direction):
     # Slice until the first digit
     name_base = name[:[i for i, c in enumerate(name) if c.isdigit()][0]]
-    dir = {'+':1, '-':-1, '?':1}[dir]
-    return (sorted(ix for ix in series if ix.startswith(name_base))[::dir]
+    direction = {'+':1, '-':-1, '?':1}[direction]
+    return (sorted(ix for ix in series if ix.startswith(name_base))[::direction]
             .index(name)) + 1
 
 
