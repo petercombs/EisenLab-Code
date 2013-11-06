@@ -121,6 +121,7 @@ def plot_likelihoods(likelihoods, starts, column_headers):
 
 
 def svg_heatmap(data, filename, row_labels=None, box_size=4,
+                index=None,
                cmap=cm.Blues, norm_rows_by = None, draw_row_labels=False,
                col_sep = '', box_height=None, total_width=None):
     """
@@ -158,8 +159,13 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
         data = (data,)
 
     rows, cols = np.shape(data[0])
+    if index is not None:
+        rows = len(index)
+
     if row_labels is None:
-        if hasattr(data[0], 'index'):
+        if index is not None:
+            row_labels = index
+        elif hasattr(data[0], 'index'):
             row_labels = data[0].index
         else:
             row_labels = ['' for row in range(rows)]
@@ -176,12 +182,18 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
     x_start = 0
     for frame, c_cmap in zip(data, cmap):
         frame = pd.DataFrame(frame)
+
+        if index is not None:
+            frame = frame.ix[index]
+
         if norm_rows_by is None:
             norm_data = frame.copy()
         elif norm_rows_by is 'mean':
             norm_data = frame.divide(frame.mean(axis=1), axis=0)
         elif norm_rows_by is 'max':
             norm_data = frame.divide(frame.max(axis=1), axis=0)
+        elif index is not None and hasattr(norm_rows_by, "ix"):
+            norm_data = frame.divide(norm_rows_by.ix[index], axis=0)
         elif hasattr(norm_rows_by, "__len__") and len(norm_rows_by) == rows:
             norm_data = frame.divide(norm_rows_by, axis=0)
 
