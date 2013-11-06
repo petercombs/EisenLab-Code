@@ -93,12 +93,15 @@ if __name__ == "__main__":
         step = 10
     else:
         step = 1
-    wt = pd.read_table('prereqs/journal.pone.0071820.s008.txt', index_col=0)[::step]
-    wt.drop(bad_cols, axis=1)
-    sort_emb = '25u_emb3'
+    wt = pd.read_table('prereqs/WT5.53_summary.tsv', index_col=0)[::step]
+    try:
+        wt.drop(bad_cols, axis=1)
+    except ValueError:
+        pass
+    sort_emb = 'cyc13'
     sort_emb = wt.select(lambda x: x.startswith(sort_emb), axis=1)
-    wt = wt[sort_emb.max(axis=1) > 10]
-    sort_emb = sort_emb[sort_emb.max(axis=1) > 10]
+    wt = wt[sort_emb.max(axis=1) > 3]
+    sort_emb = sort_emb[sort_emb.max(axis=1) > 3]
     print "Precalculating distances"
     #metric = DistributionDifference.tang_stat
     metric = DistributionDifference.diff_stat
@@ -109,7 +112,7 @@ if __name__ == "__main__":
     wt_lognorm = np.log(wt+1).divide(np.log(sort_emb.mean( axis=1)+1), axis=0)
     make_treeview_files("analysis/results/wt_all_log_normed_"+metric.__name__, wt_lognorm, Z)
 
-    zld = pd.read_table('analysis/summary.tsv', index_col=0)
+    zld = pd.read_table('analysis/summary.tsv', index_col=0).sort_index()
     zld = zld.ix[wt_lognorm.index]
     zld_lognorm = np.log(zld+1).divide(np.log(sort_emb.mean( axis=1)+1), axis=0)
 
