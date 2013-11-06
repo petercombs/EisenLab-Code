@@ -6,14 +6,18 @@ from os.path import join
 from numpy import mean
 from matplotlib import cm
 from PlotUtils import svg_heatmap
+from PeakFinder import has_anterior_peak, has_posterior_peak, has_central_peak
+from glob import glob
 
 
 mapping = pd.read_table('prereqs/gene_map_table_fb_2013_04.tsv', skiprows=5)
 
+print "Reading in mapping table..."
 fbgn_to_name = {row['primary_FBid'] : row['##current_symbol']
                 for i, row in mapping.iterrows()}
 name_to_fbgn = {row['##current_symbol']: row['primary_FBid']
                 for i, row in mapping.iterrows()}
+print "...done"
 
 binding_directory = "prereqs/BDTNP_in_vivo_binding_Release.2.1/Supplemental_Tables"
 bcd1_fname = join(binding_directory, 'bcd_1_012505-sym-1_table.txt')
@@ -30,20 +34,22 @@ bcd_genes.update({fbgn_to_name[gene]
                   if gene in fbgn_to_name})
 
 
-def has_anterior_peak(data):
-    n = len(data)
-    first_third = data[:n//3]
-    middle_third = data[n//3:2*(n//3)]
-    if mean(first_third) > 3* mean(middle_third):
-        return True
-    return False
+#bcd_genes = {fbgn_to_name[gene]
+             #for gene in bcd1['Closest_transcribed_gene']
+             #if gene in fbgn_to_name}
+##bcd_genes.update({fbgn_to_name[gene]
+                  #for gene in bcd2['Closest_transcribed_gene']
+                  #if gene in fbgn_to_name})
 
-stage = 'cyc14B'
-all_stages = ('cyc11', 'cyc14A', 'cyc14B')
+
+stagewt = 'cyc13'
+stagezld = 'cyc13'
+all_stages = ('cyc11', 'cyc13', 'cyc14A', 'cyc14B')
 
 zld_exp = pd.read_table('analysis/summary.tsv', index_col=0).sort_index().select(lambda x: x.startswith(all_stages), axis=1)
 #wt_exp = pd.read_table('prereqs/journal.pone.0071820.s008.txt', index_col=0)
 wt_exp = pd.read_table('prereqs/WT5.53_summary.tsv', index_col=0).sort_index().select(lambda x: x.startswith(all_stages), axis=1)
+wt_exp = wt_exp.drop(['cyc14B_sl06_FPKM'], axis=1)
 in_both = set(wt_exp.index).intersection(set(zld_exp.index))
 
 antant = set()

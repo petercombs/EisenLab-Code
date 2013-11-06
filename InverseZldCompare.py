@@ -5,6 +5,8 @@ from numpy import mean
 import numpy as np
 from matplotlib import cm
 from PlotUtils import svg_heatmap
+from PeakFinder import has_anterior_peak, has_posterior_peak, \
+        has_central_peak, make_sort_num
 from glob import glob
 import sys
 
@@ -32,40 +34,11 @@ def get_TF_sites(TF):
     return sites
 
 
-def has_anterior_peak(data):
-    n = np.shape(data)[-1]
-    first_third = mean(data.ix[:,:n//3], axis=1)
-    middle_third = mean(data.ix[:,n//3:-(n//3)], axis=1)
-    return (first_third > 3* middle_third) * first_third > 3
-
-def has_posterior_peak(data):
-    n = np.shape(data)[-1]
-    first_third = mean(data.ix[:,-n//3:], axis=1)
-    middle_third = mean(data.ix[:,n//3:-(n//3)], axis=1)
-    return (first_third > 3* middle_third) * (first_third > 3)
-
-def has_central_peak(data):
-    n = np.shape(data)[-1]
-    first_third = mean(data.ix[:,:n//3], axis=1)
-    middle_third = mean(data.ix[:,n//3:-(n//3)], axis=1)
-    last_third = mean(data.ix[:,-(n//3):], axis=1)
-    return (middle_third > 3*first_third)*(middle_third >  last_third) * (middle_third > 3)
-
-
-def make_sort_num(wt_data, zld_data):
-    return (1 * has_posterior_peak(zld_data)
-            + 2 * has_posterior_peak(wt_data)
-            + 4 * has_central_peak(zld_data)
-            + 8 * has_central_peak(wt_data)
-            + 16 * has_anterior_peak(zld_data)
-            + 32 * has_anterior_peak(wt_data)
-           )
-
 stagewt = sys.argv[1] if (len(sys.argv) > 1) else 'cyc13'
 stagezld = sys.argv[1] if (len(sys.argv) > 1) else 'cyc13'
 all_stages = ('cyc11', 'cyc13', 'cyc14A', 'cyc14B')
 
-zld_exp = pd.read_table('analysis/summary_merged.tsv', index_col=0).sort_index().select(lambda x: x.startswith(all_stages), axis=1)
+zld_exp = pd.read_table('analysis/summary.tsv', index_col=0).sort_index().select(lambda x: x.startswith(all_stages), axis=1)
 #wt_exp = pd.read_table('prereqs/journal.pone.0071820.s008.txt', index_col=0)
 wt_exp = pd.read_table('prereqs/WT5.53_summary.tsv', index_col=0).sort_index().select(lambda x: x.startswith(all_stages), axis=1)
 wt_exp = wt_exp.drop(['cyc14B_sl06_FPKM'], axis=1)
@@ -107,7 +80,7 @@ for TF in TFs:
     print TF, "\t%9g"%pval, '\t',
     print '*' * int(np.ceil(max((np.log10(.05/len(TFs)) -
                                                     np.log10(pval)), 0))),
-    if pval < .05/len(TFs):
+    if pval < .05/len(TFs) or True:
         print '\t', fisher_tab, '\t', 1/odds_ratio
     else:
         print
