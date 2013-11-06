@@ -3,7 +3,6 @@ from scipy import interpolate
 
 import collections
 import functools
-import itertools
 
 class memoized(object):
    '''Decorator. Caches a function's return value each time it is called.
@@ -108,8 +107,8 @@ if __name__ == "__main__":
     import pandas as pd
     import matplotlib.pyplot as mpl
 
-    zld_exp = pd.read_table('zeldaSummary.tsv', index_col=0)
-    wt_exp = pd.read_table('wt_summary.tsv', index_col=0)
+    zld_exp = pd.read_table('analysis/summary.tsv', index_col=0).sort_index()
+    wt_exp = pd.read_table('prereqs/WT5.53_summary.tsv', index_col=0).sort_index()
 
     zld_bind = pd.read_table('journal.pgen.1002266.s005.xls', skiprows=1)
     zld_bind.TSS_gene = zld_bind.TSS_gene.apply(str.strip)
@@ -140,23 +139,11 @@ if __name__ == "__main__":
     wt_fig_genes = wt_fig_genes[wt_fig_genes.max(axis=1) > 10][:120]
 
     assert (zld_fig_genes.index == wt_fig_genes.index).all()
+    import PlotUtils
 
-    mpl.figure(figsize=(2,8))
-    mpl.subplot(1,2,1)
-    mpl.pcolormesh(wt_fig_genes.divide(wt_fig_genes.max(axis=1)+1, axis=0).as_matrix(), cmap = mpl.cm.Blues)
-    mpl.yticks(np.arange(len(zld_fig_genes.index)), zld_fig_genes.index)
-    mpl.xlim(0, len(wt_fig_genes.columns))
-    mpl.xticks([])
-
-
-    mpl.subplot(1,2,2)
-    mpl.pcolormesh(zld_fig_genes.divide(zld_fig_genes.max(axis=1)+1, axis=0).as_matrix(), cmap=mpl.cm.Reds)
-    mpl.xlim(0, len(zld_fig_genes.columns))
-    mpl.xticks([])
-    ticktypes = [(i+0.5, ''.join(types[t]
-                             for t in by_gene.get_group(gene).Label.unique()))
-                 for i, gene in enumerate(zld_fig_genes.index)
-                 if gene in by_gene.indices]
-    mpl.yticks(*zip(*ticktypes))
-    mpl.tight_layout()
-
+    PlotUtils.svg_heatmap((wt_fig_genes, zld_fig_genes),
+                            'analysis/results/cyc13diff.svg',
+                            norm_rows_by=wt_fig_genes.max(axis=1),
+                            draw_row_labels=True,
+                            cmap = (mpl.cm.Blues, mpl.cm.Reds),
+                            box_size=15, total_width=150)
