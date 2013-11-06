@@ -225,5 +225,5 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
 
     if draw_row_labels:
         for i in range(rows):
-            dwg.add(dwg.text(row_labels[i], (x_start, i*box_size+box_height),))
+            dwg.add(dwg.text(row_labels[i], (x_start, i*box_height+box_height),))
     dwg.saveas(filename)
