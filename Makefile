@@ -19,6 +19,7 @@ all : $(ANALYSIS_DIR)/summary.tsv
 
 # Read the per-project make-file
 include config.make
+include analyze.make
 
 
 
