@@ -52,6 +52,7 @@ $(ANALYSIS_DIR)/%/assigned_dmelR.bam : $(ANALYSIS_DIR)/%/accepted_hits.bam Assig
 	samtools reheader $(ANALYSIS_DIR)/$*/mel_only.header.sam \
 		$(ANALYSIS_DIR)/$*/assigned_dmel_sorted.bam > $@
 	rm $(ANALYSIS_DIR)/$*/assigned_dmel_sorted.bam
+	samtools index $@
 
 
 $(MELGTF): $(MELGFF)
