@@ -22,9 +22,11 @@ __pycache__
 *.make
 *.mk
 
+prereqs*
 analysis*
 prereqs*
 sequence*
+Website*
 MemeOutput
 MemeOutput2
 Reference
@@ -49,3 +51,4 @@ FlyExpressMaternal
 *.txt
 *.expr
 *.vpc
+FlyBase*

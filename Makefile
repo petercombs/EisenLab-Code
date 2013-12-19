@@ -14,13 +14,12 @@ MELGFF   = prereqs/dmel-all-r5.53.gff
 MELGTF   = Reference/mel_good.gtf
 CERGFF   = prereqs/saccharomyces_cerevisiae_R64-1-1_20110208.gff
 
-all : $(ANALYSIS_DIR)/summary.tsv
-	make -f analyze.make
+
+all : $(ANALYSIS_DIR)/summary.tsv current-analysis
 
 # Read the per-project make-file
 include config.make
 include analyze.make
-
 
 
 $(ANALYSIS_DIR) :
@@ -30,9 +29,9 @@ $(ANALYSIS_DIR)/summary.tsv : MakeSummaryTable.py $(FPKMS) $(RUNCONFIG)
 	@echo '============================='
 	@echo 'Making summary table'
 	@echo '============================='
-	python MakeSummaryTable.py $(ANALYSIS_DIR) $(RUNCONFIG)
+	python MakeSummaryTable.py --params $(RUNCONFIG) $(ANALYSIS_DIR) 
 
-$(ANALYSIS_DIR)/%/genes.fpkm_tracking : $(ANALYSIS_DIR)/%/assigned_dmel.bam $(MELGTF) $(MELFASTA2)
+$(ANALYSIS_DIR)/%/genes.fpkm_tracking : $(ANALYSIS_DIR)/%/assigned_dmelR.bam $(MELGTF) $(MELFASTA2)
 	@echo '============================='
 	@echo 'Calculating Abundances'
 	@echo '============================='
@@ -45,7 +44,7 @@ $(ANALYSIS_DIR)/%/genes.fpkm_tracking : $(ANALYSIS_DIR)/%/assigned_dmel.bam $(ME
 #	rm $(ANALYSIS_DIR)/$*/Aligned.out.sam
 #	# This sam file is big, let's get rid of it
 
-$(ANALYSIS_DIR)/%/assigned_dmel.bam : $(ANALYSIS_DIR)/%/accepted_hits.bam AssignReads2.py
+$(ANALYSIS_DIR)/%/assigned_dmelR.bam : $(ANALYSIS_DIR)/%/accepted_hits.bam AssignReads2.py
 	samtools view -H $< | grep -Pv 'SN:(?!dmel)' > $(ANALYSIS_DIR)/$*/mel_only.header.sam
 	python AssignReads2.py $(ANALYSIS_DIR)/$*/accepted_hits.bam
 	samtools sort $(ANALYSIS_DIR)/$*/assigned_dmel.bam \
@@ -53,6 +52,7 @@ $(ANALYSIS_DIR)/%/assigned_dmel.bam : $(ANALYSIS_DIR)/%/accepted_hits.bam Assign
 	samtools reheader $(ANALYSIS_DIR)/$*/mel_only.header.sam \
 		$(ANALYSIS_DIR)/$*/assigned_dmel_sorted.bam > $@
 	rm $(ANALYSIS_DIR)/$*/assigned_dmel_sorted.bam
+	samtools index $@
 
 
 $(MELGTF): $(MELGFF)
