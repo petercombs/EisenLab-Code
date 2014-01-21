@@ -52,6 +52,7 @@ $(ANALYSIS_DIR)/%/assigned_dmelR.bam : $(ANALYSIS_DIR)/%/accepted_hits.bam Assig
 	samtools reheader $(ANALYSIS_DIR)/$*/mel_only.header.sam \
 		$(ANALYSIS_DIR)/$*/assigned_dmel_sorted.bam > $@
 	rm $(ANALYSIS_DIR)/$*/assigned_dmel_sorted.bam
+	samtools index $@
 
 
 $(MELGTF): $(MELGFF)
@@ -66,7 +67,7 @@ $(MELFASTA2): $(MELFASTA)
 $(CERFASTA2): $(CERFASTA)
 	perl -pe 's/>/>scer_/' $(CERFASTA) > $@
 
-Reference/DmelScer/Genome : |  $(MELFASTA2) $(CERFASTA2) $(MELGTF) Reference/DmelScer
+Reference/DmelScer/Genome : | $(MELFASTA2) $(CERFASTA2)  $(MELGTF) Reference/DmelScer
 	STAR --runMode genomeGenerate --genomeDir Reference/DmelScer \
 		--genomeFastaFiles $(MELFASTA2) $(CERFASTA2) \
 		--sjdbGTFfile $(MELGTF)

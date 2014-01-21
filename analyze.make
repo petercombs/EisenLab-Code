@@ -56,3 +56,5 @@ FlyBase/imgs: | FlyBase
 
 Website/imgs:
 	mkdir Website/imgs
+Reference/unmapped:
+	mkdir $@

@@ -28,6 +28,9 @@ def parse_args():
                         'Directory in column "Label", stage in column "Stage"')
     parser.add_argument('--key', '-k', default='gene_short_name', 
                         help='The column to combine on (FBgn in tracking_id)')
+    parser.add_argument('--strip-low-reads', '-s', default=0, type=int,
+                        help='Remove slices with fewer than N counts (off by'
+                        'default')
     parser.add_argument('basedir', 
                         help='The directory containing directories, which '
                         'contain genes.fpkm_tracking files')
@@ -68,6 +71,12 @@ for fname in sorted(fnames):
         print dirname, '=', new_dirname
         dirname = new_dirname
 
+    if args.strip_low_reads:
+        from pysam import Samfile
+        sf = Samfile(path.join(alldir, 'assigned_dmelR.bam'))
+        if sf.mapped < args.strip_low_reads:
+            print "Skipping", dirname 
+            continue
     if df is None:
         df = pandas.DataFrame({dirname+"_FPKM": table.FPKM})
     else:
