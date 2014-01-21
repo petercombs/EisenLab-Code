@@ -34,7 +34,7 @@ FlyBase/FlyBase.tgz: analysis/summary_flybase.tsv | FlyBase FlyBase/imgs
 	date >> FlyBase/versions.txt
 	rm -r FlyBase/imgs
 	mkdir FlyBase/imgs
-	python Website/draw_to_gene.py FlyBase/summary_flybase.tsv
+	python Website/draw_to_gene.py -W 550 -H 75 -w 175 FlyBase/summary_flybase.tsv
 	tar -cvzf FlyBase/FlyBase.tgz \
 		FlyBase/imgs FlyBase/versions.txt FlyBase/summary_flybase.tsv
 
