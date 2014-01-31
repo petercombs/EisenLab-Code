@@ -13,6 +13,11 @@ try:
 except ImportError:
     HAS_NUMPY = False
 
+try:
+    import pandas as pd
+    HAS_PANDAS = True
+except:
+    HAS_PANDAS = False
 
 class PointCloudReader(object):
     def __init__(self, fh):
@@ -120,6 +125,15 @@ class PointCloudReader(object):
                 for i, row in enumerate(all_data):
                     posarray[i, j, k] = row[colnum]
 
+        if HAS_PANDAS:
+            exparray = pd.Panel(exparray, np.arange(len(all_data), dtype=int),
+                                major_axis=self.get_gene_names(),
+                                minor_axis=['T{}'.format(i+1)
+                                            for i in range(times)])
+            posarray = pd.Panel(posarray, np.arange(len(all_data), dtype=int),
+                                major_axis=['X', 'Y', 'Z'],
+                                minor_axis=['T{}'.format(i+1)
+                                            for i in range(times)])
         return exparray, posarray
 
 
