@@ -92,7 +92,9 @@ class PointCloudReader(object):
         all_data = [row for row in self]
         self.__filehandle__.seek(filepos)
 
-        times = set(name.split('_')[-1] for name in self.column if name != 'id')
+        times = sorted(set(name.split('_')[-1]
+                           for name in self.column
+                           if name != 'id'))
         genes = self.get_gene_names()
 
         if HAS_NUMPY:
