@@ -128,17 +128,28 @@ class PointCloudReader(object):
                     posarray[i, j, k] = row[colnum]
 
         if HAS_PANDAS:
-            exparray = pd.Panel(exparray, np.arange(len(all_data), dtype=int),
+            exparray = pd.Panel(exparray, [item[0] for item in all_data],
                                 major_axis=self.get_gene_names(),
                                 minor_axis=['T{}'.format(i+1)
                                             for i in range(len(times))])
-            posarray = pd.Panel(posarray, np.arange(len(all_data), dtype=int),
+            posarray = pd.Panel(posarray, [item[0] for item in all_data],
                                 major_axis=['X', 'Y', 'Z'],
                                 minor_axis=['T{}'.format(i+1)
                                             for i in range(len(times))])
         return exparray, posarray
 
 
+    def get_neighbors(self):
+        filepos = self.__filehandle__.tell()
+        all_data = [row for row in self]
+        self.__filehandle__.seek(filepos)
+        neighbors = {}
+        for row in all_data:
+            neighbors[row[0]] = []
+            for item in row[len(self.column) + 1:]:
+                neighbors[row[0]].append(item)
+            assert len(neighbors[row[0]]) == row[len(self.column)]
+        return neighbors
 
 def strip_to_number(dataval, chars = '\'" \t #'):
     return to_number(dataval.strip(chars))
