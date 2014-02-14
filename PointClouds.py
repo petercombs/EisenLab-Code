@@ -13,6 +13,11 @@ try:
 except ImportError:
     HAS_NUMPY = False
 
+try:
+    import pandas as pd
+    HAS_PANDAS = True
+except:
+    HAS_PANDAS = False
 
 class PointCloudReader(object):
     def __init__(self, fh):
@@ -87,7 +92,9 @@ class PointCloudReader(object):
         all_data = [row for row in self]
         self.__filehandle__.seek(filepos)
 
-        times = set(name.split('_')[-1] for name in self.column if name != 'id')
+        times = sorted(set(name.split('_')[-1]
+                           for name in self.column
+                           if name != 'id'))
         genes = self.get_gene_names()
 
         if HAS_NUMPY:
@@ -120,9 +127,29 @@ class PointCloudReader(object):
                 for i, row in enumerate(all_data):
                     posarray[i, j, k] = row[colnum]
 
+        if HAS_PANDAS:
+            exparray = pd.Panel(exparray, [item[0] for item in all_data],
+                                major_axis=self.get_gene_names(),
+                                minor_axis=['T{}'.format(i+1)
+                                            for i in range(len(times))])
+            posarray = pd.Panel(posarray, [item[0] for item in all_data],
+                                major_axis=['X', 'Y', 'Z'],
+                                minor_axis=['T{}'.format(i+1)
+                                            for i in range(len(times))])
         return exparray, posarray
 
 
+    def get_neighbors(self):
+        filepos = self.__filehandle__.tell()
+        all_data = [row for row in self]
+        self.__filehandle__.seek(filepos)
+        neighbors = {}
+        for row in all_data:
+            neighbors[row[0]] = []
+            for item in row[len(self.column) + 1:]:
+                neighbors[row[0]].append(item)
+            assert len(neighbors[row[0]]) == row[len(self.column)]
+        return neighbors
 
 def strip_to_number(dataval, chars = '\'" \t #'):
     return to_number(dataval.strip(chars))

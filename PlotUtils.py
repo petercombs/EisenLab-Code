@@ -31,8 +31,11 @@ def scatter_heat(x, y, **kwargs):
         kwargs['edgecolors'] = 'none'
     if 'cmap' not in kwargs:
         kwargs['cmap'] = cm.jet
-    estimator = gaussian_kde([x, y])
-    density = estimator.evaluate([x, y])
+    if 'density' not in kwargs:
+        estimator = gaussian_kde([x, y])
+        density = estimator.evaluate([x, y])
+    else:
+        density = kwargs['density']
 
     normdensity = exp(density.clip(median(density), Inf))
 
@@ -42,7 +45,7 @@ def scatter_heat(x, y, **kwargs):
     ax = mpl.gca()
     ax.set_xlim(xlim)
     ax.set_ylim(ylim)
-    return retval
+    return retval, density
 
 def loglog_heat(x,y, **kwargs):
     if 's' not in kwargs:
@@ -117,3 +120,139 @@ def plot_likelihoods(likelihoods, starts, column_headers):
     return plots
 
 
+def svg_heatmap(data, filename, row_labels=None, box_size=4,
+                index=None,
+               cmap=cm.Blues, norm_rows_by = None, draw_row_labels=False,
+               col_sep='', box_height=None, total_width=None,
+               draw_box=False, draw_name=False, data_names=None,
+               first_col='', last_col=''):
+    """
+    Draw heatmap as an SVG file stored in filename
+
+    *data* can be either a 2D array-like type (list of lists, numpy array,
+    pandas DataFrame, etc), or a tuple of 2D array-likes, in which case a
+    separator will be added between each one in the output
+
+    *cmap* is a matplotlib-like colormap (i.e. a callable that expects floats in
+    the range 0.0-1.0.), or an iterable of the same length as the tuple *data*
+    containing colormaps
+
+    *row_labels* can be supplied, otherwise they will detected from the first
+    item in *data*, if available, and if not they will be blank.
+
+    If *total_width* is supplied, width of each dataset in *data* will be scaled
+    to that constant. If *box_height* is supplied, the height of each row will be
+    *box_height*, otherwise it will be equal to the width of each element. If
+    neither are supplied, elements will be squares equal to *box_size*. IT IS
+    STRONGLY RECOMMENDED that if if supplying *total_width*, *box_height* also be
+    specified, but this is not enforced. 
+
+    *draw_row_labels*, if True, will label the rows on the right hand side. As
+    of 2013/09/03, this won't scale the SVG properly, so including the resulting
+    file in an html element won't display properly.
+
+    """
+    import svgwrite as svg
+    import pandas as pd
+
+    dwg = svg.Drawing(filename)
+    dwg.add(svg.base.Title(path.basename(filename)))
+    if not isinstance(data, tuple):
+        data = (data,)
+
+    rows, cols = np.shape(data[0])
+    if index is not None:
+        rows = len(index)
+
+    if row_labels is None:
+        if index is not None:
+            row_labels = index
+        elif hasattr(data[0], 'index'):
+            row_labels = data[0].index
+        else:
+            row_labels = ['' for row in range(rows)]
+
+    if box_height is None:
+        box_height = box_size
+
+    if not hasattr(cmap, "__len__"):
+        cmap = [cmap for frame in data]
+
+    if data_names is None:
+        data_names = ["" for frame in data]
+
+    if len(cmap) != len(data):
+        raise ValueError("cmap and data should be the same length")
+
+    x_start = 0
+    for frame, c_cmap, name in zip(data, cmap, data_names):
+        frame = pd.DataFrame(frame)
+        if norm_rows_by is None:
+            norm_data = frame.copy()
+        elif norm_rows_by is 'mean':
+            norm_data = frame.divide(frame.mean(axis=1), axis=0)
+        elif norm_rows_by is 'max':
+            norm_data = frame.divide(frame.max(axis=1), axis=0)
+        elif index is not None and hasattr(norm_rows_by, "ix"):
+            norm_data = frame.divide(norm_rows_by.ix[index], axis=0)
+        elif hasattr(norm_rows_by, "__len__") and len(norm_rows_by) == rows:
+            norm_data = frame.divide(norm_rows_by, axis=0)
+
+        elif hasattr(norm_rows_by, "__len__"):
+            raise TypeError("norm_rows_by should be the same shape "
+                            "as the number of rows")
+        else:
+            norm_data = frame.divide(norm_rows_by, axis=0)
+
+        new_rows, new_cols = np.shape(frame)
+        if hasattr(frame, 'index'):
+            col_labels = frame.columns
+        else:
+            col_labels = ['' for col in range(new_cols)]
+        if new_rows != rows:
+            raise ValueError("All input elements must have the same number of"
+                             " rows (and same row meanings --unchecked)")
+
+        if total_width is not None:
+            box_size = total_width / float(new_cols)
+
+        for i in range(rows):
+            prefix = col_labels[0][:col_labels[0].find(col_sep)]
+            for j in range(new_cols):
+                g = dwg.g()
+                g.add(svg.base.Title("{}, {}: {:.2f}".format(row_labels[i],
+                                                             col_labels[j],
+                                                             frame.ix[i,j])))
+                g.add(dwg.rect((x_start + box_size*j, i*box_height),
+                               (box_size, box_height),
+                               style="fill:#{:02x}{:02x}{:02x}"
+                                .format(*[int(255*x) for x in
+                                          c_cmap(norm_data.ix[i,j])])))
+                dwg.add(g)
+                col_base = col_labels[j][:col_labels[j].find(col_sep)] 
+                if col_base != prefix:
+                    prefix = col_base
+                    g.add(dwg.line((x_start+box_size*j, i*box_height),
+                                   (x_start+box_size*j, (i+1)*box_height),
+                                   style="stroke-width:{}; stroke:#000000"
+                                   .format(.1 * box_size)))
+        dwg.add(dwg.text(first_col, (x_start,
+                                     (i+2)*box_height))) 
+        dwg.add(dwg.text(last_col, (x_start + (new_cols - 1) * box_size,
+                                     (i+2)*box_height))) 
+        if draw_box:
+            dwg.add(dwg.rect((x_start, 0), 
+                             (new_cols*box_size, rows*box_height),
+                             style="stroke-width:1; stroke:#000000; fill:none"))
+        if draw_name:
+            dwg.add(dwg.text(name,
+                             (x_start + box_size*new_cols/2.0,
+                              box_height*(rows+1)),
+                             style="text-anchor: middle;"))
+        x_start += new_cols * box_size + box_size
+
+
+    if draw_row_labels:
+        for i in range(rows):
+            dwg.add(dwg.text(row_labels[i], (x_start, i*box_height+box_height),))
+    dwg.saveas(filename)

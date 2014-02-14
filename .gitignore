@@ -19,11 +19,16 @@ __pycache__
 *.fb
 *dump*
 *.cfg
+*.make
+*.mk
 
+prereqs*
 analysis*
 sequence*
+Website*
 MemeOutput
 MemeOutput2
+Reference
 Reference/miso-events
 Reference/AAA
 NonFlyNonHum*
@@ -33,8 +38,10 @@ StartCheck.py
 WatchDeme.py
 GEO_*
 dry*run*
+figures*
 
 *.tiff
+*.tif
 *.eps
 *.png
 *.bmp
@@ -43,3 +50,4 @@ FlyExpressMaternal
 *.txt
 *.expr
 *.vpc
+FlyBase*

@@ -2,6 +2,7 @@ import pandas as pd
 from collections import defaultdict
 from os import path
 from subprocess import Popen, call
+from sys import stdout
 
 fasta_ref = 'Reference/AAA/mel_only.fa'
 gtf_ref = 'Reference/AAA/mel_only.gtf'
@@ -16,12 +17,13 @@ cl_base = ('cufflinks --num-threads 8 --output-dir {outdir} -u'
            ' --frag-bias-correct {fasta} '
            ' -G {gtf} {bamfile}')
 cuffcmp = ('cuffcompare -o {cuffname} -s {fasta} -CG -r {gtf} {gtf}')
-cuffname = path.join(path.dirname(gtf_ref), 'cuffcmp.')
+cuffname = path.join(path.dirname(gtf_ref), 'cuffcmp')
 
 runstr = cuffcmp.format(cuffname = cuffname,
                         fasta = fasta_ref,
                         gtf = gtf_ref)
 print runstr
+stdout.flush()
 call(runstr.split())
 
 gtf_ref =  cuffname + '.combined.gtf'
@@ -41,7 +43,17 @@ cd = cd_base.format(conditions = ','.join(conditions),
                     gtf = gtf_ref,
                     bams = ' '.join([','.join(files[key]) for key in conditions]))
 
+conds_nobcd = [c for c in conditions if 'Bcd' not in c]
+cd_nobcd = cd_base.format(conditions = ','.join(conds_nobcd),
+                    outdir = analysis_dir+'-nobcd',
+                    fasta = fasta_ref,
+                    gtf = gtf_ref,
+                    bams = ' '.join([','.join(files[key]) for key in conds_nobcd]))
+print cd_nobcd
+stdout.flush()
+call(cd_nobcd.split())
 print cd
+stdout.flush()
 call(cd.split())
 for condition in files:
     for file in files[condition]:

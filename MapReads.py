@@ -9,30 +9,29 @@ on the given indices.
 import sys
 
 from glob import glob
-from os.path import join
+from os.path import join, abspath
 import os
 from time import time
 from datetime import timedelta
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, call
 from argparse import Namespace
+from pysam import view as samview
+import pandas as pd
 
 ARGS = Namespace()
-ARGS.analysis_dir = 'analysis-multi'
-ARGS.base_GTF =  'Reference/AAA/dmel-all-r5.46.gtf'
-ARGS.refbase = 'Reference/AAA/'
-ARGS.transbase = 'Reference/AAA/transcriptome/'
-ARGS.base_species = 'mel'
-ARGS.notificationEmail = 'peter.combs@berkeley.edu'
-ARGS.seq_dir = 'sequence'
-ARGS.config_file = 'RunConfig.cfg'
+ARGS.analysis_dir = abspath('analysis-multi')
+ARGS.base_species = 'Dmel'
+ARGS.seq_dir = abspath('sequence')
+ARGS.config_file = abspath('Parameters/RunConfig.cfg')
+ARGS.ref_base = abspath('Reference/AAA/')
+ARGS.star_params = abspath('Parameters/STAR_params.in')
 
 ########################################################################
 
 BASE = Namespace()
-BASE.tophat_base = ('tophat -p8 --no-novel-juncs --read-edit-dist 6 '
-                    '--report-secondary-alignments '
-                    '--no-sort-bam ')
-BASE.cufflinks_base = 'cufflinks -p 8 -q -u '
+BASE.map_base = ('STAR --parametersFiles {params} '
+                 '--genomeDir {genome} '
+                 '--readFilesIn {rf1} {rf2}')
 BASE.assign_base = 'nice python AssignReads2.py {fname}'
 
 
@@ -42,29 +41,11 @@ BASE.assign_base = 'nice python AssignReads2.py {fname}'
 
 def process_config_file(cfg_fname):
     """ Get data we want out of the configuration file"""
-    cfg_fh = open(cfg_fname)
-    cfg_data = dict(sample_to_lib = [], samples=[], libraries = [],
-                    sample_to_carrier = {})
-    for line in cfg_fh:
-        if line.startswith('#'):
-            continue
-        try:
-            line = line.strip().split('\t')
-            lib, mbepc, slice, idx, carrier = line
-            cfg_data['sample_to_lib'].append((lib + slice,
-                                              mbepc + '*index' + idx))
-            cfg_data['sample_to_carrier'][lib + slice] = carrier
-            cfg_data['samples'].append(lib + slice)
-            cfg_data['libraries'].append(mbepc + slice)
+    cfg_file = pd.read_table(cfg_fname, index_col='Label')
+    return cfg_file
 
 
-        except ValueError:
-            print ("Line '%s' should have exactly "
-                   "5 tab-separated elements." % line)
-            print "Continuing..."
-    return cfg_data
-
-def get_readfiles(args, sample, libname):
+def get_readfiles(args, mbepc, index):
     " Find the names of the read files, based on configuration"
 
     # Directory structure:
@@ -80,15 +61,15 @@ def get_readfiles(args, sample, libname):
     #     ...
     #   Sample_MBE_PC_64B_index2
     #     ...
-    readnames = {}
-    print "Finding reads for", sample
-    seq_dir = join(args.seq_dir, 'Sample*' + libname + '*')
+    print "Finding reads for", mbepc, 'index', index
+    seq_dir = join(args.seq_dir, 
+                   'Sample_MBEPC{}*_index{}'.format(mbepc, index))
     read_1s = glob(join(seq_dir, "*_R1_*.fastq*"))
     print read_1s
     read_2s = glob(join(seq_dir, "*_R2_*.fastq*"))
     print read_2s
-    readnames[sample] = [sorted(read_1s), sorted(read_2s)]
-    return readnames
+    return  [[abspath(r) for r in sorted(read_1s)], 
+             [abspath(r) for r in sorted(read_2s)]]
 
 def count_reads(read_files):
     ''' Count the reads in the files'''
@@ -105,9 +86,9 @@ def count_reads(read_files):
 
 DATA = Namespace()
 DATA.config_data = process_config_file(ARGS.config_file)
-DATA.readnames = {} #get_readfiles(DATA.config_data)
+DATA.readnames = {} 
 
-DATA.samples = DATA.config_data['samples']
+DATA.samples = DATA.config_data.index
 
 TIMES = Namespace()
 TIMES.start = time()
@@ -117,12 +98,14 @@ TEMP.assign_procs = []
 TEMP.rezip_procs = []
 
 #for libname, (rf1, rf2) in DATA.readnames.items():
-for sample, libname in DATA.config_data['sample_to_lib']:
+for sample in DATA.config_data.index:
 
 
-    TEMP.sample_reads = get_readfiles(ARGS, sample, libname)
-    DATA.readnames.update(TEMP.sample_reads)
-    rf1, rf2 = TEMP.sample_reads[sample]
+    TEMP.sample_reads = get_readfiles(ARGS, 
+                                      DATA.config_data['MBEPC'][sample], 
+                                      DATA.config_data['Index'][sample])
+    DATA.readnames[sample] = TEMP.sample_reads
+    rf1, rf2 = TEMP.sample_reads
 
     # Print the name of the files we're going through, as a progress bar
     print '-'*72, '\n', sample, '\n', '-'*72
@@ -138,43 +121,32 @@ for sample, libname in DATA.config_data['sample_to_lib']:
         print ("Directory '%s' already exists... shouldn't be a problem" %
                TEMP.od)
 
-    TEMP.idxfile = join(ARGS.refbase, ARGS.base_species +
-                   DATA.config_data['sample_to_carrier'][sample])
-
-    # Do tophat
+    # Do mapping
     print 'Tophatting...', '\n', '='*30
-    TEMP.GTF = join(ARGS.refbase, ARGS.base_species +
-               DATA.config_data['sample_to_carrier'][sample] + '.gtf')
 
-    TEMP.transcriptome = join(ARGS.transbase, ARGS.base_species +
-                              DATA.config_data['sample_to_carrier'][sample])
-    TEMP.transarg = '--transcriptome-index %s '% TEMP.transcriptome
-
-    TEMP.commandstr =  (BASE.tophat_base + '-G %(GTF)s -o %(od)s --rg-library '
-                   '%(library)s'
-                   ' --rg-center VCGSL --rg-sample %(library)s'
-                   ' --rg-id %(library)s '
-                   ' --rg-platform ILLUMINA '
-                   ' %(transarg)s'
-                ' %(idxfile)s %(rf1)s %(rf2)s'
-           % {'GTF': TEMP.GTF,
-              'od': TEMP.od,
-              'idxfile': TEMP.idxfile,
-              'rf1': ','.join(rf1),
-              'rf2': ','.join(rf2),
-              'library': sample,
-              'transarg' : TEMP.transarg})
-
+    TEMP.old_dir = os.getcwd()
+    os.chdir(TEMP.od)
+    print DATA.config_data['CarrierSpecies'][sample]
+    TEMP.genome = join(ARGS.ref_base, 
+                       ARGS.base_species +
+                       DATA.config_data['CarrierSpecies'][sample])
+    print TEMP.genome
+    TEMP.commandstr =  BASE.map_base.format(
+        rf1 = ','.join(rf1),
+        rf2 = ','.join(rf2),
+        genome = TEMP.genome,
+        params = ARGS.star_params)
     print TEMP.commandstr
     sys.stdout.flush()
-    TEMP.tophat_proc = Popen(str(TEMP.commandstr).split())
-    TEMP.tophat_proc.wait()
 
-    TEMP.commandstr = BASE.assign_base.format(fname = join(TEMP.od,
-                                                           'accepted_hits.bam'))
-    print TEMP.commandstr
-    TEMP.assign_procs.append(Popen(TEMP.commandstr.split()))
+    call(str(TEMP.commandstr).split())
+    print "Converting to bam"
+    print abspath('../../ToBamAssign.sh')
+    sys.stdout.flush()
 
+    TEMP.assign_procs.append(Popen(['sh' , '../../ToBamAssign.sh']))
+
+    os.chdir(TEMP.old_dir)
 
 
 
@@ -190,6 +162,13 @@ print "Assignment extra time", timedelta(seconds = time() - TIMES.end)
 print "Final time", timedelta(seconds=time() - TIMES.start)
 
 import cPickle as pickle
+
+
+call('STAR --parametersFiles {params} '
+     '--genomeDir {genome} '
+     '--genomeLoad Remove'.format(params=ARGS.star_params,
+                                 genome=join(ARGS.ref_base)
+                                 ).split())
 
 pickle.dump(dict(data=DATA, args=ARGS),
             open('mapreads_dump.pkl', 'w'))

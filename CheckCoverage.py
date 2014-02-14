@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from __future__ import division
+from collections import defaultdict
 import pysam
 import re
 import sys
@@ -7,6 +8,7 @@ from glob import glob
 from os import path
 from scipy import stats
 from numpy import array, log, exp
+import progressbar as pbar
 
 if len(sys.argv) < 3:
     print """Usage: python CheckCoverage.py <GTF-File> BAMfile [BAMfile ...]"""
@@ -31,60 +33,59 @@ for bam_fname in sys.argv[2:]:
     print bam_fname,
     bam_file = pysam.Samfile(bam_fname, 'rb')
 
-    coverages = {}
+    coverages = defaultdict(lambda : [0,0, set()])
     parent = ''
     curr_len = 0
     coverage = 0
     starts = set()
 
-    for line in open(gtf_fname):
+    f = open(gtf_fname)
+    for line in f:
+        pass
+    pb = pbar.ProgressBar(maxval=f.tell()).start()
+    f.seek(0)
+    for line in f:
+        pb.update(f.tell())
         if line.startswith('#'): continue
+        if line.startswith('>'): break
         data = line.split()
         chrom = data[0]
         kind = data[2]
         start = int(data[3]) - 1
         stop = int(data[4])
         fbtr_finder = re.compile('FBtr[0-9]*')
-        if kind == 'mRNA':
-            parent = fbtr_finder.findall(line)[0]
-            curr_len = 0
-            coverage = 0
-            starts = set()
-
-        if kind == 'transcript':  #For using cufflinks generated GTFs
-            if curr_len:
-                coverages[parent] = (curr_len, coverage/curr_len, len(starts)/curr_len)
-            parent = (fbtr_finder.findall(line) or [''])[0]
-            curr_len = 0
-            coverage = 0
-            starts = set()
+        #parent = fbtr_finder.findall(line)[0]
 
 
-        elif kind == 'exon':
+
+        if kind == 'exon':
             fbtrs = fbtr_finder.findall(line)
             if not fbtrs: continue
             fbtr = fbtrs[0]
-            curr_len += (stop - start)
-            if fbtr != parent: continue
+            coverages[fbtr][1] += (stop - start )
+            
+            starts = set()
+            coverage = 0
             for read in bam_file.fetch(chrom, start, stop):
                 coverage += 1
                 starts.add(read.pos)
+            coverages[fbtr][0] += coverage
+            coverages[fbtr][2].update(starts)
 
-        elif kind == 'CDS':
-            if curr_len:
-                coverages[parent] = (curr_len, coverage/curr_len, len(starts)/curr_len)
 
-    curr_lens, rpks, pct_uniques = zip(*coverages.itervalues())
+    pb.finish()
+    curr_lens, rpks, uniques = zip(*coverages.itervalues())
     dir, fname = path.split(bam_fname)
     all_dirs.append(fname)
     all_rpks.append(rpks)
-    all_pct_uniques.append(pct_uniques)
+    all_pct_uniques.append(uniques)
     all_lens.append(curr_lens)
 
     try:
         xs = array(rpks)
-        ys = array(pct_uniques)
-        cutoff = min(xs[ys>.1])
+        ys = array([len(u)/(curr_len + 1) 
+                   for u, curr_len in zip(uniques, curr_lens)])
+        cutoff = max(xs[ys<.1])
         reg = stats.linregress(log(xs[(xs < cutoff) * (xs > 0) * (ys > 0)]),
                                log(ys[(xs < cutoff) * (xs > 0) * (ys > 0)]))
         print "exp(%f) * x ** %f" % (reg[1], reg[0])
