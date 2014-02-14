@@ -40,14 +40,14 @@ $(ANALYSIS_DIR)/%/genes.fpkm_tracking : $(ANALYSIS_DIR)/%/assigned_dmelR.bam $(M
 	@echo '============================='
 	@echo 'Calculating Abundances'
 	@echo '============================='
-	cufflinks --num-threads 8 --output-dir $(ANALYSIS_DIR)/$* -u \
+	cufflinks --num-threads 8 --output-dir $(@D) -u \
 		--frag-bias-correct $(MELFASTA2) -G $(MELGTF) $<
 
 $(ANALYSIS_DIR)/%/withambig/genes.fpkm_tracking : $(ANALYSIS_DIR)/%/dmel_ambig_merged.bam $(MELGTF) $(MELFASTA2)
 	@echo '============================='
 	@echo 'Calculating Abundances with Ambiguity'
 	@echo '============================='
-	cufflinks --num-threads 8 --output-dir `dirname $@` -u \
+	cufflinks --num-threads 8 --output-dir $(@D) -u \
 		--frag-bias-correct $(MELFASTA2) -G $(MELGTF) $<
 
 # $(ANALYSIS_DIR)/%/accepted_hits.bam : $(ANALYSIS_DIR)/%/Aligned.out.sam 
@@ -59,16 +59,14 @@ $(ANALYSIS_DIR)/%/dmel_ambig_merged.bam : $(ANALYSIS_DIR)/%/assigned_dmelR.bam
 	samtools merge `dirname $@`/dmel_ambig_merged $< `dirname $@`/amig_dmel.bam
 
 $(ANALYSIS_DIR)/%/assigned_dmelR.bam : $(ANALYSIS_DIR)/%/accepted_hits.bam AssignReads2.py
-	samtools view -H $< | grep -Pv 'SN:(?!dmel)' > $(ANALYSIS_DIR)/$*/mel_only.header.sam
-	python AssignReads2.py $(ANALYSIS_DIR)/$*/accepted_hits.bam
-	samtools sort $(ANALYSIS_DIR)/$*/assigned_dmel.bam \
-		$(ANALYSIS_DIR)/$*/assigned_dmel_sorted
-	#samtools reheader $(ANALYSIS_DIR)/$*/mel_only.header.sam \
-		#$(ANALYSIS_DIR)/$*/assigned_dmel_sorted.bam > $@
-	samtools view $(ANALYSIS_DIR)/$*/assigned_dmel_sorted.bam \
-		| cat $(ANALYSIS_DIR)/$*/mel_only.header.sam - \
+	samtools view -H $< | grep -Pv 'SN:(?!dmel)' > $(@D)/mel_only.header.sam
+	python AssignReads2.py $(@D)/accepted_hits.bam
+	samtools sort $(@D)/assigned_dmel.bam \
+		$(@D)/assigned_dmel_sorted
+	samtools view $(@D)/assigned_dmel_sorted.bam \
+		| cat $(@D)/mel_only.header.sam - \
 		| samtools view -bS -o $@ -
-	rm $(ANALYSIS_DIR)/$*/assigned_dmel_sorted.bam
+	rm $(@D)/assigned_dmel_sorted.bam
 	samtools index $@
 
 
