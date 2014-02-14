@@ -15,7 +15,11 @@ MELGTF   = Reference/mel_good.gtf
 CERGFF   = prereqs/saccharomyces_cerevisiae_R64-1-1_20110208.gff
 
 
-all : $(ANALYSIS_DIR)/summary.tsv current-analysis
+all : $(ANALYSIS_DIR)/summary.tsv 
+
+genomes: Reference/DmelDwil/Genome Reference/DmelDvir/Genome Reference/DmelDper/Genome Reference/DmelDmoj/Genome
+	echo "Genomes Made"
+
 
 # Read the per-project make-file
 include config.make
@@ -49,8 +53,11 @@ $(ANALYSIS_DIR)/%/assigned_dmelR.bam : $(ANALYSIS_DIR)/%/accepted_hits.bam Assig
 	python AssignReads2.py $(ANALYSIS_DIR)/$*/accepted_hits.bam
 	samtools sort $(ANALYSIS_DIR)/$*/assigned_dmel.bam \
 		$(ANALYSIS_DIR)/$*/assigned_dmel_sorted
-	samtools reheader $(ANALYSIS_DIR)/$*/mel_only.header.sam \
-		$(ANALYSIS_DIR)/$*/assigned_dmel_sorted.bam > $@
+	#samtools reheader $(ANALYSIS_DIR)/$*/mel_only.header.sam \
+		#$(ANALYSIS_DIR)/$*/assigned_dmel_sorted.bam > $@
+	samtools view $(ANALYSIS_DIR)/$*/assigned_dmel_sorted.bam \
+		| cat $(ANALYSIS_DIR)/$*/mel_only.header.sam - \
+		| samtools view -bS -o $@ -
 	rm $(ANALYSIS_DIR)/$*/assigned_dmel_sorted.bam
 	samtools index $@
 
@@ -72,5 +79,33 @@ Reference/DmelScer/Genome : | $(MELFASTA2) $(CERFASTA2)  $(MELGTF) Reference/Dme
 		--genomeFastaFiles $(MELFASTA2) $(CERFASTA2) \
 		--sjdbGTFfile $(MELGTF)
 
+Reference/DmelDper/Genome : |  Reference/DmelDper
+	STAR --runMode genomeGenerate --genomeDir Reference/DmelDper \
+		--genomeFastaFiles Reference/AAA/melper.fa \
+		--sjdbGTFfile Reference/AAA/melper.gtf
+Reference/DmelDwil/Genome : |  Reference/DmelDwil
+	STAR --runMode genomeGenerate --genomeDir Reference/DmelDwil \
+		--genomeFastaFiles Reference/AAA/melwil.fa \
+		--sjdbGTFfile Reference/AAA/melwil.gtf
+
+Reference/DmelDvir/Genome : |  Reference/DmelDvir
+	STAR --runMode genomeGenerate --genomeDir Reference/DmelDvir \
+		--genomeFastaFiles Reference/AAA/melvir.fa \
+		--sjdbGTFfile Reference/AAA/melvir.gtf
+
+Reference/DmelDmoj/Genome : |  Reference/DmelDmoj
+	STAR --runMode genomeGenerate --genomeDir Reference/DmelDmoj \
+		--genomeFastaFiles Reference/AAA/melmoj.fa \
+		--sjdbGTFfile Reference/AAA/melmoj.gtf
+
 Reference/DmelScer:
+	mkdir $@
+
+Reference/DmelDper:
+	mkdir $@
+Reference/DmelDwil:
+	mkdir $@
+Reference/DmelDvir:
+	mkdir $@
+Reference/DmelDmoj:
 	mkdir $@
