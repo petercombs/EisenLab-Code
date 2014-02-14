@@ -113,6 +113,7 @@ def on_last_multiread(dbs, read):
             ambig_types[ambig_names]+=1
             for amb_read in dbs.to_be_resolved_reads[read.qname].itervalues():
                 ambig.write(amb_read)
+                ambig_files[get_species(read)].write(amb_read)
 
     # Clean up the dictionaries
     dbs.to_be_resolved_vals.pop(read.qname)
@@ -132,6 +133,12 @@ for fname in sys.argv[1:]:
                              template=samfile)
     specific_files = my_defaultdict(pysam.Samfile,
                                     path.join(dir, 'assigned_%s.bam'),
+                                    {'template': samfile,
+                                     'mode': 'wb'})
+
+
+    ambig_files = my_defaultdict(pysam.Samfile,
+                                    path.join(dir, 'ambig_%s.bam'),
                                     {'template': samfile,
                                      'mode': 'wb'})
 

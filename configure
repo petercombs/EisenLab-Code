@@ -16,7 +16,13 @@ targets = ' '.join(path.join('$(ANALYSIS_DIR)',
                              'genes.fpkm_tracking')
                    for label in config_file['Label'])
 
+targets_ambig = ' '.join(path.join('$(ANALYSIS_DIR)',
+                                   label,
+                                   'withambig',
+                                   'genes.fpkm_tracking')
+                         for label in config_file['Label'])
 out.write("FPKMS = " + targets + "\n")
+out.write("FPKMS_AMBIG = " + targets_ambig + "\n")
 
 reads = defaultdict(lambda : ([], []))
 carriers = defaultdict(list)

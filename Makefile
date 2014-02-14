@@ -20,6 +20,7 @@ all : $(ANALYSIS_DIR)/summary.tsv
 genomes: Reference/DmelDwil/Genome Reference/DmelDvir/Genome Reference/DmelDper/Genome Reference/DmelDmoj/Genome
 	echo "Genomes Made"
 
+ambigs: $(FPKMS_AMBIG)
 
 # Read the per-project make-file
 include config.make
@@ -42,11 +43,20 @@ $(ANALYSIS_DIR)/%/genes.fpkm_tracking : $(ANALYSIS_DIR)/%/assigned_dmelR.bam $(M
 	cufflinks --num-threads 8 --output-dir $(ANALYSIS_DIR)/$* -u \
 		--frag-bias-correct $(MELFASTA2) -G $(MELGTF) $<
 
+$(ANALYSIS_DIR)/%/withambig/genes.fpkm_tracking : $(ANALYSIS_DIR)/%/dmel_ambig_merged.bam $(MELGTF) $(MELFASTA2)
+	@echo '============================='
+	@echo 'Calculating Abundances with Ambiguity'
+	@echo '============================='
+	cufflinks --num-threads 8 --output-dir `dirname $@` -u \
+		--frag-bias-correct $(MELFASTA2) -G $(MELGTF) $<
 
 # $(ANALYSIS_DIR)/%/accepted_hits.bam : $(ANALYSIS_DIR)/%/Aligned.out.sam 
 #	samtools view -bS  -o $@  $<
 #	rm $(ANALYSIS_DIR)/$*/Aligned.out.sam
 #	# This sam file is big, let's get rid of it
+
+$(ANALYSIS_DIR)/%/dmel_ambig_merged.bam : $(ANALYSIS_DIR)/%/assigned_dmelR.bam
+	samtools merge `dirname $@`/dmel_ambig_merged $< `dirname $@`/amig_dmel.bam
 
 $(ANALYSIS_DIR)/%/assigned_dmelR.bam : $(ANALYSIS_DIR)/%/accepted_hits.bam AssignReads2.py
 	samtools view -H $< | grep -Pv 'SN:(?!dmel)' > $(ANALYSIS_DIR)/$*/mel_only.header.sam
