@@ -20,12 +20,14 @@ all : $(ANALYSIS_DIR)/summary.tsv
 genomes: Reference/DmelDwil/Genome Reference/DmelDvir/Genome Reference/DmelDper/Genome Reference/DmelDmoj/Genome
 	echo "Genomes Made"
 
-ambigs: $(FPKMS_AMBIG)
 
 # Read the per-project make-file
 include config.make
 include analyze.make
 
+ambigs: $(FPKMS_AMBIG)
+
+.SECONDARY: 
 
 $(ANALYSIS_DIR) :
 	mkdir $(ANALYSIS_DIR)
@@ -56,7 +58,14 @@ $(ANALYSIS_DIR)/%/withambig/genes.fpkm_tracking : $(ANALYSIS_DIR)/%/dmel_ambig_m
 #	# This sam file is big, let's get rid of it
 
 $(ANALYSIS_DIR)/%/dmel_ambig_merged.bam : $(ANALYSIS_DIR)/%/assigned_dmelR.bam
-	samtools merge `dirname $@`/dmel_ambig_merged $< `dirname $@`/amig_dmel.bam
+	echo $(@D)
+	samtools view $(@D)/ambiguous.bam \
+		| grep 'dmel' \
+		| cat $(@D)/mel_only.header.sam - \
+		| samtools view -bS -o $(@D)/ambig_dmelR.bam -
+	samtools sort $(@D)/ambig_dmelR.bam $(@D)/ambig_dmelRS
+	samtools merge $@ $< $(@D)/ambig_dmelRS.bam
+	rm $(@D)/ambig_dmelR.bam
 
 $(ANALYSIS_DIR)/%/assigned_dmelR.bam : $(ANALYSIS_DIR)/%/accepted_hits.bam AssignReads2.py
 	samtools view -H $< | grep -Pv 'SN:(?!dmel)' > $(@D)/mel_only.header.sam
