@@ -32,10 +32,10 @@ for i, row in config_file.iterrows():
     mbepc = int(row['MBEPC'])
     carrier = row['CarrierID']
     glob_spec = ('sequence/*{id}*index{index}/*_R1_*.fastq*'
-               .format(index=index, id=int(row['MBEPC'])))
+               .format(index=index, id=mbepc))
     rf1 = glob(glob_spec)
-    rf2 = glob('sequence/*{id}*index{index}_*/*_R2_*.fastq*'
-               .format(index=index, id=int(row['MBEPC'])))
+    rf2 = glob('sequence/*{id}*index{index}/*_R2_*.fastq*'
+               .format(index=index, id=mbepc))
     if rf1 == []:
         print "Warning: no sequence for ", label, index
         print glob_spec
