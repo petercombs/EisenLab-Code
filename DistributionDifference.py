@@ -3,6 +3,7 @@ from scipy import interpolate
 
 import collections
 import functools
+import emd
 
 class memoized(object):
    '''Decorator. Caches a function's return value each time it is called.
@@ -78,7 +79,15 @@ def tang_stat(points1, points2):
 #
 #    return np.sqrt(stat)
 
+def earth_mover(points1, points2):
+    return emd.emd(np.linspace(0,1,len(points1), endpoint=True),
+                   np.linspace(0,1,len(points2), endpoint=True),
+                   points1/np.sum(points1),
+                   points2/np.sum(points2))
 
+def mp_earth_mover(args):
+    i, j = args
+    return earth_mover(i, j)
 
 import progressbar as pb
 def pdist(X, metric, p=2, w=None, V=None, VI=None):
