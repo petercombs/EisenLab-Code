@@ -54,6 +54,7 @@ def diff_stat(points1, points2):
 
 divmat = np.zeros([0,0])
 
+
 def tang_stat(points1, points2):
     assert len(points1) == len(points2)
     points1 = np.array(points1 / np.mean(points1))
@@ -110,6 +111,37 @@ def pdist(X, metric, p=2, w=None, V=None, VI=None):
         for j in xrange(i + 1, m):
             dm[k] = metric(X[i], X[j])
             k = k + 1
+    return dm
+
+def mp_mapped(args):
+    manager, X, i, j = args
+    metric = manager.get_metric()
+    return metric(X[i], X[j])
+
+def mp_pdist(X, metric, p=2, w=None, V=None, VI=None):
+    import multiprocessing
+    from multiprocessing.managers import BaseManager
+    X = np.asarray(X, order='c')
+
+
+    s = X.shape
+    if len(s) != 2:
+        raise ValueError('A 2-dimensional array must be passed.')
+
+    m, n = s
+    dm = np.zeros((m * (m - 1) / 2,), dtype=np.double)
+
+    pool = multiprocessing.Pool(10)
+    func = globals()["mp_"+metric.__name__]
+
+    k = 0
+    prog = pb.ProgressBar(widgets=['calculating distances', pb.Bar(),
+                                   pb.Percentage(), pb.ETA()])
+    for i in prog(range(0, m - 1)):
+        ks = np.arange(k, k + m - i - 1)
+        inputs = [(X[i], X[j]) for j in xrange(i+1, m)]
+        dm[ks] = pool.map(func, inputs)
+        k  = ks[-1] + 1
     return dm
 
 if __name__ == "__main__":
