@@ -21,6 +21,7 @@ all : $(ANALYSIS_DIR)/summary.tsv current-analysis
 include config.make
 include analyze.make
 
+.SECONDARY: 
 
 $(ANALYSIS_DIR) :
 	mkdir $(ANALYSIS_DIR)
