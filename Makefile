@@ -6,11 +6,17 @@ STARCONFIG = Parameters/STAR_params.in
 ANALYSIS_DIR = analysis
 
 # Reference FASTA and GFF files from FlyBase and SGD
-MELFASTA = prereqs/dmel-all-chromosome-r5.53.fasta
+MELRELEASE = r5.55_FB2014_01
+MELVERSION = $(word 1, $(subst _FB, ,$(MELRELEASE)))
+
+MELFASTA = prereqs/dmel-all-chromosome-$(MELVERSION).fasta
+
 MELFASTA2= Reference/dmel_prepend.fasta
+
 CERFASTA = prereqs/S288C_reference_sequence_R64-1-1_20110203.fsa
 CERFASTA2= Reference/scer_prepend.fasta
-MELGFF   = prereqs/dmel-all-r5.53.gff
+
+MELGFF   = prereqs/dmel-all-$(MELVERSION).gff
 MELGTF   = Reference/mel_good.gtf
 CERGFF   = prereqs/saccharomyces_cerevisiae_R64-1-1_20110208.gff
 
@@ -61,6 +67,14 @@ $(MELGTF): $(MELGFF)
 		awk '{print "dmel_"$$0}' | \
 		grep -vP '(snoRNA|CR[0-9]{4}|Rp[ILS]|mir-|tRNA|unsRNA|snRNA|snmRNA|scaRNA|rRNA|RNA:|mt:)' > \
 		$@
+
+$(MELFASTA): 
+	wget -O $@.gz ftp://ftp.flybase.net/genomes/Drosophila_melanogaster/dmel_$(MELRELEASE)/fasta/dmel-all-chromosome-$(MELVERSION).fasta.gz
+	gunzip $@.gz
+
+$(MELGFF): 
+	wget -O $@.gz ftp://ftp.flybase.net/genomes/Drosophila_melanogaster/dmel_$(MELRELEASE)/gff/dmel-all-$(MELVERSION).gff.gz
+	gunzip $@.gz
 
 $(MELFASTA2): $(MELFASTA)
 	perl -pe 's/>/>dmel_/' $(MELFASTA) > $@
