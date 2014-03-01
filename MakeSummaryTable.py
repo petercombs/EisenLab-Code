@@ -45,7 +45,7 @@ def parse_args():
 def get_stagenum(name, series, dir):
     # Slice until the first digit
     name_base = name[:[i for i, c in enumerate(name) if c.isdigit()][0]]
-    dir = {'+':1, '-':-1}[dir]
+    dir = {'+':1, '?':1, '-':-1}[dir]
     return (sorted(ix for ix in series if ix.startswith(name_base))[::dir]
             .index(name)) + 1
 

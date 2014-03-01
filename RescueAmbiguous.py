@@ -33,7 +33,7 @@ for fname in sys.argv[1:]:
     data = defaultdict(lambda : [None, None])
     infile = pysam.Samfile(fname)
     outfile = pysam.Samfile(fname[:-4] + '_rescued_unsorted.bam', 'wb',
-                            header=reheader(infile))
+                            header=reheader(infile, fname[-8:-4]))
     irefs = infile.references
     orefs = outfile.references
     maxval, start = get_bam_length(infile) # For progress bar goodness
