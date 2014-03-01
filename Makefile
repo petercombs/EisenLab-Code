@@ -10,12 +10,15 @@ MELRELEASE = r5.55_FB2014_01
 VIRRELEASE = r1.2_FB2012_01
 MELVERSION = $(word 1, $(subst _FB, ,$(MELRELEASE)))
 VIRVERSION = $(word 1, $(subst _FB, ,$(VIRRELEASE)))
+MELDATE = $(word 2, $(subst _FB, ,$(MELRELEASE)))
 
 MELFASTA = prereqs/dmel-all-chromosome-$(MELVERSION).fasta
 VIRFASTA = prereqs/dvir-all-chromosome-$(VIRVERSION).fasta
 
 MELFASTA2= Reference/dmel_prepend.fasta
 VIRFASTA2= Reference/dvir_prepend.fasta
+
+ORTHOLOGS = prereqs/gene_orthologs_fb_$(MELDATE).tsv
 
 CERFASTA = prereqs/S288C_reference_sequence_R64-1-1_20110203.fsa
 CERFASTA2= Reference/scer_prepend.fasta
@@ -77,11 +80,13 @@ $(MELGTF): $(MELGFF)
 		grep -vP '(snoRNA|CR[0-9]{4}|Rp[ILS]|mir-|tRNA|unsRNA|snRNA|snmRNA|scaRNA|rRNA|RNA:|mt:)' > \
 		$@
 
-$(VIRGTF): $(VIRGFF)
-	gffread $< -E -T -o- | \
-		awk '{print "dvir_"$$0}' | \
-		grep -vP '(snoRNA|CR[0-9]{4}|Rp[ILS]|mir-|tRNA|unsRNA|snRNA|snmRNA|scaRNA|rRNA|RNA:|mt:)' > \
-		$@
+$(VIRGTF): $(VIRGFF) $(ORTHOLOGS)
+	gffread $< -E -T -o- \
+		| awk '{print "dvir_"$$0}' \
+		| grep -vP '(snoRNA|CR[0-9]{4}|Rp[ILS]|mir-|tRNA|unsRNA|snRNA|snmRNA|scaRNA|rRNA|RNA:|mt:)' \
+		| grep 'FBgn' \
+		| python FilterOrthologs.py $(ORTHOLOGS) \
+		> $@
 
 $(MELFASTA): 
 	wget -O $@.gz ftp://ftp.flybase.net/genomes/Drosophila_melanogaster/dmel_$(MELRELEASE)/fasta/dmel-all-chromosome-$(MELVERSION).fasta.gz
@@ -125,7 +130,12 @@ Reference/DmelScer:
 Reference/DmelDvir:
 	mkdir $@
 
-Reference/DmelDvir/Genome : $(MELFASTA2) $(VIRFASTA2) $(MELVIRGTF) |  Reference/DmelDvir
+Reference/DmelDvir/Genome : $(MELVIRGTF) |  Reference/DmelDvir $(MELFASTA2) $(VIRFASTA2) 
 	STAR --runMode genomeGenerate --genomeDir Reference/DmelDvir \
 		--genomeFastaFiles $(MELFASTA2) $(VIRFASTA2) \
 		--sjdbGTFfile $(MELVIRGTF)
+
+$(ORTHOLOGS) :
+	wget -O $@.gz -i ftp.flybase.org/releases/FB$(MELDATE)/precomputed_files/genes/gene_orthologs_fb_$(MELDATE).tsv.gz
+	gunzip $@.gz
+
