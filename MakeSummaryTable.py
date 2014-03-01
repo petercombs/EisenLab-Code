@@ -29,8 +29,13 @@ def parse_args():
     parser.add_argument('--key', '-k', default='gene_short_name', 
                         help='The column to combine on (FBgn in tracking_id)')
     parser.add_argument('--strip-low-reads', '-s', default=0, type=int,
-                        help='Remove slices with fewer than N counts (off by'
+                        help='Remove samples with fewer than N counts (off by'
                         'default')
+    parser.add_argument('--in-subdirectory', default=None,
+                        help='Subdirectory in '
+                        'basedir/sample/subdirectory/genes.fpkm_tracking')
+    parser.add_argument('--filename', default='genes.fpkm_tracking',
+                        help='Filename of the per-sample gene expression table')
     parser.add_argument('basedir', 
                         help='The directory containing directories, which '
                         'contain genes.fpkm_tracking files')
@@ -46,16 +51,21 @@ def get_stagenum(name, series, dir):
 
 
 args = parse_args()
-fnames = glob(path.join(args.basedir, '*', 'genes.fpkm_tracking'))
+if args.in_subdirectory:
+    fnames = glob(path.join(args.basedir, '*', args.in_subdirectory,
+                            args.filename))
+else:
+    fnames = glob(path.join(args.basedir, '*',args.filename))
 if args.has_params:
     has_params = argv[2]
-    params = pandas.read_table(has_params, index_col='Label')
+    params = pandas.read_table(has_params, index_col='Label', comment='#',
+                               converters={'Label':str}, na_values='-')
     params = params.dropna(how='any')
 
 
 df = None
 for fname in sorted(fnames):
-    table = pandas.read_table(fname)
+    table = pandas.read_table(fname, na_values='-', converters={args.key:str})
     alldir, fname = path.split(fname)
     basedir, dirname = path.split(alldir)
     table = table.drop_duplicates(args.key).dropna(how='any')
