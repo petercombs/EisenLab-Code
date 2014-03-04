@@ -16,7 +16,11 @@ targets = ' '.join(path.join('$(ANALYSIS_DIR)',
                              'genes.fpkm_tracking')
                    for label in config_file['Label'])
 
-out.write("FPKMS = " + targets + "\n")
+targets_all = ' '.join(path.join('$(ANALYSIS_DIR)',
+                             label, 'all',
+                             'genes.fpkm_tracking')
+                   for label in config_file['Label'])
+out.write("FPKMS = {} {} \n".format(targets, targets_all))
 
 reads = defaultdict(lambda : ([], []))
 carriers = defaultdict(list)

@@ -29,6 +29,7 @@ VIRGFF   = prereqs/dvir-all-$(VIRVERSION).gff
 VIRGTF   = Reference/vir_good.gtf
 CERGFF   = prereqs/saccharomyces_cerevisiae_R64-1-1_20110208.gff
 MELVIRGTF= Reference/melvir.gtf
+MELVIRFASTA=Reference/melvir.fa
 
 
 all : $(ANALYSIS_DIR)/summary.tsv current-analysis
@@ -47,6 +48,7 @@ $(ANALYSIS_DIR)/summary.tsv : MakeSummaryTable.py $(FPKMS) $(RUNCONFIG)
 	@echo 'Making summary table'
 	@echo '============================='
 	python MakeSummaryTable.py $(ANALYSIS_DIR) 
+	python MakeSummaryTable.py --in-subdirectory all $(ANALYSIS_DIR) 
 
 $(ANALYSIS_DIR)/%/genes.fpkm_tracking : $(ANALYSIS_DIR)/%/assigned_dmelR.bam $(MELGTF) $(MELFASTA2)
 	@echo '============================='
@@ -55,11 +57,19 @@ $(ANALYSIS_DIR)/%/genes.fpkm_tracking : $(ANALYSIS_DIR)/%/assigned_dmelR.bam $(M
 	cufflinks --num-threads 8 --output-dir $(ANALYSIS_DIR)/$* -u \
 		--frag-bias-correct $(MELFASTA2) -G $(MELGTF) $<
 
+$(ANALYSIS_DIR)/%/all/genes.fpkm_tracking : $(ANALYSIS_DIR)/%/accepted_hits_sorted.bam $(MELVIRGTF) $(MELVIRFASTA)
+	@echo '============================='
+	@echo 'Calculating Abundances'
+	@echo '============================='
+	cufflinks --num-threads 8 --output-dir $(@D) -u \
+		--frag-bias-correct $(MELVIRFASTA) -G $(MELVIRGTF) $<
 
 # $(ANALYSIS_DIR)/%/accepted_hits.bam : $(ANALYSIS_DIR)/%/Aligned.out.sam 
 #	samtools view -bS  -o $@  $<
 #	rm $(ANALYSIS_DIR)/$*/Aligned.out.sam
 #	# This sam file is big, let's get rid of it
+%/accepted_hits_sorted.bam: $(@D)/accepted_hits.bam
+	samtools sort $< $(@D)/accepted_hits_sorted
 
 $(ANALYSIS_DIR)/%/assigned_dmelR.bam : $(ANALYSIS_DIR)/%/accepted_hits.bam AssignReads2.py
 	samtools view -H $< \

@@ -102,6 +102,9 @@ for fname in sorted(fnames):
 
 
 df.sort_index(axis=1).to_csv(path.join(args.basedir, 
-                                       'summary' + ('_with_conf' * args.conf) + '.tsv'),
+                                       'summary'
+                                       + ('_in_{}'.format(args.in_subdirectory) * args.in_subdirectory) 
+                                       + ('_with_conf' * args.conf) 
+                                       + '.tsv'),
                              sep='\t')
 
