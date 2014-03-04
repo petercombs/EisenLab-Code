@@ -64,10 +64,6 @@ $(ANALYSIS_DIR)/%/all/genes.fpkm_tracking : $(ANALYSIS_DIR)/%/accepted_hits_sort
 	cufflinks --num-threads 8 --output-dir $(@D) -u \
 		--frag-bias-correct $(MELVIRFASTA) -G $(MELVIRGTF) $<
 
-# $(ANALYSIS_DIR)/%/accepted_hits.bam : $(ANALYSIS_DIR)/%/Aligned.out.sam 
-#	samtools view -bS  -o $@  $<
-#	rm $(ANALYSIS_DIR)/$*/Aligned.out.sam
-#	# This sam file is big, let's get rid of it
 %/accepted_hits_sorted.bam: $(@D)/accepted_hits.bam
 	samtools sort $< $(@D)/accepted_hits_sorted
 
