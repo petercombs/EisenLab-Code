@@ -1,4 +1,5 @@
 import pandas as pd
+import sys
 from scipy.stats import linregress
 from matplotlib.pyplot import figure, subplot, hist, title, savefig
 
@@ -14,7 +15,7 @@ from matplotlib.pyplot import figure, subplot, hist, title, savefig
 """
 
 startswith = lambda y: lambda x: x.startswith(y)
-expr = pd.read_table('analysis/summary.tsv', index_col=0)
+expr = pd.read_table(sys.argv[1], index_col=0, converters={'gene_short_name':str})
 
 protocols = {c.split('_')[0] for c in expr.columns}
 
@@ -32,6 +33,7 @@ for protocol in protocols:
         intercepts.ix[gene] = res[1]
         r_values.ix[gene] = res[2]
 
+    print '-'*30, '\n', protocol
     print "analyzed {} genes".format(i)
     figure()
     subplot(3,1,1)
