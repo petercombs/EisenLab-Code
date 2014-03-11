@@ -71,7 +71,7 @@ for fname in sorted(fnames):
         alldir = alldir.replace(args.in_subdirectory,
                                 '').replace('//','/').strip('/')
     basedir, dirname = path.split(alldir)
-    table = table.drop_duplicates(args.key).dropna(how='any')
+    table = table.drop_duplicates(args.key).dropna(axis=1, how='all').dropna(how='any')
     table.set_index(args.key, inplace=True, verify_integrity=True)
     if args.has_params and dirname not in params.index:
         continue
