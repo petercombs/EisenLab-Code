@@ -15,21 +15,23 @@ MELDATE = $(word 2, $(subst _FB, ,$(MELRELEASE)))
 MELFASTA = prereqs/dmel-all-chromosome-$(MELVERSION).fasta
 VIRFASTA = prereqs/dvir-all-chromosome-$(VIRVERSION).fasta
 
-MELFASTA2= Reference/dmel_prepend.fasta
-VIRFASTA2= Reference/dvir_prepend.fasta
+REFDIR = Reference
+
+MELFASTA2= $(REFDIR)/dmel_prepend.fasta
+VIRFASTA2= $(REFDIR)/dvir_prepend.fasta
 
 ORTHOLOGS = prereqs/gene_orthologs_fb_$(MELDATE).tsv
 
 CERFASTA = prereqs/S288C_reference_sequence_R64-1-1_20110203.fsa
-CERFASTA2= Reference/scer_prepend.fasta
+CERFASTA2= $(REFDIR)/scer_prepend.fasta
 
 MELGFF   = prereqs/dmel-all-$(MELVERSION).gff
-MELGTF   = Reference/mel_good.gtf
+MELGTF   = $(REFDIR)/mel_good.gtf
 VIRGFF   = prereqs/dvir-all-$(VIRVERSION).gff
-VIRGTF   = Reference/vir_good.gtf
+VIRGTF   = $(REFDIR)/vir_good.gtf
 CERGFF   = prereqs/saccharomyces_cerevisiae_R64-1-1_20110208.gff
-MELVIRGTF= Reference/melvir.gtf
-MELVIRFASTA=Reference/melvir.fa
+MELVIRGTF= $(REFDIR)/melvir.gtf
+MELVIRFASTA=$(REFDIR)/melvir.fa
 
 
 all : $(ANALYSIS_DIR)/summary.tsv current-analysis
@@ -43,11 +45,16 @@ include analyze.make
 $(ANALYSIS_DIR) :
 	mkdir $(ANALYSIS_DIR)
 
-$(ANALYSIS_DIR)/summary.tsv : MakeSummaryTable.py $(FPKMS) $(RUNCONFIG)
+$(ANALYSIS_DIR)/summary.tsv : MakeSummaryTable.py $(FPKMS) $(RUNCONFIG) | $(ANALYSIS_DIR)
 	@echo '============================='
 	@echo 'Making summary table'
 	@echo '============================='
 	python MakeSummaryTable.py $(ANALYSIS_DIR) 
+
+$(ANALYSIS_DIR)/summary_in_all.tsv : MakeSummaryTable.py $(FPKMS) $(RUNCONFIG) | $(ANALYSIS_DIR)
+	@echo '============================='
+	@echo 'Making summary table'
+	@echo '============================='
 	python MakeSummaryTable.py --in-subdirectory all $(ANALYSIS_DIR) 
 
 %/genes.fpkm_tracking : %/assigned_dmelR.bam $(MELGTF) $(MELFASTA2)
@@ -80,13 +87,13 @@ $(ANALYSIS_DIR)/summary.tsv : MakeSummaryTable.py $(FPKMS) $(RUNCONFIG)
 	samtools index $@
 
 
-$(MELGTF): $(MELGFF)
+$(MELGTF): $(MELGFF) | $(REFDIR)
 	gffread $< -E -T -o- | \
 		awk '{print "dmel_"$$0}' | \
 		grep -vP '(snoRNA|CR[0-9]{4}|Rp[ILS]|mir-|tRNA|unsRNA|snRNA|snmRNA|scaRNA|rRNA|RNA:|mt:)' > \
 		$@
 
-$(VIRGTF): $(VIRGFF) $(ORTHOLOGS)
+$(VIRGTF): $(VIRGFF) $(ORTHOLOGS) | $(REFDIR)
 	gffread $< -E -T -o- \
 		| awk '{print "dvir_"$$0}' \
 		| grep -vP '(snoRNA|CR[0-9]{4}|Rp[ILS]|mir-|tRNA|unsRNA|snRNA|snmRNA|scaRNA|rRNA|RNA:|mt:)' \
@@ -94,51 +101,51 @@ $(VIRGTF): $(VIRGFF) $(ORTHOLOGS)
 		| python FilterOrthologs.py $(ORTHOLOGS) \
 		> $@
 
-$(MELFASTA): 
+$(MELFASTA): | $(REFDIR)
 	wget -O $@.gz ftp://ftp.flybase.net/genomes/Drosophila_melanogaster/dmel_$(MELRELEASE)/fasta/dmel-all-chromosome-$(MELVERSION).fasta.gz
 	gunzip $@.gz
 
-$(MELGFF): 
+$(MELGFF): | $(REFDIR)
 	wget -O $@.gz ftp://ftp.flybase.net/genomes/Drosophila_melanogaster/dmel_$(MELRELEASE)/gff/dmel-all-$(MELVERSION).gff.gz
 	gunzip $@.gz
 
-$(VIRFASTA): 
+$(VIRFASTA): | $(REFDIR)
 	wget -O $@.gz ftp://ftp.flybase.net/genomes/Drosophila_virilis/dvir_$(VIRRELEASE)/fasta/dvir-all-chromosome-$(VIRVERSION).fasta.gz
 	gunzip $@.gz
 
-$(VIRGFF): 
+$(VIRGFF): | $(REFDIR)
 	wget -O $@.gz ftp://ftp.flybase.net/genomes/Drosophila_virilis/dvir_$(VIRRELEASE)/gff/dvir-all-$(VIRVERSION).gff.gz
 	gunzip $@.gz
 
-$(MELFASTA2): $(MELFASTA)
+$(MELFASTA2): $(MELFASTA)| $(REFDIR)
 	perl -pe 's/>/>dmel_/' $(MELFASTA) > $@
 
-$(VIRFASTA2): $(VIRFASTA)
+$(VIRFASTA2): $(VIRFASTA)| $(REFDIR)
 	perl -pe 's/>/>dvir_/' $(VIRFASTA) > $@
 
-$(CERFASTA2): $(CERFASTA)
+$(CERFASTA2): $(CERFASTA)| $(REFDIR)
 	perl -pe 's/>/>scer_/' $(CERFASTA) > $@
 
-$(MELVIRFASTA): $(MELFASTA2) $(VIRVASTA2)
+$(MELVIRFASTA): $(MELFASTA2) $(VIRVASTA2)| $(REFDIR)
 	cat $^ > $@
 
 
-Reference/DmelScer/Genome : | $(MELFASTA2) $(CERFASTA2)  $(MELGTF) Reference/DmelScer
+Reference/DmelScer/Genome : | $(MELFASTA2) $(CERFASTA2)  $(MELGTF) Reference/DmelScer $(REFDIR)
 	STAR --runMode genomeGenerate --genomeDir Reference/DmelScer \
 		--genomeFastaFiles $(MELFASTA2) $(CERFASTA2) \
 		--sjdbGTFfile $(MELGTF)
 
-$(MELVIRGTF): $(MELGTF) $(VIRGTF)
+$(MELVIRGTF): $(MELGTF) $(VIRGTF) | $(REFDIR)
 	cat $^ > $@
 
-Reference/DmelScer:
+Reference/DmelScer: | $(REFDIR)
 	mkdir $@
 
 
-Reference/DmelDvir:
+$(REFDIR)/DmelDvir: | $(REFDIR)
 	mkdir $@
 
-Reference/DmelDvir/Genome : $(MELVIRGTF) |  Reference/DmelDvir $(MELFASTA2) $(VIRFASTA2) 
+$(REFDIR)/DmelDvir/Genome : $(MELVIRGTF) |  Reference/DmelDvir $(MELFASTA2) $(VIRFASTA2)  $(REFDIR)
 	STAR --runMode genomeGenerate --genomeDir Reference/DmelDvir \
 		--genomeFastaFiles $(MELFASTA2) $(VIRFASTA2) \
 		--sjdbGTFfile $(MELVIRGTF)
@@ -147,3 +154,5 @@ $(ORTHOLOGS) :
 	wget -O $@.gz -i ftp.flybase.org/releases/FB$(MELDATE)/precomputed_files/genes/gene_orthologs_fb_$(MELDATE).tsv.gz
 	gunzip $@.gz
 
+$(REFDIR) :
+	mkdir $@
