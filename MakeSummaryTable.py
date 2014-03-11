@@ -67,6 +67,9 @@ df = None
 for fname in sorted(fnames):
     table = pandas.read_table(fname, na_values='-', converters={args.key:str})
     alldir, fname = path.split(fname)
+    if args.in_subdirectory:
+        alldir = alldir.replace(args.in_subdirectory,
+                                '').replace('//','/').strip('/')
     basedir, dirname = path.split(alldir)
     table = table.drop_duplicates(args.key).dropna(how='any')
     table.set_index(args.key, inplace=True, verify_integrity=True)
@@ -103,7 +106,8 @@ for fname in sorted(fnames):
 
 df.sort_index(axis=1).to_csv(path.join(args.basedir, 
                                        'summary'
-                                       + ('_in_{}'.format(args.in_subdirectory) * args.in_subdirectory) 
+                                       + ('_in_{}'.format(args.in_subdirectory)
+                                          * bool(args.in_subdirectory) )
                                        + ('_with_conf' * args.conf) 
                                        + '.tsv'),
                              sep='\t')

@@ -1,4 +1,4 @@
-current_analysis: analysis/results/fpkm_sum
+current-analysis: analysis/results/fpkm_sum analysis/results/fold_change.log analysis/results/mel_summary.log
 	@echo "Nothing deeper yet"
 
 analysis/results/fpkm_sum: analysis/summary.tsv | analysis/results

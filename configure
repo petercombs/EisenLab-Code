@@ -24,11 +24,13 @@ out.write("FPKMS = {} {} \n".format(targets, targets_all))
 
 reads = defaultdict(lambda : ([], []))
 carriers = defaultdict(list)
+carrier_species = {}
 for i, row in config_file.iterrows():
     label = row['Label']
     index = int(row['Index'])
     mbepc = int(row['MBEPC'])
     carrier = row['CarrierID']
+    species = row['CarrierSpecies']
     glob_spec = ('sequence/*{id}*index{index}/*_R1_*.fastq*'
                .format(index=index, id=int(row['MBEPC'])))
     rf1 = glob(glob_spec)
@@ -43,6 +45,7 @@ for i, row in config_file.iterrows():
     reads[label][0].extend(rf1)
     reads[label][1].extend(rf2)
     carriers[label].append(carrier)
+    carrier_species[label] = species
 
 for label in reads:
     reads1, reads2 = reads[label]
@@ -50,7 +53,7 @@ for label in reads:
               '\t mkdir $(ANALYSIS_DIR)/{label}\n'.format(label=label))
     out.write('$(ANALYSIS_DIR)/{label}/accepted_hits.bam: '
               ' {rfs} '
-              ' Reference/DmelScer/Genome'
+              ' Reference/{genome}/Genome'
               ' | $(ANALYSIS_DIR)/{label}\n'
               '\t@echo {label} \n'
               '\tSTAR --parametersFiles $(STARCONFIG) '
@@ -64,7 +67,7 @@ for label in reads:
                      rf2=','.join(reads2),
                      rfs=' '.join(reads1 + reads2),
                      label=label,
-                     genome='DmelScer'
+                     genome='Dmel' + carrier_species[label],
                     ))
     out.write('$(ANALYSIS_DIR)/{label}/{yeast}.bam:  '
               '$(ANALYSIS_DIR)/{label}/assigned_scer.bam\n'

@@ -50,33 +50,33 @@ $(ANALYSIS_DIR)/summary.tsv : MakeSummaryTable.py $(FPKMS) $(RUNCONFIG)
 	python MakeSummaryTable.py $(ANALYSIS_DIR) 
 	python MakeSummaryTable.py --in-subdirectory all $(ANALYSIS_DIR) 
 
-$(ANALYSIS_DIR)/%/genes.fpkm_tracking : $(ANALYSIS_DIR)/%/assigned_dmelR.bam $(MELGTF) $(MELFASTA2)
+%/genes.fpkm_tracking : %/assigned_dmelR.bam $(MELGTF) $(MELFASTA2)
 	@echo '============================='
 	@echo 'Calculating Abundances'
 	@echo '============================='
-	cufflinks --num-threads 8 --output-dir $(ANALYSIS_DIR)/$* -u \
+	cufflinks --num-threads 8 --output-dir $(@D) -u \
 		--frag-bias-correct $(MELFASTA2) -G $(MELGTF) $<
 
-$(ANALYSIS_DIR)/%/all/genes.fpkm_tracking : $(ANALYSIS_DIR)/%/accepted_hits_sorted.bam $(MELVIRGTF) $(MELVIRFASTA)
+%/all/genes.fpkm_tracking : %/accepted_hits_sorted.bam $(MELVIRGTF) $(MELVIRFASTA)
 	@echo '============================='
 	@echo 'Calculating Abundances'
 	@echo '============================='
 	cufflinks --num-threads 8 --output-dir $(@D) -u \
 		--frag-bias-correct $(MELVIRFASTA) -G $(MELVIRGTF) $<
 
-%/accepted_hits_sorted.bam: $(@D)/accepted_hits.bam
+%/accepted_hits_sorted.bam: %/accepted_hits.bam
 	samtools sort $< $(@D)/accepted_hits_sorted
 
-$(ANALYSIS_DIR)/%/assigned_dmelR.bam : $(ANALYSIS_DIR)/%/accepted_hits.bam AssignReads2.py
+%/assigned_dmelR.bam : %/accepted_hits.bam AssignReads2.py
 	samtools view -H $< \
 		| grep -Pv 'SN:(?!dmel)' \
-		> $(ANALYSIS_DIR)/$*/mel_only.header.sam
-	python AssignReads2.py $(ANALYSIS_DIR)/$*/accepted_hits.bam
-	samtools sort $(ANALYSIS_DIR)/$*/assigned_dmel.bam \
-		$(ANALYSIS_DIR)/$*/assigned_dmel_sorted
-	samtools reheader $(ANALYSIS_DIR)/$*/mel_only.header.sam \
-		$(ANALYSIS_DIR)/$*/assigned_dmel_sorted.bam > $@
-	rm $(ANALYSIS_DIR)/$*/assigned_dmel_sorted.bam
+		> $(@D)/mel_only.header.sam
+	python AssignReads2.py $(@D)/accepted_hits.bam
+	samtools sort $(@D)/assigned_dmel.bam \
+		$(@D)/assigned_dmel_sorted
+	samtools reheader $(@D)/mel_only.header.sam \
+		$(@D)/assigned_dmel_sorted.bam > $@
+	rm $(@D)/assigned_dmel_sorted.bam
 	samtools index $@
 
 
@@ -114,11 +114,13 @@ $(MELFASTA2): $(MELFASTA)
 	perl -pe 's/>/>dmel_/' $(MELFASTA) > $@
 
 $(VIRFASTA2): $(VIRFASTA)
-	perl -pe 's/>/>dmel_/' $(VIRFASTA) > $@
+	perl -pe 's/>/>dvir_/' $(VIRFASTA) > $@
 
 $(CERFASTA2): $(CERFASTA)
 	perl -pe 's/>/>scer_/' $(CERFASTA) > $@
 
+$(MELVIRFASTA): $(MELFASTA2) $(VIRVASTA2)
+	cat $^ > $@
 
 
 Reference/DmelScer/Genome : | $(MELFASTA2) $(CERFASTA2)  $(MELGTF) Reference/DmelScer
