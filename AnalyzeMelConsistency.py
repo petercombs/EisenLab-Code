@@ -12,10 +12,12 @@
 
 import sys
 import pandas as pd
+import numpy as np
 from numpy import outer, triu_indices, mean, std, log
 from scipy.stats import spearmanr, pearsonr
 from scipy.stats.mstats import gmean
-from matplotlib import subplot, hist, figure
+from matplotlib.pyplot import subplot, hist, figure, loglog, ylabel, xlabel,\
+        savefig, xlim, ylim, xticks, yticks
 
 
 startswith = lambda y: lambda x: x.startswith(y)
@@ -25,11 +27,12 @@ protocols = {c.split('_')[0] for c in expr.columns}
 
 for protocol in protocols:
     samples = expr.select(startswith(protocol), axis=1)
-    selector = lambda x: 3 < np.mean(samples.ix[x]) < 1000
+    selector = lambda x: 3 < np.max(samples.ix[x]) < 1000
+    samples = samples.select(selector)
 
-    fcs = pd.Series(index=samplex.index)
-    for i, gene in enumerate(samples.select(selectors).index):
-        a = samplex.ix[gene]
+    fcs = pd.Series(index=samples.index)
+    for i, gene in enumerate(samples.index):
+        a = samples.ix[gene]
         # Geometric mean is proper way to weight all the fold changes
         # Outer product multiplies a by 1/a to give all by all
         # Triu_indices(..,1) only takes elements above the diagonal
@@ -42,28 +45,38 @@ for protocol in protocols:
     print "Mean Log FC", mean(log(fcs))
     print "Std  Log FC", std(log(fcs))
 
-    figure()
+    figure(figsize=(16,16))
     L = len(a)
     for row, samp1 in enumerate(samples.columns):
         for col, samp2 in enumerate(samples.columns):
             if row == col: break
             subplot(L-1, L-1,  (row-1) * (L-1) + col + 1)
-            loglog(samples.select(selectors).ix[:, samp2],
-                   samples.select(selectors).ix[:, samp1], 
+            loglog(samples.ix[:, samp2],
+                   samples.ix[:, samp1], 
                    'k.', alpha=0.5)
+            xlim(.1,1e5)
+            ylim(.1,1e5)
             if col == 0:
-                ylabel(row)
-            if col + 1 == L:
-                xlabel(col)
+                ylabel(samp1)
+                yticks([1e-1, 1e1, 1e3, 1e5])
+            else:
+                yticks([1e-1, 1e1, 1e3, 1e5], ('',)*4)
+
+            if row + 1 == L:
+                xlabel(samp2)
+                xticks([1e-1, 1e1, 1e3, 1e5])
+            else:
+                xticks([1e-1, 1e1, 1e3, 1e5], ('',)*4)
+
 
             print "{} vs {}:\tspearman: {}\t\tpearson: {}".format(
-                row, col, spearmanr(samples.select(selectors).ix[:,samp1],
-                                    samples.select(selectors).ix[:,samp2]),
-                pearsonr(samples.select(selectors).ix[:,samp1],
-                                    samples.select(selectors).ix[:,samp2])
+                row, col, spearmanr(samples.ix[:,samp1],
+                                    samples.ix[:,samp2]),
+                pearsonr(samples.ix[:,samp1],
+                                    samples.ix[:,samp2])
             )
 
 
-    savefig('analysis/results/{}.png'.format(protocol))
+    savefig('analysis/results/{}_logfc.png'.format(protocol), dpi=150)
 
 
