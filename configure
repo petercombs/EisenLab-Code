@@ -6,8 +6,19 @@ from glob import glob
 from collections import defaultdict
 from sys import argv
 
-config = argv[1] if len(argv) > 1 else 'Parameters/RunConfig.cfg'
-config_file = pd.read_table(config,
+def parse_arguments():
+    from argparse import ArgumentParser
+    p = ArgumentParser(description='Configuration script for SliceSeq data processing')
+    p.add_argument('parameters', type=file, 
+                   default='Parameters/RunConfig.cfg',
+                   help='Configuration table for the sequences')
+    p.add_argument('--seqdir', type=str, default='sequence*',
+                   help='Sequence directory (or glob pattern) to look in for'
+                   ' reads')
+    return p.parse_args()
+
+args = parse_arguments()
+config_file = pd.read_table(args.parameters,
                             comment='#').dropna(how='all')
 
 out = open('config.make', 'w')
@@ -31,11 +42,11 @@ for i, row in config_file.iterrows():
     mbepc = int(row['MBEPC'])
     carrier = row['CarrierID']
     species = row['CarrierSpecies']
-    glob_spec = ('sequence/*{id}*index{index}/*_R1_*.fastq*'
-               .format(index=index, id=int(row['MBEPC'])))
+    glob_spec = ('{seqdir}/*{id}*index{index}/*_R1_*.fastq*'
+               .format(seqdir=args.seqdir, index=index, id=int(row['MBEPC'])))
     rf1 = glob(glob_spec)
-    rf2 = glob('sequence/*{id}*index{index}_*/*_R2_*.fastq*'
-               .format(index=index, id=int(row['MBEPC'])))
+    rf2 = glob('{seqdir}/*{id}*index{index}_*/*_R2_*.fastq*'
+               .format(seqdir=args.seqdir, index=index, id=int(row['MBEPC'])))
     if rf1 == []:
         print "Warning: no sequence for ", label, index
         print glob_spec
