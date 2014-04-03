@@ -82,7 +82,7 @@ class PointCloudReader(object):
         return names
 
 
-    def data_to_arrays(self):
+    def data_to_arrays(self, usenan=True):
         """Turn raw data from virtual embryo to arrays
 
         Primarily, this separates out the times into its own axis, and puts the
@@ -98,7 +98,9 @@ class PointCloudReader(object):
         genes = self.get_gene_names()
 
         if HAS_NUMPY:
-            exparray = np.zeros((len(all_data), len(genes), len(times))) * np.nan
+            exparray = np.zeros((len(all_data), len(genes), len(times)))
+            if usenan:
+                exparray*= np.nan
         else:
             exparray = [[[0 for k in times]
                          for j in genes]
