@@ -96,10 +96,31 @@ Reference/DmelScer/Genome : | $(MELFASTA2) $(CERFASTA2)  $(MELGTF) Reference/Dme
 		--genomeFastaFiles $(MELFASTA2) $(CERFASTA2) \
 		--sjdbGTFfile $(MELGTF)
 
+Reference/DmelDper/transcriptome : |  Reference/DmelDper
+	tophat --GTF Reference/AAA/melper.gtf \
+		--transcriptome-index $@ \
+		Reference/AAA/melper
+
+Reference/DmelDwil/transcriptome : |  Reference/DmelDwil
+	tophat --GTF Reference/AAA/melwil.gtf \
+		--transcriptome-index $@ \
+		Reference/AAA/melwil
+
+Reference/DmelDmoj/transcriptome : |  Reference/DmelDmoj
+	tophat --GTF Reference/AAA/melmoj.gtf \
+		--transcriptome-index $@ \
+		Reference/AAA/melmoj
+
+Reference/DmelDvir/transcriptome : |  Reference/DmelDvir
+	tophat --GTF Reference/AAA/melvir.gtf \
+		--transcriptome-index $@ \
+		Reference/AAA/melvir
+
 Reference/DmelDper/Genome : |  Reference/DmelDper
 	STAR --runMode genomeGenerate --genomeDir Reference/DmelDper \
 		--genomeFastaFiles Reference/AAA/melper.fa \
 		--sjdbGTFfile Reference/AAA/melper.gtf
+
 Reference/DmelDwil/Genome : |  Reference/DmelDwil
 	STAR --runMode genomeGenerate --genomeDir Reference/DmelDwil \
 		--genomeFastaFiles Reference/AAA/melwil.fa \
@@ -119,10 +140,15 @@ Reference/DmelScer:
 	mkdir $@
 
 Reference/DmelDper:
+	bowtie2-build Reference/AAA/melper.fa $@
 	mkdir $@
+
 Reference/DmelDwil:
+	bowtie2-build Reference/AAA/melwil.fa $@
 	mkdir $@
 Reference/DmelDvir:
+	bowtie2-build Reference/AAA/melvir.fa $@
 	mkdir $@
 Reference/DmelDmoj:
+	bowtie2-build Reference/AAA/melmoj.fa $@
 	mkdir $@
