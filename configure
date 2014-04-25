@@ -67,9 +67,6 @@ for label in reads:
               '--num-threads 12 '
               'Reference/{genome} '
               '{rf1} {rf2}\n'
-              '\tsamtools view -bS -o $(ANALYSIS_DIR)/{label}/accepted_hits.bam'
-              ' $(ANALYSIS_DIR)/{label}/Aligned.out.sam\n'
-              '\trm $(ANALYSIS_DIR)/{label}/Aligned.out.sam\n'
              .format(rf1=','.join(reads1),
                      rf2=','.join(reads2),
                      rfs=' '.join(reads1 + reads2),

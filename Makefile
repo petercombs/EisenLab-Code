@@ -3,7 +3,7 @@ RUNCONFIG  = Parameters/RunConfig.cfg
 STARCONFIG = Parameters/STAR_params.in
 
 # Other random variables
-ANALYSIS_DIR = analysis
+ANALYSIS_DIR = analysis-multi
 
 # Reference FASTA and GFF files from FlyBase and SGD
 MELFASTA = prereqs/dmel-all-chromosome-r5.53.fasta
@@ -100,21 +100,25 @@ Reference/DmelDper/transcriptome : |  Reference/DmelDper
 	tophat --GTF Reference/AAA/melper.gtf \
 		--transcriptome-index $@ \
 		Reference/AAA/melper
+	touch $@
 
 Reference/DmelDwil/transcriptome : |  Reference/DmelDwil
 	tophat --GTF Reference/AAA/melwil.gtf \
 		--transcriptome-index $@ \
 		Reference/AAA/melwil
+	touch $@
 
 Reference/DmelDmoj/transcriptome : |  Reference/DmelDmoj
 	tophat --GTF Reference/AAA/melmoj.gtf \
 		--transcriptome-index $@ \
 		Reference/AAA/melmoj
+	touch $@
 
 Reference/DmelDvir/transcriptome : |  Reference/DmelDvir
 	tophat --GTF Reference/AAA/melvir.gtf \
 		--transcriptome-index $@ \
 		Reference/AAA/melvir
+	touch $@
 
 Reference/DmelDper/Genome : |  Reference/DmelDper
 	STAR --runMode genomeGenerate --genomeDir Reference/DmelDper \
