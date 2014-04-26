@@ -42,7 +42,7 @@ for bam_fname in sys.argv[2:]:
     f = open(gtf_fname)
     for line in f:
         pass
-    pb = pbar.ProgressBar(maxval=f.tell()).start()
+    pb = pbar.ProgressBar(widgets=[bam_fname, pbar.Bar(), pbar.ETA()],maxval=f.tell()).start()
     f.seek(0)
     for line in f:
         pb.update(f.tell())

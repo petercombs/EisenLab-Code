@@ -73,6 +73,7 @@ $(ANALYSIS_DIR)/summary_in_all.tsv : MakeSummaryTable.py $(FPKMS) $(RUNCONFIG) |
 
 %/accepted_hits_sorted.bam: %/accepted_hits.bam
 	samtools sort $< $(@D)/accepted_hits_sorted
+	samtools index $@
 
 %/assigned_dmelR.bam : %/accepted_hits.bam AssignReads2.py
 	samtools view -H $< \
@@ -126,8 +127,8 @@ $(VIRFASTA2): $(VIRFASTA)| $(REFDIR)
 $(CERFASTA2): $(CERFASTA)| $(REFDIR)
 	perl -pe 's/>/>scer_/' $(CERFASTA) > $@
 
-$(MELVIRFASTA): $(MELFASTA2) $(VIRVASTA2)| $(REFDIR)
-	cat $^ > $@
+$(MELVIRFASTA): $(MELFASTA2) $(VIRFASTA2)| $(REFDIR)
+	cat $(MELFASTA2) $(VIRFASTA2) > $@
 
 
 Reference/DmelScer/Genome : | $(MELFASTA2) $(CERFASTA2)  $(MELGTF) Reference/DmelScer $(REFDIR)
