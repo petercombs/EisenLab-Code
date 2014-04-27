@@ -17,7 +17,15 @@ analysis/results/complexity: | analysis/results
 		Reference/melvir.gtf \
 		analysis/*/accepted_hits_sorted.bam \
 		| tee $@
-	@echo "Temporarily deprecated"
+	python CheckCoverage.py \
+		Reference/mel_good.gtf \
+		analysis/*/accepted_hits_sorted.bam \
+		| tee $@_mel
+	python CheckCoverage.py \
+		Reference/vir_good.gtf \
+		analysis/*/accepted_hits_sorted.bam \
+		| tee $@_vir
+
 
 analysis/results/fold_change.log: analysis/summary_in_all.tsv | analysis/results
 	python AnalyzeFoldChanges.py $^ > $@
