@@ -21,15 +21,9 @@ starts = set()
 curr_len = -1
 coverage = 0
 
-all_dirs = []
-all_rpks = []
-all_pct_uniques = []
-all_lens = []
-
 cutoff = 0
 
-for bam_fname in sys.argv[2:]:
-    if not bam_fname.endswith('.bam'): continue
+def analyze_bamfile(bam_fname):
     print bam_fname,
     bam_file = pysam.Samfile(bam_fname, 'rb')
 
@@ -76,10 +70,6 @@ for bam_fname in sys.argv[2:]:
     pb.finish()
     curr_lens, rpks, uniques = zip(*coverages.itervalues())
     dir, fname = path.split(bam_fname)
-    all_dirs.append(fname)
-    all_rpks.append(rpks)
-    all_pct_uniques.append(uniques)
-    all_lens.append(curr_lens)
 
     try:
         xs = array(rpks)
@@ -93,8 +83,16 @@ for bam_fname in sys.argv[2:]:
     except Exception as exc:
         print exc
 
+    return fname, rpks, uniques, curr_lens
 
-import cPickle as pickle
-out_fh = open('checkcoverage.pkl', 'w')
-pickle.dump({'dirs':all_dirs, 'rpks':all_rpks, 'pct_uniques':all_pct_uniques,
-             'lens': all_lens}, out_fh)
+if __name__ == "__main__":
+    import multiprocessing as mp
+
+    POOL = mp.Pool(20)
+    res = POOL.map(analyze_bamfile, [f for f in sys.argv[2:] if f.endswith('.bam')])
+    all_dirs, all_rpks, all_pct_uniques, all_lens = zip(*res)
+
+    import cPickle as pickle
+    out_fh = open('checkcoverage.pkl', 'w')
+    pickle.dump({'dirs':all_dirs, 'rpks':all_rpks, 'pct_uniques':all_pct_uniques,
+                 'lens': all_lens}, out_fh)
