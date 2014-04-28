@@ -71,19 +71,8 @@ def analyze_bamfile(bam_fname):
     curr_lens, rpks, uniques = zip(*coverages.itervalues())
     dir, fname = path.split(bam_fname)
 
-    try:
-        xs = array(rpks)
-        ys = array([len(u)/(curr_len + 1) 
-                   for u, curr_len in zip(uniques, curr_lens)])
-        cutoff = max(xs[ys<.1])
-        reg = stats.linregress(log(xs[(xs < cutoff) * (xs > 0) * (ys > 0)]),
-                               log(ys[(xs < cutoff) * (xs > 0) * (ys > 0)]))
-        print "exp(%f) * x ** %f" % (reg[1], reg[0])
-        print "Duplicate badness score: ", exp(-reg[1]-.38)
-    except Exception as exc:
-        print exc
 
-    return fname, rpks, uniques, curr_lens
+    return dir, rpks, uniques, curr_lens
 
 if __name__ == "__main__":
     import multiprocessing as mp
@@ -96,3 +85,16 @@ if __name__ == "__main__":
     out_fh = open('checkcoverage.pkl', 'w')
     pickle.dump({'dirs':all_dirs, 'rpks':all_rpks, 'pct_uniques':all_pct_uniques,
                  'lens': all_lens}, out_fh)
+    for fname, rpks, uniques, curr_lens in res:
+        print fname
+        try:
+            xs = array(rpks)
+            ys = array([len(u)/(curr_len + 1) 
+                       for u, curr_len in zip(uniques, curr_lens)])
+            cutoff = max(xs[ys<.1])
+            reg = stats.linregress(log(xs[(xs < cutoff) * (xs > 0) * (ys > 0)]),
+                                   log(ys[(xs < cutoff) * (xs > 0) * (ys > 0)]))
+            print "exp(%f) * x ** %f" % (reg[1], reg[0])
+            print "Duplicate badness score: ", exp(-reg[1]-.38)
+        except Exception as exc:
+            print exc
