@@ -38,23 +38,27 @@ carriers = defaultdict(list)
 carrier_species = {}
 for i, row in config_file.iterrows():
     label = row['Label']
-    index = int(row['Index'])
+    index = row['Index']
     mbepc = int(row['MBEPC'])
     carrier = row['CarrierID']
     species = row['CarrierSpecies']
-    glob_spec = ('{seqdir}/*/*{label}*/*_R1_*.fastq*'
-               .format(seqdir=args.seqdir, label=label, index=index, id=int(row['MBEPC'])))
-    rf1 = glob(glob_spec)
-    rf2 = glob('{seqdir}/*/*{label}*/*_R2_*.fastq*'
-               .format(seqdir=args.seqdir, label=label, index=index, id=int(row['MBEPC'])))
+    glob_spec = ('{seqdir}/*/*{label}*/*_{{read}}_*.fastq*'
+               .format(seqdir=args.seqdir, label=label, index=index, id=mbepc))
+    rf1 = glob(glob_spec.format(read='R1'))
     if rf1 == []:
-        print "Warning: no sequence for ", label, index
-        print glob_spec
+        glob_spec = ('{seqdir}/*{id}*{index}*/*_{{read}}*.fastq*'
+                    .format(seqdir=args.seqdir, label=label, index=index,
+                            id=mbepc))
+        rf1 = glob(glob_spec.format(read='R1'))
+        if rf1 == []:
+            print "Warning: no sequence for ", label, index
+            print glob_spec.format(read='R1')
+    rf2 = glob(glob_spec.format(read='R2'))
     if rf2 == []:
         print "Warning: No R2 sequence for ", label, index
 
-    reads[label][0].extend(rf1)
-    reads[label][1].extend(rf2)
+    reads[label][0].extend(sorted(rf1))
+    reads[label][1].extend(sorted(rf2))
     carriers[label].append(carrier)
     carrier_species[label] = species
 
