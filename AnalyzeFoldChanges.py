@@ -18,7 +18,7 @@ from matplotlib.pyplot import figure, subplot, hist, title, \
 """
 
 startswith = lambda y: lambda x: x.startswith(y)
-contains = lambda y: lambda x: y in x
+contains = lambda y: lambda x: y not in x
 expr = pd.read_table(sys.argv[1], converters={'gene_short_name':str})
 expr.set_index('gene_short_name', inplace=True, verify_integrity=True)
 

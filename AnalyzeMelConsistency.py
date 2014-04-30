@@ -22,7 +22,7 @@ from matplotlib.pyplot import subplot, hist, figure, loglog, ylabel, xlabel,\
 
 
 startswith = lambda y: lambda x: x.startswith(y)
-contains = lambda y: lambda x: y in x
+contains = lambda y: lambda x: y not in x
 expr = pd.read_table(sys.argv[1], index_col=0, converters={'gene_short_name':str})
 
 protocols = {c.split('_')[0] for c in expr.columns}
