@@ -24,6 +24,7 @@ expr.set_index('gene_short_name', inplace=True, verify_integrity=True)
 
 protocols = {c.split('_')[0] for c in expr.columns}
 all_samples = {}
+all_slopes = {}
 print(protocols)
 
 for protocol in protocols:
@@ -31,17 +32,24 @@ for protocol in protocols:
         samples = expr.select(startswith(protocol+"_"), axis=1)
         samples = samples.select(contains('subset'), axis=1)
         selector = lambda x: x.startswith('Dvir') and 3 < np.max(samples.ix[x]) < 1000
-        x_values = [float(c.split('V')[-1].split('_')[0]) for c in samples.columns]
+
+        x_values = np.array([float(c.split('V')[-1].split('_')[0])
+                             for c in samples.columns])
         samples = samples.select(selector)
-        samples = samples.divide(samples.ix[:,2], axis='index')
-        all_samples[protocol] = samples
+        normer = np.sum(x_values*samples, axis=1)/(sum(x_values))
+        samplesN = samples.divide(normer, axis='index')
+        samplesN /= (samplesN.ix[:,-1].mean() / x_values[-1])
+
+        samples = samplesN
+        all_samples[protocol] = samplesN
+        #all_samples[protocol] = samples
 
         slopes = pd.Series(index=samples.index)
         intercepts = pd.Series(index=samples.index)
         r_values = pd.Series(index=samples.index)
         for i, gene in enumerate(samples.index):
             res = linregress(x_values, samples.ix[gene])
-            slopes.ix[gene] = res[0] * x_values[2]
+            slopes.ix[gene] = res[0]
             intercepts.ix[gene] = res[1]
             r_values.ix[gene] = res[2]
 
@@ -77,6 +85,7 @@ for protocol in protocols:
 
         tight_layout()
         savefig('analysis/results/{}_virslopes.png'.format(protocol), dpi=150)
+        all_slopes[protocol] = slopes
     except Exception as error:
         if 'die' in sys.argv:
             raise(error)
