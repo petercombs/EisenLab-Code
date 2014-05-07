@@ -24,8 +24,10 @@ expr.set_index('gene_short_name', inplace=True, verify_integrity=True)
 
 protocols = {c.split('_')[0] for c in expr.columns}
 all_samples = {}
+all_samples_nonorm = {}
 all_slopes = {}
-expr_min = .01
+all_rs = {}
+expr_min = .1
 expr_max = 1e3
 bin_step = 1
 print(protocols)
@@ -45,6 +47,7 @@ for protocol in protocols:
         samplesN /= (samplesN.ix[:,-1].mean() / x_values[-1])
 
         #samples = samplesN
+        all_samples_nonorm[protocol] = samples
         all_samples[protocol] = samplesN
         #all_samples[protocol] = samples
 
@@ -65,11 +68,15 @@ for protocol in protocols:
         slopes_by_expr = [slopes.ix[(10**(i) < samples.ix[:,-1]) *
                                     (samples.ix[:,-1] < 10**(i+bin_step))]
                           .dropna()
-                          for i in np.arange(0, np.log10(expr_max), bin_step)]
+                          for i in np.arange(np.floor(np.log10(expr_min)),
+                                             np.ceil(np.log10(expr_max)),
+                                             bin_step)]
         hist(slopes_by_expr,bins=np.linspace(0, 2, 100), range=(-0,2),
              stacked=True, histtype='bar',normed=True,
              label=['{} < FPKM < {}'.format(10**i, 10**(i+bin_step))
-                    for i in np.arange(0, np.log10(expr_max), bin_step)])
+                    for i in np.arange(np.floor(np.log10(expr_min)),
+                                       np.ceil(np.log10(expr_max)),
+                                       bin_step)])
         title('Slopes')
         legend()
         xlim(-0,2)
@@ -98,6 +105,7 @@ for protocol in protocols:
         tight_layout()
         savefig('analysis/results/{}_virslopes.png'.format(protocol), dpi=150)
         all_slopes[protocol] = slopes
+        all_rs[protocol] = r_values
     except Exception as error:
         if 'die' in sys.argv:
             raise(error)
