@@ -4,7 +4,8 @@ import numpy as np
 import sys
 from scipy.stats import linregress, scoreatpercentile
 from matplotlib.pyplot import figure, subplot, hist, title, \
-        savefig, tight_layout, close, xlim, legend
+        savefig, tight_layout, close, xlim, legend, gca
+import setcolor
 
 """
 
@@ -19,7 +20,16 @@ from matplotlib.pyplot import figure, subplot, hist, title, \
 
 startswith = lambda y: lambda x: x.startswith(y)
 contains = lambda y: lambda x: y not in x
-expr = pd.read_table(sys.argv[1], converters={'gene_short_name':str})
+expfile = sys.argv[1]
+if 'in' in expfile:
+    outdir = 'analysis/results_{}'.format(expfile[expfile.find('in') +3:
+                                                  expfile.find('.')])
+    print("Saving to "+outdir)
+else:
+    outdir = 'analysis/results'
+
+
+expr = pd.read_table(expfile, converters={'gene_short_name':str})
 expr.set_index('gene_short_name', inplace=True, verify_integrity=True)
 
 protocols = {c.split('_')[0] for c in expr.columns}
@@ -37,7 +47,8 @@ for protocol in protocols:
         samples = expr.select(startswith(protocol+"_"), axis=1)
         samples = samples.select(contains('subset'), axis=1)
         selector = lambda x: (x.startswith('Dvir')
-                              and expr_min < np.max(samples.ix[x]) < expr_max)
+                              and expr_min < samples.ix[x, -1]
+                              and samples.ix[x, -1] < expr_max)
 
         x_values = np.array([float(c.split('V')[-1].split('_')[0])
                              for c in samples.columns])
@@ -84,6 +95,8 @@ for protocol in protocols:
         print(np.median(slopes), "+/-",)
         print(scoreatpercentile(slopes, 75) - scoreatpercentile(slopes, 25))
 
+        setcolor.set_foregroundcolor(gca(), 'w')
+        setcolor.set_backgroundcolor(gca(), 'k')
         subplot(3,1,2)
         intercepts = intercepts.dropna()
         hist(intercepts,bins=100, range=(-50,50))
@@ -93,6 +106,8 @@ for protocol in protocols:
         print(np.median(intercepts.dropna()), "+/-",)
         print(scoreatpercentile(intercepts, 75)
               - scoreatpercentile(intercepts, 25))
+        setcolor.set_foregroundcolor(gca(), 'w')
+        setcolor.set_backgroundcolor(gca(), 'k')
 
         subplot(3,1,3)
         hist(r_values.dropna(),bins=np.arange(.5,1,.01))
@@ -103,7 +118,10 @@ for protocol in protocols:
         print(np.std(r_values.dropna()))
 
         tight_layout()
-        savefig('analysis/results/{}_virslopes.png'.format(protocol), dpi=150)
+        setcolor.set_foregroundcolor(gca(), 'w')
+        setcolor.set_backgroundcolor(gca(), 'k')
+        savefig('{outdir}/{}_virslopes.png'.format(protocol, outdir=outdir), dpi=150,
+                transparent=True)
         all_slopes[protocol] = slopes
         all_rs[protocol] = r_values
     except Exception as error:
