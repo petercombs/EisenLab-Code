@@ -31,7 +31,9 @@ targets_all = ' '.join(path.join('$(ANALYSIS_DIR)',
                              label, 'all',
                              'genes.fpkm_tracking')
                    for label in config_file['Label'])
+
 out.write("FPKMS = {} {} \n".format(targets, targets_all))
+out.write("FPKMS_SUBSET = {} \n\n".format(targets_all.replace('all', 'subset')))
 
 reads = defaultdict(lambda : ([], []))
 carriers = defaultdict(list)

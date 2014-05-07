@@ -4,6 +4,7 @@ from random import random, randint
 from numpy import histogram, linspace
 from heapq import heappush, heapreplace
 from os import path, makedirs
+from sys import stdout
 
 
 
@@ -18,10 +19,11 @@ for fn in files:
     n = min(n, Samfile(fn).mapped)
 
 print "Keeping {} reads".format(n)
+stdout.flush()
 for fn in files:
     sample = [] 
     count = 0
-    outdir = path.dirname(fn) + '_subset'
+    outdir = path.join(path.dirname(fn), 'subset')
     try:
         makedirs(outdir)
     except OSError:
@@ -47,6 +49,7 @@ for fn in files:
 
     count += i
     print "Kept {: >12,} of {: >12,} reads".format(len(sample), count)
+    stdout.flush()
     of = Samfile(path.join(outdir, 'accepted_hits.bam'), mode='wb', template=sf)
     sample.sort(key=lambda (key, read, pos): (read.tid, read.pos))
     for key, read, pos in sample:

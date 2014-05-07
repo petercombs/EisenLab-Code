@@ -57,6 +57,12 @@ $(ANALYSIS_DIR)/summary_in_all.tsv : MakeSummaryTable.py $(FPKMS) $(RUNCONFIG) |
 	@echo '============================='
 	python MakeSummaryTable.py --in-subdirectory all $(ANALYSIS_DIR) 
 
+$(ANALYSIS_DIR)/summary_in_subset.tsv : $(ANALYSIS_DIR)/subset_count MakeSummaryTable.py $(FPKMS_SUBSET) $(RUNCONFIG) | $(ANALYSIS_DIR)
+	@echo '============================='
+	@echo 'Making summary table'
+	@echo '============================='
+	python MakeSummaryTable.py --in-subdirectory subset $(ANALYSIS_DIR) 
+
 %/genes.fpkm_tracking : %/assigned_dmelR.bam $(MELGTF) $(MELFASTA2)
 	@echo '============================='
 	@echo 'Calculating Abundances'
@@ -70,6 +76,17 @@ $(ANALYSIS_DIR)/summary_in_all.tsv : MakeSummaryTable.py $(FPKMS) $(RUNCONFIG) |
 	@echo '============================='
 	cufflinks --num-threads 8 --output-dir $(@D) -u \
 		--frag-bias-correct $(MELVIRFASTA) -G $(MELVIRGTF) $<
+
+%/subset/genes.fpkm_tracking : $(ANALYSIS_DIR)/subset_count %/subset/accepted_hits_sorted.bam $(MELVIRGTF) $(MELVIRFASTA)
+	@echo '============================='
+	@echo 'Calculating Abundances'
+	@echo '============================='
+	cufflinks --num-threads 8 --output-dir $(@D) -u \
+		--frag-bias-correct $(MELVIRFASTA) -G $(MELVIRGTF) \
+		$(@D)/accepted_hits_sorted.bam
+
+$(ANALYSIS_DIR)/subset_count: $(FPKMS)
+	python SubSample.py | tee $@
 
 %/accepted_hits_sorted.bam: %/accepted_hits.bam
 	samtools sort $< $(@D)/accepted_hits_sorted
