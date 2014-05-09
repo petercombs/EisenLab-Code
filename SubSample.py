@@ -2,7 +2,7 @@ from glob import glob
 from pysam import Samfile
 from numpy.random import random, randint
 from numpy import histogram, linspace
-from heapq import heappush, heapreplace
+from heapq import heappush, heappushpop
 from os import path, makedirs
 from sys import stdout
 
@@ -55,7 +55,7 @@ def subsample(fn, n=None):
         if len(sample) < n:
             heappush(sample, (key, read, i+count))
         else:
-            heapreplace(sample, (key, read, i+count))
+            heappushpop(sample, (key, read, i+count))
 
     count += i
     print "Kept {: >12,} of {: >12,} reads".format(len(sample), count)
