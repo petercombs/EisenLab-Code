@@ -15,8 +15,8 @@ def main():
 
     files = []
     for pat in "*_V?? *_V???".split():
-        files.extend(sorted(glob('analysis/' 
-                                 + pat 
+        files.extend(sorted(glob('analysis/'
+                                 + pat
                                  + '/accepted_hits_sorted.bam')))
     print files
     for fn in files:
@@ -24,12 +24,12 @@ def main():
     print "Keeping {} reads".format(n)
     stdout.flush()
     p = Pool()
-    p.map(subsample, zip(files, repeat(n)))
+    return p.map(subsample, zip(files, repeat(n)))
 
 def subsample(fn, n=None):
     if n is None:
         fn, n = fn
-    sample = [] 
+    sample = []
     count = 0
     outdir = path.join(path.dirname(fn), 'subset')
     try:
@@ -43,11 +43,11 @@ def subsample(fn, n=None):
         print "Read out ", i_weight
     except ValueError:
         i_weight=0.0
-        for read in sf: 
+        for read in sf:
             i_weight += 1
         print "Counted ", i_weight
         i_weight /= float(n)
-        sf.seek(0)
+        sf = Samfile(fn)
 
     print fn, count, i_weight
     for i, read in enumerate(sf):
@@ -66,6 +66,7 @@ def subsample(fn, n=None):
         of.write(read)
     sf.close()
     of.close()
+    return [count for key, read, count in sample]
 
 if __name__ == "__main__":
-    main()
+    subset_results = main()
