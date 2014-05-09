@@ -1,6 +1,6 @@
 from glob import glob
 from pysam import Samfile
-from random import random, randint
+from numpy.random import random, randint
 from numpy import histogram, linspace
 from heapq import heappush, heapreplace
 from os import path, makedirs
@@ -8,19 +8,27 @@ from sys import stdout
 
 
 
-n = int(1e7)
+def main():
+    from itertools import repeat
+    from multiprocessing import Pool
+    n = int(1e7)
 
-files = []
-for pat in "*_V?? *_V???".split():
-#for pat in "B??".split():
-    files.extend(sorted(glob('analysis/' + pat + '/accepted_hits_sorted.bam')))
-print files
-for fn in files:
-    n = min(n, Samfile(fn).mapped)
+    files = []
+    for pat in "*_V?? *_V???".split():
+        files.extend(sorted(glob('analysis/' 
+                                 + pat 
+                                 + '/accepted_hits_sorted.bam')))
+    print files
+    for fn in files:
+        n = min(n, Samfile(fn).mapped)
+    print "Keeping {} reads".format(n)
+    stdout.flush()
+    p = Pool()
+    p.map(subsample, zip(files, repeat(n)))
 
-print "Keeping {} reads".format(n)
-stdout.flush()
-for fn in files:
+def subsample(fn, n=None):
+    if n is None:
+        fn, n = fn
     sample = [] 
     count = 0
     outdir = path.join(path.dirname(fn), 'subset')
@@ -32,10 +40,12 @@ for fn in files:
     sf = Samfile(fn)
     try:
         i_weight = float(sf.mapped)/n
+        print "Read out ", i_weight
     except ValueError:
-        for i_weight, read in enumerate(sf): 
-            pass
-        print i_weight
+        i_weight=0.0
+        for read in sf: 
+            i_weight += 1
+        print "Counted ", i_weight
         i_weight /= float(n)
         sf.seek(0)
 
@@ -56,3 +66,6 @@ for fn in files:
         of.write(read)
     sf.close()
     of.close()
+
+if __name__ == "__main__":
+    main()
