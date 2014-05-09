@@ -3,7 +3,7 @@ RUNCONFIG  = Parameters/RunConfig.cfg
 STARCONFIG = Parameters/STAR_params.in
 
 # Other random variables
-ANALYSIS_DIR = analysis
+ANALYSIS_DIR = analysis-tophat
 
 # Reference FASTA and GFF files from FlyBase and SGD
 MELRELEASE = r5.55_FB2014_01
@@ -165,6 +165,12 @@ $(MELVIRGTF): $(MELGTF) $(VIRGTF) | $(REFDIR)
 Reference/DmelScer: | $(REFDIR)
 	mkdir $@
 
+Reference/DmelDvir/transcriptome : |  Reference/DmelDvir
+	tophat --GTF $(MELVIRGTF) \
+		--transcriptome-index $@ \
+		$(REFDIR)/DmelDvir
+	touch $@
+
 
 $(REFDIR)/DmelDvir: | $(REFDIR)
 	mkdir $@
@@ -179,4 +185,7 @@ $(ORTHOLOGS) :
 	gunzip $@.gz
 
 $(REFDIR) :
+	mkdir $@
+Reference/DmelDvir:
+	bowtie2-build $(MELVIRFASTA) $@
 	mkdir $@

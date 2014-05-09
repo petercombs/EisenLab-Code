@@ -70,16 +70,19 @@ for label in reads:
               '\t mkdir $(ANALYSIS_DIR)/{label}\n'.format(label=label))
     out.write('$(ANALYSIS_DIR)/{label}/accepted_hits.bam: '
               ' {rfs} '
-              ' Reference/{genome}/Genome'
+              ' Reference/{genome}/transcriptome '
               ' | $(ANALYSIS_DIR)/{label}\n'
               '\t@echo {label} \n'
-              '\tSTAR --parametersFiles $(STARCONFIG) '
-              '--genomeDir Reference/{genome} '
-              '--outFileNamePrefix $(ANALYSIS_DIR)/{label}/ '
-              '--readFilesIn {rf1} {rf2}\n'
-              '\tsamtools view -bS -o $(ANALYSIS_DIR)/{label}/accepted_hits.bam'
-              ' $(ANALYSIS_DIR)/{label}/Aligned.out.sam\n'
-              '\trm $(ANALYSIS_DIR)/{label}/Aligned.out.sam\n'
+              '\t tophat '
+              '--read-mismatches 6 --read-edit-dist 6 '
+              '--report-secondary-alignments '
+              '--output-dir $(ANALYSIS_DIR)/{label}/ '
+              '--transcriptome-index Reference/{genome}/transcriptome '
+              '--transcriptome-only '
+              '--b2-sensitive '
+              '--num-threads 12 '
+              'Reference/{genome} '
+              '{rf1} {rf2}\n'
              .format(rf1=','.join(reads1),
                      rf2=','.join(reads2),
                      rfs=' '.join(reads1 + reads2),
