@@ -6,6 +6,7 @@ from scipy.stats import linregress, scoreatpercentile
 from matplotlib.pyplot import figure, subplot, hist, title, \
         savefig, tight_layout, close, xlim, legend, gca
 import setcolor
+from os import path
 
 """
 
@@ -22,8 +23,9 @@ startswith = lambda y: lambda x: x.startswith(y)
 contains = lambda y: lambda x: y not in x
 expfile = sys.argv[1]
 if 'in' in expfile:
-    outdir = 'analysis/results_{}'.format(expfile[expfile.find('in') +3:
-                                                  expfile.find('.')])
+    outdir = path.join(path.dirname(expfile),
+                       'results_{}'.format(expfile[expfile.find('in') +3:
+                                                  expfile.find('.')]))
     print("Saving to "+outdir)
 else:
     outdir = 'analysis/results'
