@@ -154,29 +154,26 @@ $(MELVIRFASTA): $(MELFASTA2) $(VIRFASTA2)| $(REFDIR)
 	cat $(MELFASTA2) $(VIRFASTA2) > $@
 
 
-Reference/DmelScer/Genome : | $(MELFASTA2) $(CERFASTA2)  $(MELGTF) Reference/DmelScer $(REFDIR)
-	STAR --runMode genomeGenerate --genomeDir Reference/DmelScer \
+$(REFDIR)/DmelScer/Genome : | $(MELFASTA2) $(CERFASTA2)  $(MELGTF) $(REFDIR)/DmelScer $(REFDIR)
+	STAR --runMode genomeGenerate --genomeDir $(REFDIR)/DmelScer \
 		--genomeFastaFiles $(MELFASTA2) $(CERFASTA2) \
 		--sjdbGTFfile $(MELGTF)
 
 $(MELVIRGTF): $(MELGTF) $(VIRGTF) | $(REFDIR)
 	cat $^ > $@
 
-Reference/DmelScer: | $(REFDIR)
+$(REFDIR)/DmelScer: | $(REFDIR)
 	mkdir $@
 
-Reference/DmelDvir/transcriptome : |  Reference/DmelDvir
+$(REFDIR)/DmelDvir/transcriptome : |  $(REFDIR)/DmelDvir
 	tophat --GTF $(MELVIRGTF) \
 		--transcriptome-index $@ \
 		$(REFDIR)/DmelDvir
 	touch $@
 
 
-$(REFDIR)/DmelDvir: | $(REFDIR)
-	mkdir $@
-
-$(REFDIR)/DmelDvir/Genome : $(MELVIRGTF) |  Reference/DmelDvir $(MELFASTA2) $(VIRFASTA2)  $(REFDIR)
-	STAR --runMode genomeGenerate --genomeDir Reference/DmelDvir \
+$(REFDIR)/DmelDvir/Genome : $(MELVIRGTF) |  $(REFDIR)/DmelDvir $(MELFASTA2) $(VIRFASTA2)  $(REFDIR)
+	STAR --runMode genomeGenerate --genomeDir $(REFDIR)/DmelDvir \
 		--genomeFastaFiles $(MELFASTA2) $(VIRFASTA2) \
 		--sjdbGTFfile $(MELVIRGTF)
 
@@ -186,6 +183,6 @@ $(ORTHOLOGS) :
 
 $(REFDIR) :
 	mkdir $@
-Reference/DmelDvir:
-	bowtie2-build $(MELVIRFASTA) $@
+$(REFDIR)/DmelDvir:
+	bowtie2-build --offrate 1 $(MELVIRFASTA) $@
 	mkdir $@
