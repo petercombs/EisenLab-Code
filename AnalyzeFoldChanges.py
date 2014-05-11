@@ -28,7 +28,8 @@ if 'in' in expfile:
                                                   expfile.find('.')]))
     print("Saving to "+outdir)
 else:
-    outdir = 'analysis/results'
+    outdir = path.join(path.dirname(expfile),
+                       'results')
 
 
 expr = pd.read_table(expfile, converters={'gene_short_name':str})

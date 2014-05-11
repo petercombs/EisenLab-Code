@@ -19,11 +19,13 @@ from scipy.stats import spearmanr, pearsonr
 from scipy.stats.mstats import gmean
 from matplotlib.pyplot import subplot, hist, figure, loglog, ylabel, xlabel,\
         savefig, xlim, ylim, xticks, yticks, close, text, gca
+from os import path
 
 
 startswith = lambda y: lambda x: x.startswith(y)
 contains = lambda y: lambda x: y not in x
 expr = pd.read_table(sys.argv[1], index_col=0, converters={'gene_short_name':str})
+outdir = path.join(path.dirname(sys.argv[1]), 'results')
 
 protocols = {c.split('_')[0] for c in expr.columns}
 print protocols
@@ -96,12 +98,12 @@ for protocol in protocols:
                     )
 
 
-        savefig('analysis/results/{}_logfc.png'.format(protocol), dpi=150)
+        savefig('{outdir}/{}_logfc.png'.format(protocol, outdir=outdir), dpi=150)
         figure(figsize=(15,15))
         hist(log(fcs), arange(-1,1,.01))
         xlim(-1, 1)
         xlabel('$log_{10} FC$')
-        savefig('analysis/results/{}_hist_logfc.png'.format(protocol), dpi=150)
+        savefig('{outdir}/{}_hist_logfc.png'.format(protocol, outdir=outdir), dpi=150)
         close('all')
     except Exception as error:
         if 'die' in sys.argv:
