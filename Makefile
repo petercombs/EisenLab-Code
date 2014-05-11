@@ -82,7 +82,7 @@ $(ANALYSIS_DIR)/summary_in_subset.tsv : $(ANALYSIS_DIR)/subset_count MakeSummary
 	cufflinks --num-threads 8 --output-dir $(@D) -u \
 		--frag-bias-correct $(MELVIRFASTA) -G $(MELVIRGTF) $<
 
-%/subset/subset_genes.fpkm_tracking : $(ANALYSIS_DIR)/subset_count %/subset/accepted_hits_sorted.bam $(MELVIRGTF) $(MELVIRFASTA)
+%/subset/subset_genes.fpkm_tracking : $(ANALYSIS_DIR)/subset_count %/subset/accepted_hits_sorted.bam $(MELVIRGTF) $(MELVIRFASTA) | %/subset
 	@echo '============================='
 	@echo 'Calculating Abundances'
 	@echo '============================='
@@ -91,8 +91,12 @@ $(ANALYSIS_DIR)/summary_in_subset.tsv : $(ANALYSIS_DIR)/subset_count MakeSummary
 		$(@D)/accepted_hits_sorted.bam
 	mv $(@D)/genes.fpkm_tracking $@
 
+%/subset:
+	mkdir $@
+
 $(ANALYSIS_DIR)/subset_count: $(FPKMS)
-	python SubSample.py | tee $@
+	python SubSample.py $(ANALYSIS_DIR) | tee $@_temp
+	mv $@_temp $@
 
 %/accepted_hits_sorted.bam: %/accepted_hits.bam
 	samtools sort $< $(@D)/accepted_hits_sorted

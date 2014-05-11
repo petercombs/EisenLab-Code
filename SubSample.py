@@ -4,7 +4,7 @@ from numpy.random import random, randint
 from numpy import histogram, linspace
 from heapq import heappush, heappushpop
 from os import path, makedirs
-from sys import stdout
+from sys import argv, stdout
 
 
 
@@ -15,12 +15,19 @@ def main():
 
     files = []
     for pat in "*_V?? *_V???".split():
-        files.extend(sorted(glob('analysis/'
-                                 + pat
-                                 + '/accepted_hits_sorted.bam')))
+        glob_pat = path.join(argv[1], pat, 'accepted_hits_sorted.bam')
+        print glob_pat
+                                 
+        files.extend(sorted(glob(glob_pat)))
     print files
     for fn in files:
-        n = min(n, Samfile(fn).mapped)
+        try:
+            n = min(n, Samfile(fn).mapped)
+        except ValueError:
+            i = 0
+            for  read in Samfile(fn):
+                i += 1
+            n = min(n, i)
     print "Keeping {} reads".format(n)
     stdout.flush()
     p = Pool()
