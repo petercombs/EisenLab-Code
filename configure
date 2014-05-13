@@ -77,9 +77,26 @@ targets_all = ' '.join(path.join('$(ANALYSIS_DIR)',
                    for label in config_file['Label'])
 
 out.write("FPKMS = {} {} \n".format(targets, targets_all))
-out.write("FPKMS_SUBSET = {} \n\n".format(targets_all.replace('all', 'subset')
-                                          .replace('genes.fpkm_tracking', 
-                                                   'subset_genes.fpkm_tracking')))
+out.write("FPKMS_SUBSET_MIN = {} \n\n"
+          .format(targets_all.replace('all', 'subset_min')
+                  .replace('genes.fpkm_tracking', 
+                           'subset_genes.fpkm_tracking')))
+out.write("FPKMS_SUBSET_10 = {} \n\n"
+          .format(targets_all.replace('all', 'subset10.0M')
+                  .replace('genes.fpkm_tracking', 
+                           'subset_genes.fpkm_tracking')))
+out.write("FPKMS_SUBSET_7 = {} \n\n"
+          .format(targets_all.replace('all', 'subset07.5M')
+                  .replace('genes.fpkm_tracking', 
+                           'subset_genes.fpkm_tracking')))
+out.write("FPKMS_SUBSET_5 = {} \n\n"
+          .format(targets_all.replace('all', 'subset05.0M')
+                  .replace('genes.fpkm_tracking', 
+                           'subset_genes.fpkm_tracking')))
+out.write("FPKMS_SUBSET_3 = {} \n\n"
+          .format(targets_all.replace('all', 'subset03.0M')
+                  .replace('genes.fpkm_tracking', 
+                           'subset_genes.fpkm_tracking')))
 
 reads = defaultdict(lambda : ([], []))
 carriers = defaultdict(list)
