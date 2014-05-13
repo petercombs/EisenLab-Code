@@ -36,10 +36,25 @@ def parse_args():
                         'basedir/sample/subdirectory/genes.fpkm_tracking')
     parser.add_argument('--filename', default='genes.fpkm_tracking',
                         help='Filename of the per-sample gene expression table')
+    parser.add_argument('--column', '-C', default='FPKM',
+                        help='Column to read out (either name or number)')
+    parser.add_argument('--no-header', dest='header', action='store_false',
+                        default=True,
+                        help='No header line in the file')
     parser.add_argument('basedir', 
                         help='The directory containing directories, which '
                         'contain genes.fpkm_tracking files')
-    return parser.parse_args()
+
+    args =  parser.parse_args()
+    try:
+        args.column = int(args.column)
+    except ValueError:
+        pass
+    try:
+        args.key = int(args.key)
+    except ValueError:
+        pass
+    return args
 
 
 def get_stagenum(name, series, dir):
@@ -65,7 +80,8 @@ if args.has_params:
 
 df = None
 for fname in sorted(fnames):
-    table = pandas.read_table(fname, na_values='-', converters={args.key:str})
+    table = pandas.read_table(fname, na_values='-', converters={args.key:str},
+                              header=None if not args.header else 0)
     alldir, fname = path.split(fname)
     if args.in_subdirectory:
         alldir = alldir.replace(args.in_subdirectory,
@@ -91,9 +107,9 @@ for fname in sorted(fnames):
             print "Skipping", dirname 
             continue
     if df is None:
-        df = pandas.DataFrame({dirname+"_FPKM": table.FPKM})
+        df = pandas.DataFrame({dirname+"_FPKM": table.ix[:,args.column]})
     else:
-        df.insert(len(df.columns), dirname+"_FPKM", table.FPKM)
+        df.insert(len(df.columns), dirname+"_FPKM", table.ix[:,args.column])
 
     if args.conf:
         df.insert(len(df.columns),
