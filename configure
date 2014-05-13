@@ -6,6 +6,36 @@ from glob import glob
 from collections import defaultdict
 from sys import argv
 
+tophat_str = ('$(ANALYSIS_DIR)/{label}/accepted_hits.bam: '
+              ' {rfs} '
+              ' Reference/{genome}/transcriptome '
+              ' | $(ANALYSIS_DIR)/{label}\n'
+              '\t@echo {label} \n'
+              '\t tophat '
+              '--read-mismatches 6 --read-edit-dist 6 '
+              '--report-secondary-alignments '
+              '--output-dir $(ANALYSIS_DIR)/{label}/ '
+              '--transcriptome-index Reference/{genome}/transcriptome '
+              '--transcriptome-only '
+              '--b2-sensitive '
+              '--num-threads 12 '
+              'Reference/{genome} '
+              '{rf1} {rf2}\n') 
+star_str = ('$(ANALYSIS_DIR)/{label}/accepted_hits.bam: '
+            ' {rfs} '
+            ' Reference/{genome}/Genome '
+            ' | $(ANALYSIS_DIR)/{label}\n'
+            '\t@echo {label} \n'
+            '\tSTAR --parametersFiles $(STARCONFIG) '
+            '--genomeDir Reference/{genome} '
+            '--outFileNamePrefix $(ANALYSIS_DIR)/{label}/ '
+            '--readFilesIn {rf1} {rf2}\n'
+            '\tsamtools view -bS -o $(ANALYSIS_DIR)/{label}/accepted_hits.bam'
+            ' $(ANALYSIS_DIR)/{label}/Aligned.out.sam\n'
+            '\trm $(ANALYSIS_DIR)/{label}/Aligned.out.sam\n')
+
+mappers = {'star': star_str, 'tophat' : tophat_str}
+
 def parse_arguments():
     from argparse import ArgumentParser
     p = ArgumentParser(description='Configuration script for SliceSeq data processing')
@@ -15,7 +45,21 @@ def parse_arguments():
     p.add_argument('--seqdir', type=str, default='sequence*',
                    help='Sequence directory (or glob pattern) to look in for'
                    ' reads')
-    return p.parse_args()
+    p.add_argument('--mapper', type=str, default='star',
+                   help='Mapper to use. Options: [star], tophat')
+    args =  p.parse_args()
+    if args.mapper.lower() in mappers:
+        args.mapper_str = mappers[args.mapper.lower()]
+    else:
+        import sys
+        sys.stderr.write('Unrecognized mapper: "{}". \n'
+                         'Valid options are: {}\n'
+                         .format(args.mapper, 
+                                 ', '.join(mappers)))
+        sys.exit(1)
+    return args
+
+
 
 args = parse_arguments()
 config_file = pd.read_table(args.parameters,
@@ -70,21 +114,7 @@ for label in reads:
     reads1, reads2 = reads[label]
     out.write('$(ANALYSIS_DIR)/{label}: | $(ANALYSIS_DIR)\n'
               '\t mkdir $(ANALYSIS_DIR)/{label}\n'.format(label=label))
-    out.write('$(ANALYSIS_DIR)/{label}/accepted_hits.bam: '
-              ' {rfs} '
-              ' Reference/{genome}/transcriptome '
-              ' | $(ANALYSIS_DIR)/{label}\n'
-              '\t@echo {label} \n'
-              '\t tophat '
-              '--read-mismatches 6 --read-edit-dist 6 '
-              '--report-secondary-alignments '
-              '--output-dir $(ANALYSIS_DIR)/{label}/ '
-              '--transcriptome-index Reference/{genome}/transcriptome '
-              '--transcriptome-only '
-              '--b2-sensitive '
-              '--num-threads 12 '
-              'Reference/{genome} '
-              '{rf1} {rf2}\n'
+    out.write( args.mapper_str
              .format(rf1=','.join(reads1),
                      rf2=','.join(reads2),
                      rfs=' '.join(reads1 + reads2),
