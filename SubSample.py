@@ -64,7 +64,10 @@ def subsample(fn, ns=None):
     count += i
 
     for n in ns:
-        outdir = outdir_base + '{:04.1f}M'.format(n/1e6)
+        if n == min(ns):
+            outdir = outdir_base + '_min'
+        else:
+            outdir = outdir_base + '{:04.1f}M'.format(n/1e6)
         try:
             makedirs(outdir)
         except OSError:
