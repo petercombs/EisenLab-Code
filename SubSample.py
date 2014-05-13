@@ -30,49 +30,55 @@ def main():
             n = min(n, i)
     print "Keeping {} reads".format(n)
     stdout.flush()
-    p = Pool()
-    return p.map(subsample, zip(files, repeat(n)))
+    p = Pool(20)
+    return p.map(subsample, zip(files, repeat([n, 3e6, 5e6, 7.5e6, 10e6])))
+    #return    map(subsample, zip(files, repeat([n, 3e6, 5e6, 7.5e6, 10e6])))
+    # Note: Comment out line -3 and -2, and uncomment line -1 to de-parallelize
 
-def subsample(fn, n=None):
-    if n is None:
-        fn, n = fn
+def subsample(fn, ns=None):
+    if ns is None:
+        fn, ns = fn
     sample = []
     count = 0
-    outdir = path.join(path.dirname(fn), 'subset')
-    try:
-        makedirs(outdir)
-    except OSError:
-        pass
-    print fn, '->', outdir
+    outdir_base = path.join(path.dirname(fn), 'subset')
     sf = Samfile(fn)
     try:
-        i_weight = float(sf.mapped)/n
+        i_weight = float(sf.mapped)/max(ns)
         print "Read out ", i_weight
     except ValueError:
         i_weight=0.0
         for read in sf:
             i_weight += 1
         print "Counted ", i_weight
-        i_weight /= float(n)
+        i_weight /= float(max(ns))
         sf = Samfile(fn)
 
     print fn, count, i_weight
     for i, read in enumerate(sf):
         key = random()**i_weight
-        if len(sample) < n:
+        if len(sample) < max(ns):
             heappush(sample, (key, read, i+count))
         else:
             heappushpop(sample, (key, read, i+count))
 
     count += i
-    print "Kept {: >12,} of {: >12,} reads".format(len(sample), count)
-    stdout.flush()
-    of = Samfile(path.join(outdir, 'accepted_hits.bam'), mode='wb', template=sf)
-    sample.sort(key=lambda (key, read, pos): (read.tid, read.pos))
-    for key, read, pos in sample:
-        of.write(read)
+
+    for n in ns:
+        outdir = outdir_base + '{:04.1f}M'.format(n/1e6)
+        try:
+            makedirs(outdir)
+        except OSError:
+            pass
+        sampN = sorted(sample, reverse=True)[:int(n)]
+        print "Kept {: >12,} of {: >12,} reads".format(len(sampN), count)
+        print fn, '->', outdir
+        stdout.flush()
+        of = Samfile(path.join(outdir, 'accepted_hits.bam'), mode='wb', template=sf)
+        sample.sort(key=lambda (key, read, pos): (read.tid, read.pos))
+        for key, read, pos in sampN:
+            of.write(read)
+        of.close()
     sf.close()
-    of.close()
     return [count for key, read, count in sample]
 
 if __name__ == "__main__":
