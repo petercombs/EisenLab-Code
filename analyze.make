@@ -4,6 +4,10 @@ current-analysis: analysis/results/fpkm_sum \
 	analysis/results/complexity
 	@echo "Nothing deeper yet"
 
+subset_fpkms: $(FPKMS_SUBSET_MIN)  $(FPKMS_SUBSET_10)  $(FPKMS_SUBSET_7)  $(FPKMS_SUBSET_5) $(FPKMS_SUBSET_3)
+all_fpkms: $(FPKMS)  $(FPKMS_SUBSET_MIN)  $(FPKMS_SUBSET_10)  $(FPKMS_SUBSET_7)  $(FPKMS_SUBSET_5) $(FPKMS_SUBSET_3)
+	@echo "OK"
+
 #.PHONY: analysis/results/fpkm_sum analysis/results/complexity \
 	#analysis/results/fold_change.log analysis/results/mel_summary.log
 
