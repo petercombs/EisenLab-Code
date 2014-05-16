@@ -31,6 +31,7 @@ VIRGFF   = prereqs/dvir-all-$(VIRVERSION).gff
 VIRGTF   = $(REFDIR)/vir_good.gtf
 CERGFF   = prereqs/saccharomyces_cerevisiae_R64-1-1_20110208.gff
 MELVIRGTF= $(REFDIR)/melvir.gtf
+MELVIRGTF_FILT= $(REFDIR)/melvir_withgenename.gtf
 MELVIRFASTA=$(REFDIR)/melvir.fa
 
 
@@ -82,16 +83,18 @@ $(ANALYSIS_DIR)/summary_in_subset.tsv : $(ANALYSIS_DIR)/subset_count MakeSummary
 	cufflinks --num-threads 8 --output-dir $(@D) -u \
 		--frag-bias-correct $(MELVIRFASTA) -G $(MELVIRGTF) $<
 
-%/subset/subset_genes.fpkm_tracking : $(ANALYSIS_DIR)/subset_count %/subset/accepted_hits_sorted.bam $(MELVIRGTF) $(MELVIRFASTA) | %/subset
+%/subset_genes.fpkm_tracking : $(ANALYSIS_DIR)/subset_count %/accepted_hits_sorted.bam $(MELVIRGTF) $(MELVIRFASTA) | %
 	@echo '============================='
 	@echo 'Calculating Abundances'
 	@echo '============================='
-	cufflinks --num-threads 8 --output-dir $(@D) -u \
-		--frag-bias-correct $(MELVIRFASTA) -G $(MELVIRGTF) \
-		$(@D)/accepted_hits_sorted.bam
-	mv $(@D)/genes.fpkm_tracking $@
+	#cufflinks --num-threads 8 --output-dir $(@D) -u \
+		#--frag-bias-correct $(MELVIRFASTA) -G $(MELVIRGTF) \
+		#$(@D)/accepted_hits_sorted.bam
+	htseq-count --idattr='gene_name' -f bam -s no -r pos %/accepted_hits.bam $(MELVIRGTF_FILT) \
+		| tee htseq.tab
+	cp $(@D)/htseq.tab $@
 
-%/subset:
+%/subset%:
 	mkdir $@
 
 $(ANALYSIS_DIR)/subset_count: $(FPKMS)
@@ -165,6 +168,9 @@ $(REFDIR)/DmelScer/Genome : | $(MELFASTA2) $(CERFASTA2)  $(MELGTF) $(REFDIR)/Dme
 
 $(MELVIRGTF): $(MELGTF) $(VIRGTF) | $(REFDIR)
 	cat $^ > $@
+
+$(MELVIRGTF_FILT): $(MELVIRGTF) | $(REFDIR)
+	grep 'gene_name' $< > $@
 
 $(REFDIR)/DmelScer: | $(REFDIR)
 	mkdir $@
