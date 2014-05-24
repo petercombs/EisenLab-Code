@@ -45,6 +45,22 @@ protocol_map = dict(
 )
 
 
+outtex = open(path.join(outdir, 'foldchanges.tex'), 'w')
+outtex.write(r'''
+\begin{table}[htdp]
+
+\caption{Distribution of fit parameters. A simple linear fit,
+             $\hat{A}_{ij} = m \cdot Q_{j} + b$
+             was computed for each gene $i$, and a correlation coefficent $r$
+             calculated.  For brevity,
+             $\bar{x}$ is the mean of some variable $x$, and $\sigma_x$ is its
+             standard deviation.  }
+             \begin{center}
+             \begin{tabular}{|c|r@{$\pm$}l|r@{$\pm$}l|r@{$\pm$}l|}
+             \hline Protocol & $\bar{m}$ & $\sigma_m$ & $\bar{b}$ & $\sigma_b$
+                    & $\bar{r}$ & $\sigma_r$ \\\hline
+             ''')
+
 #expr = pd.read_table(expfile, converters={'gene_short_name':str})
 #expr.set_index('gene_short_name', inplace=True, verify_integrity=True)
 expr = pd.read_table(expfile, converters={"0":str})
@@ -141,6 +157,18 @@ for protocol in protocols:
         print(np.mean(r_values.dropna()), "+/-",)
         print(np.std(r_values.dropna()))
 
+        outtex.write('{prot} & {slope:0.3} & {stdslope:0.3} & {b:0.3} & '
+                     '{stdb:0.3} & {r:0.2} & {stdr:0.2} \\\\\n'
+                     .format(prot=protocol_map[protocol],
+                             slope=np.mean(slopes),
+                             stdslope=np.std(slopes),
+                             b=np.mean(intercepts),
+                             stdb=np.std(intercepts),
+                             r=np.mean(r_values.dropna()),
+                             stdr=np.std(r_values.dropna())
+                            )
+                    )
+
         tight_layout()
         #setcolor.set_foregroundcolor(gca(), 'w')
         #setcolor.set_backgroundcolor(gca(), 'k')
@@ -156,3 +184,15 @@ for protocol in protocols:
 
 close('all')
 
+outtex.write('''
+\hline
+
+\end{tabular}
+\label{tab:fits}
+\end{center}
+\end{table}
+
+
+
+              ''')
+outtex.close()
