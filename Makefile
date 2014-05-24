@@ -3,7 +3,7 @@ RUNCONFIG  = Parameters/RunConfig.cfg
 STARCONFIG = Parameters/STAR_params.in
 
 # Other random variables
-ANALYSIS_DIR = analysis-tophat
+ANALYSIS_DIR = analysis
 
 # Reference FASTA and GFF files from FlyBase and SGD
 MELRELEASE = r5.55_FB2014_01
@@ -83,15 +83,15 @@ $(ANALYSIS_DIR)/summary_in_subset.tsv : $(ANALYSIS_DIR)/subset_count MakeSummary
 	cufflinks --num-threads 8 --output-dir $(@D) -u \
 		--frag-bias-correct $(MELVIRFASTA) -G $(MELVIRGTF) $<
 
-%/subset_genes.fpkm_tracking : $(ANALYSIS_DIR)/subset_count %/accepted_hits_sorted.bam $(MELVIRGTF) $(MELVIRFASTA) | %
+%/subset_genes.fpkm_tracking : $(ANALYSIS_DIR)/subset_count %/accepted_hits_sorted.bam $(MELVIRGTF_FILT) $(MELVIRFASTA) | %
 	@echo '============================='
 	@echo 'Calculating Abundances'
 	@echo '============================='
 	#cufflinks --num-threads 8 --output-dir $(@D) -u \
 		#--frag-bias-correct $(MELVIRFASTA) -G $(MELVIRGTF) \
 		#$(@D)/accepted_hits_sorted.bam
-	htseq-count --idattr='gene_name' -f bam -s no -r pos %/accepted_hits.bam $(MELVIRGTF_FILT) \
-		| tee htseq.tab
+	htseq-count --idattr='gene_name' -f bam -s no -r pos $(@D)/accepted_hits.bam $(MELVIRGTF_FILT) \
+		| tee $(@D)/htseq.tab
 	cp $(@D)/htseq.tab $@
 
 %/subset%:
