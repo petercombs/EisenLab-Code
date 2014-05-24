@@ -6,7 +6,7 @@ from scipy.stats import linregress, scoreatpercentile
 from matplotlib.pyplot import figure, subplot, hist, title, \
         savefig, tight_layout, close, xlim, legend, gca
 import setcolor
-from os import path
+from os import path, makedirs
 
 """
 
@@ -25,23 +25,40 @@ expfile = sys.argv[1]
 if 'in' in expfile:
     outdir = path.join(path.dirname(expfile),
                        'results_{}'.format(expfile[expfile.find('in') +3:
-                                                  expfile.find('.')]))
+                                                  expfile.rfind('.')]))
     print("Saving to "+outdir)
+    try:
+        makedirs(outdir)
+    except (FileExistsError, OSError):
+        pass
 else:
     outdir = path.join(path.dirname(expfile),
                        'results')
 
+protocol_map = dict(
+    Truseq = 'TruSeq',
+    Clontech = 'Clontech',
+    EpicentreOligodT = 'TotalScript',
+    SMART2 = 'Smart-seq2',
+    SMART2dil2 = 'Smart-seq2, 2.5 fold dilution',
+    SMART2dil5 = 'Smart-seq2, 5 fold dilution',
+)
 
-expr = pd.read_table(expfile, converters={'gene_short_name':str})
+
+#expr = pd.read_table(expfile, converters={'gene_short_name':str})
+#expr.set_index('gene_short_name', inplace=True, verify_integrity=True)
+expr = pd.read_table(expfile, converters={"0":str})
+expr.rename(columns={'0':'gene_short_name'}, inplace=True)
 expr.set_index('gene_short_name', inplace=True, verify_integrity=True)
 
 protocols = {c.split('_')[0] for c in expr.columns}
 all_samples = {}
 all_samples_nonorm = {}
 all_slopes = {}
+all_intercepts = {}
 all_rs = {}
-expr_min = .1
-expr_max = 1e3
+expr_min = 20
+expr_max = 1e6
 bin_step = 1
 print(protocols)
 
@@ -56,9 +73,12 @@ for protocol in protocols:
         x_values = np.array([float(c.split('V')[-1].split('_')[0])
                              for c in samples.columns])
         samples = samples.select(selector)
-        normer = np.sum(x_values*samples, axis=1)/(sum(x_values))
+        if 0 in samples.shape:
+            print("Skipping", protocol, "due to low reads")
+            continue
+        normer = np.sum(x_values*samples, axis=1)/(sum(x_values**2))
         samplesN = samples.divide(normer, axis='index')
-        samplesN /= (samplesN.ix[:,-1].mean() / x_values[-1])
+        #samplesN /= (samplesN.ix[:,-1].mean() / x_values[-1])
 
         #samples = samplesN
         all_samples_nonorm[protocol] = samples
@@ -85,32 +105,33 @@ for protocol in protocols:
                           for i in np.arange(np.floor(np.log10(expr_min)),
                                              np.ceil(np.log10(expr_max)),
                                              bin_step)]
-        hist(slopes_by_expr,bins=np.linspace(0, 2, 100), range=(-0,2),
-             stacked=True, histtype='bar',normed=True,
-             label=['{} < FPKM < {}'.format(10**i, 10**(i+bin_step))
-                    for i in np.arange(np.floor(np.log10(expr_min)),
-                                       np.ceil(np.log10(expr_max)),
-                                       bin_step)])
+        #hist(slopes_by_expr,bins=np.linspace(0, 2, 100), range=(-0,2),
+             #stacked=True, histtype='bar',normed=True,
+             #label=['{} < FPKM < {}'.format(10**i, 10**(i+bin_step))
+                    #for i in np.arange(np.floor(np.log10(expr_min)),
+                                       #np.ceil(np.log10(expr_max)),
+                                       #bin_step)])
+        hist(slopes, bins=np.linspace(0, 2, 100), range=(0,2))
         title('Slopes')
-        legend()
+        #legend()
         xlim(-0,2)
         print("Slopes")
         print(np.median(slopes), "+/-",)
         print(scoreatpercentile(slopes, 75) - scoreatpercentile(slopes, 25))
 
-        setcolor.set_foregroundcolor(gca(), 'w')
-        setcolor.set_backgroundcolor(gca(), 'k')
+        #setcolor.set_foregroundcolor(gca(), 'w')
+        #setcolor.set_backgroundcolor(gca(), 'k')
         subplot(3,1,2)
-        intercepts = intercepts.dropna()
-        hist(intercepts,bins=100, range=(-50,50))
-        xlim(-50,50)
-        title('Intercepts')
+        intercepts = intercepts.dropna()/(5*max(x_values)/100)
+        hist(intercepts,bins=100, range=(-10,10))
+        xlim(-10,10)
+        title('Intercepts (% D. vir)')
         print("Intercepts")
         print(np.median(intercepts.dropna()), "+/-",)
         print(scoreatpercentile(intercepts, 75)
               - scoreatpercentile(intercepts, 25))
-        setcolor.set_foregroundcolor(gca(), 'w')
-        setcolor.set_backgroundcolor(gca(), 'k')
+        #setcolor.set_foregroundcolor(gca(), 'w')
+        #setcolor.set_backgroundcolor(gca(), 'k')
 
         subplot(3,1,3)
         hist(r_values.dropna(),bins=np.arange(.5,1,.01))
@@ -121,11 +142,12 @@ for protocol in protocols:
         print(np.std(r_values.dropna()))
 
         tight_layout()
-        setcolor.set_foregroundcolor(gca(), 'w')
-        setcolor.set_backgroundcolor(gca(), 'k')
+        #setcolor.set_foregroundcolor(gca(), 'w')
+        #setcolor.set_backgroundcolor(gca(), 'k')
         savefig('{outdir}/{}_virslopes.png'.format(protocol, outdir=outdir), dpi=150,
                 transparent=True)
         all_slopes[protocol] = slopes
+        all_intercepts[protocol] = intercepts
         all_rs[protocol] = r_values
     except Exception as error:
         if 'die' in sys.argv:
