@@ -4,6 +4,8 @@ from glob import glob
 import time
 
 url_base = 'http://bdtnp.lbl.gov/Fly-Net/archives/chipper/Post_Processing/{chip}/{chip}-sym-25_primary_peaks.bed'
+pwm_base = ('http://bdtnp.lbl.gov/Fly-Net/archives/'
+            'chipper/Post_Processing/{chip}/{chip}.cm')
 file_base = 'Reference/peaks-25-dm2/{chip}-sym-25_peaks.bed'
 files = glob('prereqs/BDTNP_in_vivo_binding_Release.2.1/Supplemental_Tables/*.txt')
 
@@ -19,4 +21,6 @@ for file in files:
         of.write('\t'.join(data) + '\n')
         #of.write(line.replace('\t',' '))
         #of.write(line)
+    urllib.urlretrieve(pwm_base.format(chip=chip),
+                       'prereqs/BDTNP_pwms/'+chip.split('_')[0]+'.cm')
     time.sleep(1)
