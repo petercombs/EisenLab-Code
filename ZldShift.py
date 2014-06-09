@@ -3,31 +3,38 @@
 from __future__ import division, print_function
 import pandas as pd
 from os.path import join
-from numpy import mean
+from collections import defaultdict
 from matplotlib import cm
 from PlotUtils import svg_heatmap
 from PeakFinder import has_anterior_peak, has_posterior_peak, has_central_peak
 from glob import glob
 
 
-mapping = pd.read_table('prereqs/gene_map_table_fb_2013_04.tsv', skiprows=5)
+try:
+    len(fbgn_to_name)
+    len(name_to_fbgn)
 
-print("Reading in mapping table...")
-fbgn_to_name = {row['primary_FBid'] : row['##current_symbol']
-                for i, row in mapping.iterrows()}
-name_to_fbgn = {row['##current_symbol']: row['primary_FBid']
-                for i, row in mapping.iterrows()}
-print("...done")
+except NameError:
+    mapping = pd.read_table('prereqs/gene_map_table_fb_2013_04.tsv', skiprows=5)
+
+    print("Reading in mapping table...")
+    fbgn_to_name = {row['primary_FBid'] : row['##current_symbol']
+                    for i, row in mapping.iterrows()}
+    name_to_fbgn = {row['##current_symbol']: row['primary_FBid']
+                    for i, row in mapping.iterrows()}
+    print("...done")
 
 binding_directory = "prereqs/BDTNP_in_vivo_binding_Release.2.1/Supplemental_Tables"
 def get_TF_sites(TF):
     files = glob(join(binding_directory, TF+"_*.txt"))
-    sites = set()
+    sites = defaultdict(list)
     for file in files:
         table = pd.read_table(file)
-        sites.update({fbgn_to_name[fbgn]
-                      for fbgn in table['Closest_transcribed_gene']
-                      if fbgn in fbgn_to_name})
+        for i, row in table.iterrows():
+            if row['Closest_transcribed_gene'] not in fbgn_to_name:
+                continue
+            sites[fbgn_to_name[row['Closest_transcribed_gene']]
+                 ].append(row['Peak_score'])
     return sites
 
 
@@ -45,9 +52,9 @@ def get_TF_sites(TF):
                   #if gene in fbgn_to_name})
 
 
-stagewt = 'cyc13'
-stagezld = 'cyc13'
-all_stages = ('cyc11', 'cyc13', 'cyc14A', 'cyc14B')
+stagewt = 'cyc14B'
+stagezld = 'cyc14B'
+all_stages = ('cyc11', 'cyc13_rep3', 'cyc13_sl', 'cyc14A', 'cyc14B')
 
 zld_exp = pd.read_table('analysis/summary.tsv', index_col=0).sort_index().select(lambda x: x.startswith(all_stages), axis=1)
 #wt_exp = pd.read_table('prereqs/journal.pone.0071820.s008.txt', index_col=0)
@@ -60,6 +67,11 @@ antshift = set()
 antlost = set()
 noant = set()
 
+antant_bind = list()
+antshift_bind = list()
+antlost_bind = list()
+noant_bind = list()
+
 postpost = set()
 postshift = set()
 postlost = set()
@@ -71,31 +83,36 @@ centlost = set()
 nocent = set()
 
 print("Assigning to categories")
+ant_types = [[noant, antlost], [antshift, antant]]
+ant_binds = [[noant_bind, antlost_bind], [antshift_bind, antant_bind]]
+post_types = [[nopost, postlost], [postshift, postpost]]
+cent_types = [[nocent, centlost], [centshift, centcent]]
+
+bcd_sites = get_TF_sites('bcd')
 
 for gene in in_both:
     wt_gene =  wt_exp.ix[gene].select(lambda x: x.startswith(stagewt))
     zld_gene =  zld_exp.ix[gene].select(lambda x: x.startswith(stagezld))
-    if max(wt_gene) < 10 and max(zld_gene) < 10:
+    if max(wt_gene) < 3 and max(zld_gene) < 3:
         continue
     zld_has_ant = has_anterior_peak(zld_gene)
     wt_has_ant = has_anterior_peak(wt_gene)
-    ant_types = [[noant, antlost], [antshift, antant]]
     ant_types[zld_has_ant][wt_has_ant].add(gene)
+    ant_binds[zld_has_ant][wt_has_ant].extend(bcd_sites[gene])
 
     zld_has_post = has_posterior_peak(zld_gene)
     wt_has_post = has_posterior_peak(wt_gene)
-    post_types = [[nopost, postlost], [postshift, postpost]]
     post_types[zld_has_post][wt_has_post].add(gene)
 
     zld_has_cent = has_central_peak(zld_gene)
     wt_has_cent = has_central_peak(wt_gene)
-    cent_types = [[nocent, centlost], [centshift, centcent]]
     cent_types[zld_has_cent][wt_has_cent].add(gene)
 
 print("...done")
 
 list_of_TFs = ('D TFIIB bcd cad da dl ftz gt h hb hkb kni kr mad med polII '
                'prd run shn slp1 sna tll twi z').split()
+list_of_TFs = ('bcd').split()
 
 for TF in list_of_TFs:
     n_antant = 0
