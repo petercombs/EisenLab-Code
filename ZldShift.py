@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from __future__ import division
+from __future__ import division, print_function
 import pandas as pd
 from os.path import join
 from numpy import mean
@@ -12,12 +12,12 @@ from glob import glob
 
 mapping = pd.read_table('prereqs/gene_map_table_fb_2013_04.tsv', skiprows=5)
 
-print "Reading in mapping table..."
+print("Reading in mapping table...")
 fbgn_to_name = {row['primary_FBid'] : row['##current_symbol']
                 for i, row in mapping.iterrows()}
 name_to_fbgn = {row['##current_symbol']: row['primary_FBid']
                 for i, row in mapping.iterrows()}
-print "...done"
+print("...done")
 
 binding_directory = "prereqs/BDTNP_in_vivo_binding_Release.2.1/Supplemental_Tables"
 def get_TF_sites(TF):
@@ -70,7 +70,7 @@ centshift = set()
 centlost = set()
 nocent = set()
 
-print "Assigning to categories"
+print("Assigning to categories")
 
 for gene in in_both:
     wt_gene =  wt_exp.ix[gene].select(lambda x: x.startswith(stagewt))
@@ -92,7 +92,7 @@ for gene in in_both:
     cent_types = [[nocent, centlost], [centshift, centcent]]
     cent_types[zld_has_cent][wt_has_cent].add(gene)
 
-print "...done"
+print("...done")
 
 list_of_TFs = ('D TFIIB bcd cad da dl ftz gt h hb hkb kni kr mad med polII '
                'prd run shn slp1 sna tll twi z').split()
@@ -137,39 +137,49 @@ for TF in list_of_TFs:
         if gene in TF_sites:
             n_nopost+= 1
 
-    print '-'*32, '\n', TF,'\n', '-'*32
-    print "The {} anterior shifted genes have {} sites ({:%})".format(len(antshift),
+    print('-'*32, '\n', TF,'\n', '-'*32)
+    print("The {} anterior shifted genes have {} sites ({:%})".format(len(antshift),
                                                                       n_antshift,
                                                                       n_antshift/len(antshift))
+         )
 
-    print "The {} anterior maintained genes have {} sites ({:%})".format(len(antant),
+    print("The {} anterior maintained genes have {} sites ({:%})".format(len(antant),
                                                                          n_antant,
                                                                          n_antant/len(antant))
+         )
 
-    print "The {} anterior lost genes have {} sites ({:%})".format(len(antlost),
+    print("The {} anterior lost genes have {} sites ({:%})".format(len(antlost),
                                                                       n_antlost,
                                                                       n_antlost/len(antlost))
+         )
 
-    print "The {} never anterior genes have {} sites ({:%})".format(len(noant),
+    print("The {} never anterior genes have {} sites ({:%})".format(len(noant),
                                                                       n_noant,
                                                                       n_noant/len(noant))
+         )
 
-    print '-'*15
-    print "The {} posterior shifted genes have {} sites ({:%})".format(len(postshift),
+    print('-'*15)
+    print("The {} posterior shifted genes have {} sites ({:%})".format(len(postshift),
                                                                       n_postshift,
                                                                       n_postshift/len(postshift))
+         )
 
-    print "The {} posterior maintained genes have {} sites ({:%})".format(len(postpost),
+    print("The {} posterior maintained genes have {} sites ({:%})".format(len(postpost),
                                                                          n_postpost,
-                                                                         n_postpost/len(postpost))
+                                                                         n_postpost/(len(postpost)+1e-6))
+         )
 
-    print "The {} posterior lost genes have {} sites ({:%})".format(len(postlost),
+    print("The {} posterior lost genes have {} sites ({:%})".format(len(postlost),
                                                                       n_postlost,
-                                                                      n_postlost/len(postlost))
+                                                                      n_postlost/(len(postlost)+1e-6))
+         )
 
-    print "The {} never posterior genes have {} sites ({:%})".format(len(nopost),
+    print("The {} never posterior genes have {} sites ({:%})".format(len(nopost),
                                                                       n_nopost,
-                                                                      n_nopost/len(nopost))
+                                                                      n_nopost/(len(nopost)
+                                                                               +
+                                                                               1e-6))
+         )
 
 
 norm_col = wt_exp.select(lambda x: not x.startswith('cyc11'), axis=1).max(axis=1)

@@ -1,3 +1,4 @@
+from __future__ import print_function
 import numpy as np
 import pandas as pd
 from Bio import SeqIO
@@ -27,7 +28,7 @@ if __name__ == "__main__":
     n_emd =     pd.Series(data=0,   index=zld_exp.index)
     for zcyc, wcyc in zip('cyc11 cyc13_rep1 cyc14A cyc14B cyc14D'.split(),
                           'cyc11 cyc13      cyc14A cyc14B cyc14E'.split()):
-        print "Processing cycle", zcyc, wcyc
+        print("Processing cycle", zcyc, wcyc)
         zld_comp = zld_exp.select(is_in(zcyc), axis=1)
         wt_comp  =  wt_exp.select(is_in(wcyc), axis=1)
 
@@ -54,7 +55,7 @@ if __name__ == "__main__":
         if emd_array.ix[gene] < 0:
             continue
         if gene not in by_gene.indices:
-            print "No zld binding for ", gene
+            print("No zld binding for ", gene)
             continue
         for i, peak in enumerate(by_gene.indices[gene]):
             site = zld_bind.ix[peak]
