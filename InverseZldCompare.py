@@ -5,8 +5,8 @@ from numpy import mean
 import numpy as np
 from matplotlib import cm
 from PlotUtils import svg_heatmap
-from PeakFinder import has_anterior_peak, has_posterior_peak, \
-        has_central_peak, make_sort_num
+from PeakFinder import (has_anterior_peak, has_posterior_peak, 
+                        has_central_peak, make_sort_num)
 from glob import glob
 import sys
 

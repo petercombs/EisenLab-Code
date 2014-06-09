@@ -1,6 +1,6 @@
 import pandas as pd
-from pylab import figure, close, hist, subplot, ylabel, plot, vlines, \
-        ylim
+from pylab import (figure, close, hist, subplot, ylabel, plot, vlines, 
+                   ylim)
 from numpy import arange, log2, mean
 
 startswith = lambda y: lambda x: x.startswith(y)

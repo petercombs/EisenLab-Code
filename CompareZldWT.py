@@ -2,8 +2,6 @@ import pandas as pd
 from glob import glob
 from collections import defaultdict
 from PlotUtils import svg_heatmap
-#from matplotlib.pyplot import subplot2grid, pcolormesh, figure, xlim, ylim, \
-    #xticks, yticks, vlines, show, cm, title, axis, gca, savefig, pcolor
 import matplotlib.pyplot as mpl
 
 from numpy import shape, all
