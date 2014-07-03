@@ -108,7 +108,7 @@ def pdist(X, metric, p=2, w=None, V=None, VI=None):
     prog = pb.ProgressBar(widgets=['calculating distances', pb.Bar(),
                                    pb.Percentage(), pb.ETA()])
     for i in prog(range(0, m - 1)):
-        for j in xrange(i + 1, m):
+        for j in range(i + 1, m):
             dm[k] = metric(X[i], X[j])
             k = k + 1
     return dm
@@ -139,7 +139,7 @@ def mp_pdist(X, metric, p=2, w=None, V=None, VI=None):
                                    pb.Percentage(), pb.ETA()])
     for i in prog(range(0, m - 1)):
         ks = np.arange(k, k + m - i - 1)
-        inputs = [(X[i], X[j]) for j in xrange(i+1, m)]
+        inputs = [(X[i], X[j]) for j in range(i+1, m)]
         dm[ks] = pool.map(func, inputs)
         k  = ks[-1] + 1
     return dm

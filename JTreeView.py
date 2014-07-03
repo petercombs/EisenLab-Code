@@ -1,12 +1,20 @@
+from __future__ import print_function
 import numpy as np
 import pandas as pd
 from scipy.cluster import hierarchy
 import sys
 
+try:
+    reload(sys)
+except NameError:
+    from importlib import reload
+
 bad_cols = {'25u_emb4_sl10_FPKM', '25u_emb7_sl08_FPKM', '25u_emb7_sl09_FPKM'}
 
 fbgn_data = pd.read_table('prereqs/gene_map_table_fb_2013_04.tsv', index_col=0,
-                            skiprows=5).dropna(how='all')
+                          na_values=['-', 'NaN', ''], keep_default_na=False,
+                          skipfooter=3,
+                            skiprows=5).dropna(how='all', axis=1)
 fbgn_lookup = dict(fbgn_data['primary_FBid'].dropna())
 fbgn_map = dict(fbgn_data['sequence_loc'].dropna())
 
@@ -102,7 +110,7 @@ if __name__ == "__main__":
     sort_emb = wt.select(lambda x: x.startswith(sort_emb), axis=1)
     wt = wt[sort_emb.max(axis=1) > 3]
     sort_emb = sort_emb[sort_emb.max(axis=1) > 3]
-    print "Precalculating distances"
+    print("Precalculating distances")
     #metric = DistributionDifference.tang_stat
     #metric = DistributionDifference.diff_stat
     metric = DistributionDifference.earth_mover
