@@ -86,9 +86,23 @@ def earth_mover(points1, points2):
                    points1/np.sum(points1),
                    points2/np.sum(points2))
 
+startswith = lambda x: lambda y: y.startswith(x)
+
+def earth_mover_multi(points1, points2):
+    dist = 0.0
+    embs = {col.split('sl')[0] for col in points1.index}
+    for emb in embs:
+        dist += earth_mover(points1.select(startswith(emb))+1e-5,
+                            points2.select(startswith(emb))+1e-5)**2
+    return dist**.5
+
 def mp_earth_mover(args):
     i, j = args
     return earth_mover(i, j)
+
+def mp_earth_mover_multi(args):
+    i, j = args
+    return earth_mover_multi(i, j)
 
 import progressbar as pb
 def pdist(X, metric, p=2, w=None, V=None, VI=None):
@@ -140,6 +154,29 @@ def mp_pdist(X, metric, p=2, w=None, V=None, VI=None):
     for i in prog(range(0, m - 1)):
         ks = np.arange(k, k + m - i - 1)
         inputs = [(X[i], X[j]) for j in range(i+1, m)]
+        dm[ks] = pool.map(func, inputs)
+        k  = ks[-1] + 1
+    return dm
+
+def mp_pandas_pdist(X, metric, p=2, w=None, V=None, VI=None):
+    import multiprocessing
+
+    s = X.shape
+    if len(s) != 2:
+        raise ValueError('A 2-dimensional array must be passed.')
+
+    m, n = s
+    dm = np.zeros((m * (m - 1) / 2,), dtype=np.double)
+
+    pool = multiprocessing.Pool()
+    func = globals()["mp_"+metric.__name__+"_multi"]
+
+    k = 0
+    prog = pb.ProgressBar(widgets=['calculating distances', pb.Bar(),
+                                   pb.Percentage(), pb.ETA()])
+    for i in prog(range(0, m - 1)):
+        ks = np.arange(k, k + m - i - 1)
+        inputs = [(X.ix[i], X.ix[j]) for j in range(i+1, m)]
         dm[ks] = pool.map(func, inputs)
         k  = ks[-1] + 1
     return dm

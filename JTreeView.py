@@ -115,7 +115,7 @@ if __name__ == "__main__":
     #metric = DistributionDifference.diff_stat
     metric = DistributionDifference.earth_mover
     #metric = hierarchy.distance.euclidean
-    dist_mat = DistributionDifference.mp_pdist(sort_emb, metric)
+    dist_mat = DistributionDifference.mp_pandas_pdist(wt, metric)
     Z = hierarchy.linkage(dist_mat, method='weighted')
 
     wt_lognorm = np.log(wt+1).divide(np.log(sort_emb.mean( axis=1)+1), axis=0)
