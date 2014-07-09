@@ -8,6 +8,15 @@ from matplotlib.pyplot import figure, subplot, hist, title, \
 import setcolor
 from os import path, makedirs
 
+# Python 2/3 compatibility code
+try:
+    import builtins
+except ImportError:
+    import __builtin__ as builtins
+
+if "FileExistsError" not in dir(builtins):
+    FileExistsError = OSError
+
 """
 
 * Map to mel + vir reference (especially the cufflinks step)
