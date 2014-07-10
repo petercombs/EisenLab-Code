@@ -101,7 +101,7 @@ if __name__ == "__main__":
         step = 10
     else:
         step = 1
-    wt = pd.read_table('prereqs/WT5.54_summary.tsv', index_col=0)[::step]
+    wt = pd.read_table('prereqs/WT5.53_summary.tsv', index_col=0)[::step]
     try:
         wt.drop(bad_cols, axis=1)
     except ValueError:
@@ -121,7 +121,7 @@ if __name__ == "__main__":
     wt_lognorm = np.log(wt+1).divide(np.log(sort_emb.mean( axis=1)+1), axis=0)
     make_treeview_files("analysis/results/wt_all_log_normed_"+metric.__name__, wt_lognorm, Z)
 
-    zld = pd.read_table('analysis/summary.tsv', index_col=0).sort_index()
+    zld = pd.read_table('analysis/summary_merged.tsv', index_col=0).sort_index()
     zld = zld.ix[wt_lognorm.index]
     zld_lognorm = np.log(zld+1).divide(np.log(sort_emb.mean( axis=1)+1), axis=0)
 
