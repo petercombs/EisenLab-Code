@@ -49,7 +49,9 @@ args = parse_args()
 fnames = glob(path.join(args.basedir, '*', 'genes.fpkm_tracking'))
 if args.has_params:
     has_params = argv[2]
-    params = pandas.read_table(has_params, index_col='Label')
+    #params = pandas.read_table(has_params, index_col='Label')
+    params = pandas.read_table(has_params).drop_duplicates(cols=['Label'])
+    params.set_index('Label', inplace=True)
     params = params.dropna(how='any')
 
 
@@ -67,7 +69,7 @@ for fname in sorted(fnames):
         new_dirname = "cyc{stage}_sl{num:02}".format(
             stage=params.ix[dirname]['Stage'],
             num=get_stagenum(dirname, params.index,
-                             params.ix[dirname]['Direction']))
+                             params.ix[dirname,'Direction']))
         print dirname, '=', new_dirname
         dirname = new_dirname
 
