@@ -91,9 +91,13 @@ startswith = lambda x: lambda y: y.startswith(x)
 def earth_mover_multi(points1, points2):
     dist = 0.0
     embs = {col.split('sl')[0] for col in points1.index}
+    sums = [[],[]]
     for emb in embs:
         dist += earth_mover(points1.select(startswith(emb))+1e-5,
                             points2.select(startswith(emb))+1e-5)**2
+        sums[0].append(points1.select(startswith(emb)).mean())
+        sums[1].append(points2.select(startswith(emb)).mean())
+    dist += earth_mover(sums[0], sums[1])
     return dist**.5
 
 def mp_earth_mover(args):
