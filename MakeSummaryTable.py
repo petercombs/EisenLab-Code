@@ -59,13 +59,15 @@ else:
 if args.has_params:
     has_params = argv[2]
     params = pandas.read_table(has_params, index_col='Label', comment='#',
+                               keep_default_na=False,
                                converters={'Label':str}, na_values='-')
     params = params.dropna(how='any')
 
 
 df = None
 for fname in sorted(fnames):
-    table = pandas.read_table(fname, na_values='-', converters={args.key:str})
+    table = pandas.read_table(fname, na_values='-', converters={args.key:str},
+                              keep_default_na=False)
     alldir, fname = path.split(fname)
     basedir, dirname = path.split(alldir)
     table = table.drop_duplicates(args.key).dropna(how='any')
