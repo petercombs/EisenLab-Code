@@ -1,4 +1,6 @@
 import DistributionDifference as DD
+import pandas as pd
+import numpy as np
 from matplotlib.pyplot import (clf, plot, xlabel, ylabel, savefig)
 
 zld = pd.read_table("analysis/summary_merged.tsv", index_col=0, 
@@ -61,7 +63,7 @@ for i in zld_select.index:
                                               wt_select.ix[i])
 
 allEMDsg = allEMDs.dropna()
-allEMDsg.sort()
+allEMDsg.sort(ascending=False)
 zld_bind_all = pd.read_table('prereqs/journal.pgen.1002266.s005.xls', header=1)
 zld_bind = set(g.strip() for g in zld_bind_all.TSS_gene)
 
