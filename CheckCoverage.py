@@ -21,15 +21,9 @@ starts = set()
 curr_len = -1
 coverage = 0
 
-all_dirs = []
-all_rpks = []
-all_pct_uniques = []
-all_lens = []
-
 cutoff = 0
 
-for bam_fname in sys.argv[2:]:
-    if not bam_fname.endswith('.bam'): continue
+def analyze_bamfile(bam_fname):
     print bam_fname,
     bam_file = pysam.Samfile(bam_fname, 'rb')
 
@@ -42,7 +36,7 @@ for bam_fname in sys.argv[2:]:
     f = open(gtf_fname)
     for line in f:
         pass
-    pb = pbar.ProgressBar(maxval=f.tell()).start()
+    pb = pbar.ProgressBar(widgets=[bam_fname, pbar.Bar(), pbar.ETA()],maxval=f.tell()).start()
     f.seek(0)
     for line in f:
         pb.update(f.tell())
@@ -76,25 +70,31 @@ for bam_fname in sys.argv[2:]:
     pb.finish()
     curr_lens, rpks, uniques = zip(*coverages.itervalues())
     dir, fname = path.split(bam_fname)
-    all_dirs.append(fname)
-    all_rpks.append(rpks)
-    all_pct_uniques.append(uniques)
-    all_lens.append(curr_lens)
-
-    try:
-        xs = array(rpks)
-        ys = array([len(u)/(curr_len + 1) 
-                   for u, curr_len in zip(uniques, curr_lens)])
-        cutoff = max(xs[ys<.1])
-        reg = stats.linregress(log(xs[(xs < cutoff) * (xs > 0) * (ys > 0)]),
-                               log(ys[(xs < cutoff) * (xs > 0) * (ys > 0)]))
-        print "exp(%f) * x ** %f" % (reg[1], reg[0])
-        print "Duplicate badness score: ", exp(-reg[1]-.38)
-    except Exception as exc:
-        print exc
 
 
-import cPickle as pickle
-out_fh = open('checkcoverage.pkl', 'w')
-pickle.dump({'dirs':all_dirs, 'rpks':all_rpks, 'pct_uniques':all_pct_uniques,
-             'lens': all_lens}, out_fh)
+    return dir, rpks, uniques, curr_lens
+
+if __name__ == "__main__":
+    import multiprocessing as mp
+
+    POOL = mp.Pool(20)
+    res = POOL.map(analyze_bamfile, [f for f in sys.argv[2:] if f.endswith('.bam')])
+    all_dirs, all_rpks, all_pct_uniques, all_lens = zip(*res)
+
+    import cPickle as pickle
+    out_fh = open('checkcoverage.pkl', 'w')
+    pickle.dump({'dirs':all_dirs, 'rpks':all_rpks, 'pct_uniques':all_pct_uniques,
+                 'lens': all_lens}, out_fh)
+    for fname, rpks, uniques, curr_lens in res:
+        print fname
+        try:
+            xs = array(rpks)
+            ys = array([len(u)/(curr_len + 1) 
+                       for u, curr_len in zip(uniques, curr_lens)])
+            cutoff = max(xs[ys<.1])
+            reg = stats.linregress(log(xs[(xs < cutoff) * (xs > 0) * (ys > 0)]),
+                                   log(ys[(xs < cutoff) * (xs > 0) * (ys > 0)]))
+            print "exp(%f) * x ** %f" % (reg[1], reg[0])
+            print "Duplicate badness score: ", exp(-reg[1]-.38)
+        except Exception as exc:
+            print exc

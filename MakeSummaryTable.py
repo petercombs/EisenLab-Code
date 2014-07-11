@@ -21,12 +21,12 @@ def parse_args():
                             "file.")
     parser.add_argument('--confidence', '-c', default=False,
                         dest='conf', action='store_true',
-                        help="Include confidence intervals") 
-    parser.add_argument('--params', '-p', default=False, 
+                        help="Include confidence intervals")
+    parser.add_argument('--params', '-p', default=False,
                         dest='has_params',
                         help="Parameters file including renaming conventions: "
                         'Directory in column "Label", stage in column "Stage"')
-    parser.add_argument('--key', '-k', default='gene_short_name', 
+    parser.add_argument('--key', '-k', default='gene_short_name',
                         help='The column to combine on (FBgn in tracking_id)')
     parser.add_argument('--strip-low-reads', '-s', default=0, type=int,
                         help='Remove samples with fewer than N counts (off by'
@@ -36,10 +36,25 @@ def parse_args():
                         'basedir/sample/subdirectory/genes.fpkm_tracking')
     parser.add_argument('--filename', default='genes.fpkm_tracking',
                         help='Filename of the per-sample gene expression table')
-    parser.add_argument('basedir', 
+    parser.add_argument('--column', '-C', default='FPKM',
+                        help='Column to read out (either name or number)')
+    parser.add_argument('--no-header', dest='header', action='store_false',
+                        default=True,
+                        help='No header line in the file')
+    parser.add_argument('basedir',
                         help='The directory containing directories, which '
                         'contain genes.fpkm_tracking files')
-    return parser.parse_args()
+
+    args =  parser.parse_args()
+    try:
+        args.column = int(args.column)
+    except ValueError:
+        pass
+    try:
+        args.key = int(args.key)
+    except ValueError:
+        pass
+    return args
 
 
 def get_stagenum(name, series, dir):
@@ -65,10 +80,15 @@ if args.has_params:
 
 df = None
 for fname in sorted(fnames):
-    table = pandas.read_table(fname, na_values='-', converters={args.key:str})
+    table = pandas.read_table(fname, na_values='-', converters={args.key:str},
+                              keep_default_na=False,
+                              header=None if not args.header else 0)
     alldir, fname = path.split(fname)
+    if args.in_subdirectory:
+        alldir = alldir.replace(args.in_subdirectory,
+                                '').replace('//','/').strip('/')
     basedir, dirname = path.split(alldir)
-    table = table.drop_duplicates(args.key).dropna(how='any')
+    table = table.drop_duplicates(args.key).dropna(axis=1, how='all').dropna(how='any')
     table.set_index(args.key, inplace=True, verify_integrity=True)
     if args.has_params and dirname not in params.index:
         continue
@@ -85,12 +105,12 @@ for fname in sorted(fnames):
         from pysam import Samfile
         sf = Samfile(path.join(alldir, 'assigned_dmelR.bam'))
         if sf.mapped < args.strip_low_reads:
-            print "Skipping", dirname 
+            print "Skipping", dirname
             continue
     if df is None:
-        df = pandas.DataFrame({dirname+"_FPKM": table.FPKM})
+        df = pandas.DataFrame({dirname+"_FPKM": table.ix[:,args.column]})
     else:
-        df.insert(len(df.columns), dirname+"_FPKM", table.FPKM)
+        df.insert(len(df.columns), dirname+"_FPKM", table.ix[:,args.column])
 
     if args.conf:
         df.insert(len(df.columns),
@@ -101,7 +121,11 @@ for fname in sorted(fnames):
                   table.FPKM_conf_hi)
 
 
-df.sort_index(axis=1).to_csv(path.join(args.basedir, 
-                                       'summary' + ('_with_conf' * args.conf) + '.tsv'),
+df.sort_index(axis=1).to_csv(path.join(args.basedir,
+                                       'summary'
+                                       + ('_in_{}'.format(args.in_subdirectory)
+                                          * bool(args.in_subdirectory) )
+                                       + ('_with_conf' * args.conf)
+                                       + '.tsv'),
                              sep='\t')
 
