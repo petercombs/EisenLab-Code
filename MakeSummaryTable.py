@@ -74,6 +74,7 @@ else:
 if args.has_params:
     has_params = argv[2]
     params = pandas.read_table(has_params, index_col='Label', comment='#',
+                               keep_default_na=False,
                                converters={'Label':str}, na_values='-')
     params = params.dropna(how='any')
 
