@@ -1,6 +1,7 @@
 GENETABLE = prereqs/gene_map_table_fb_2013_04.tsv
-
-current-analysis: analysis/results/fpkm_sum Website 
+current-analysis: analysis/results/fpkm_sum \
+	Website \
+	analysis/results/complexity
 	@echo "Nothing deeper yet"
 
 analysis/results/fpkm_sum: analysis/summary.tsv | analysis/results
@@ -8,8 +9,11 @@ analysis/results/fpkm_sum: analysis/summary.tsv | analysis/results
 	python -c "import pandas as pd; print pd.read_table('analysis/summary.tsv',index_col=0).sum(axis=0)" \
 		| tee $@
 	
-analysis/results/complexity:
-	@echo "Temporarily deprecated"
+analysis/results/complexity: analysis/summary.tsv | analysis/results 
+	python CheckCoverage.py \
+		Reference/mel_good.gtf \
+		analysis/*/accepted_hits_sorted.bam \
+		| tee $@_mel
 
 
 analysis/results:
