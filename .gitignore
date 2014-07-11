@@ -24,12 +24,11 @@ __pycache__
 
 prereqs*
 analysis*
-prereqs*
-sequence*
+*[Ss]equence*
 Website*
 MemeOutput
 MemeOutput2
-Reference
+Reference/*
 Reference/miso-events
 Reference/AAA
 NonFlyNonHum*
