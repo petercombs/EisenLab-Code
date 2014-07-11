@@ -110,6 +110,9 @@ if __name__ == "__main__":
     sort_emb = wt.select(lambda x: x.startswith(sort_emb), axis=1)
     wt = wt[sort_emb.max(axis=1) > 3]
     sort_emb = sort_emb[sort_emb.max(axis=1) > 3]
+    wt_lognorm = np.log(wt+1).divide(np.log(sort_emb.mean( axis=1)+1), axis=0)
+    zld = pd.read_table('analysis/summary_merged.tsv', index_col=0).sort_index()
+    zld = zld.ix[wt_lognorm.index]
     print("Precalculating distances")
     #metric = DistributionDifference.tang_stat
     #metric = DistributionDifference.diff_stat
@@ -118,11 +121,8 @@ if __name__ == "__main__":
     dist_mat = DistributionDifference.mp_pandas_pdist(wt, metric)
     Z = hierarchy.linkage(dist_mat, method='weighted')
 
-    wt_lognorm = np.log(wt+1).divide(np.log(sort_emb.mean( axis=1)+1), axis=0)
     make_treeview_files("analysis/results/wt_all_log_normed_"+metric.__name__, wt_lognorm, Z)
 
-    zld = pd.read_table('analysis/summary_merged.tsv', index_col=0).sort_index()
-    zld = zld.ix[wt_lognorm.index]
     zld_lognorm = np.log(zld+1).divide(np.log(sort_emb.mean( axis=1)+1), axis=0)
 
     make_treeview_files("analysis/results/zld_all_log_normed_"+metric.__name__,
