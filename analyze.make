@@ -1,6 +1,15 @@
 current-analysis: analysis/results/fpkm_sum \
+	analysis/results/fold_change.log \
+	analysis/results/mel_summary.log \
 	analysis/results/complexity
 	@echo "Nothing deeper yet"
+
+subset_fpkms: $(FPKMS_SUBSET_MIN)  $(FPKMS_SUBSET_10)  $(FPKMS_SUBSET_7)  $(FPKMS_SUBSET_5) $(FPKMS_SUBSET_3)
+all_fpkms: $(FPKMS)  $(FPKMS_SUBSET_MIN)  $(FPKMS_SUBSET_10)  $(FPKMS_SUBSET_7)  $(FPKMS_SUBSET_5) $(FPKMS_SUBSET_3)
+	@echo "OK"
+
+#.PHONY: analysis/results/fpkm_sum analysis/results/complexity \
+	#analysis/results/fold_change.log analysis/results/mel_summary.log
 
 analysis/results/fpkm_sum: analysis/summary.tsv | analysis/results
 	@echo "All genes should have approximately the same sum of FPKMs"
@@ -9,10 +18,24 @@ analysis/results/fpkm_sum: analysis/summary.tsv | analysis/results
 	
 analysis/results/complexity: analysis/summary.tsv | analysis/results 
 	python CheckCoverage.py \
+		Reference/melvir.gtf \
+		analysis/*/accepted_hits_sorted.bam \
+		| tee $@
+	python CheckCoverage.py \
 		Reference/mel_good.gtf \
 		analysis/*/accepted_hits_sorted.bam \
 		| tee $@_mel
+	python CheckCoverage.py \
+		Reference/vir_good.gtf \
+		analysis/*/accepted_hits_sorted.bam \
+		| tee $@_vir
 
+
+analysis/results/fold_change.log: analysis/summary_in_all.tsv | analysis/results
+	python AnalyzeFoldChanges.py $^ > $@
+
+analysis/results/mel_summary.log: analysis/summary.tsv | analysis/results
+	python AnalyzeMelConsistency.py $^ > $@
 
 analysis/results:
 	mkdir analysis/results
