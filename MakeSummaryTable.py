@@ -73,9 +73,12 @@ else:
     fnames = glob(path.join(args.basedir, '*',args.filename))
 if args.has_params:
     has_params = argv[2]
-    params = pandas.read_table(has_params, index_col='Label', comment='#',
-                               keep_default_na=False,
-                               converters={'Label':str}, na_values='-')
+    params = pandas.read_table(has_params,
+                               comment='#',
+                               converters={'Label':str},
+                               keep_default_na=False, na_values='-'
+                              ).drop_duplicates(cols=['Label'])
+    params.set_index('Label', inplace=True)
     params = params.dropna(how='any')
 
 
@@ -98,7 +101,7 @@ for fname in sorted(fnames):
         new_dirname = "cyc{stage}_sl{num:02}".format(
             stage=params.ix[dirname]['Stage'],
             num=get_stagenum(dirname, params.index,
-                             params.ix[dirname]['Direction']))
+                             params.ix[dirname,'Direction']))
         print dirname, '=', new_dirname
         dirname = new_dirname
 
