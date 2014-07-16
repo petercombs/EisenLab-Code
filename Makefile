@@ -25,6 +25,9 @@ ORTHOLOGS = prereqs/gene_orthologs_fb_$(MELDATE).tsv
 CERFASTA = prereqs/S288C_reference_sequence_R64-1-1_20110203.fsa
 CERFASTA2= $(REFDIR)/scer_prepend.fasta
 
+DELFASTA = prereqs/Tdelbrueckii_sequence.fsa
+DELFASTA2= $(REFDIR)/tdel_prepend.fasta
+
 MELGFF   = prereqs/dmel-all-$(MELVERSION).gff
 MELGTF   = $(REFDIR)/mel_good.gtf
 VIRGFF   = prereqs/dvir-all-$(VIRVERSION).gff
@@ -114,6 +117,9 @@ $(VIRGFF): | $(REFDIR)
 	wget -O $@.gz ftp://ftp.flybase.net/genomes/Drosophila_virilis/dvir_$(VIRRELEASE)/gff/dvir-all-$(VIRVERSION).gff.gz
 	gunzip $@.gz
 
+$(DELFASTA): | $(REFDIR)
+	wget -O $@ http://ygob.ucd.ie/ygob/data/v7-Aug2012/Tdelbrueckii_sequence.fsa
+
 $(MELFASTA2): $(MELFASTA)| $(REFDIR)
 	perl -pe 's/>/>dmel_/' $(MELFASTA) > $@
 
@@ -123,6 +129,9 @@ $(VIRFASTA2): $(VIRFASTA)| $(REFDIR)
 $(CERFASTA2): $(CERFASTA)| $(REFDIR)
 	perl -pe 's/>/>scer_/' $(CERFASTA) > $@
 
+$(DELFASTA2): $(DELFASTA)| $(REFDIR)
+	perl -pe 's/>/>tdel_/' $(DELFASTA) > $@
+
 $(MELVIRFASTA): $(MELFASTA2) $(VIRFASTA2)| $(REFDIR)
 	cat $(MELFASTA2) $(VIRFASTA2) > $@
 
@@ -130,6 +139,11 @@ $(MELVIRFASTA): $(MELFASTA2) $(VIRFASTA2)| $(REFDIR)
 $(REFDIR)/DmelScer/Genome : | $(MELFASTA2) $(CERFASTA2)  $(MELGTF) $(REFDIR)/DmelScer $(REFDIR)
 	STAR --runMode genomeGenerate --genomeDir $(REFDIR)/DmelScer \
 		--genomeFastaFiles $(MELFASTA2) $(CERFASTA2) \
+		--sjdbGTFfile $(MELGTF)
+
+$(REFDIR)/DmelTdel/Genome : | $(MELFASTA2) $(DELFASTA2)  $(MELGTF) $(REFDIR)/DmelTdel $(REFDIR)
+	STAR --runMode genomeGenerate --genomeDir $(REFDIR)/DmelTdel \
+		--genomeFastaFiles $(MELFASTA2) $(DELFASTA2) \
 		--sjdbGTFfile $(MELGTF)
 
 $(MELVIRGTF): $(MELGTF) $(VIRGTF) | $(REFDIR)
@@ -159,17 +173,17 @@ $(ORTHOLOGS) :
 
 $(REFDIR) :
 	mkdir $@
+
 $(REFDIR)/DmelDvir:
 	bowtie2-build --offrate 1 $(MELVIRFASTA) $@
 
-$(REFDIR)/DmelScer:
+
+$(REFDIR)/DmelTdel:
 	mkdir $@
 
 Reference/DmelDper:
 	mkdir $@
 Reference/DmelDwil:
-	mkdir $@
-Reference/DmelDvir:
 	mkdir $@
 Reference/DmelDmoj:
 	mkdir $@
