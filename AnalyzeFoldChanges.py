@@ -1,22 +1,3 @@
-from __future__ import print_function
-import pandas as pd
-import numpy as np
-import sys
-from scipy.stats import linregress, scoreatpercentile
-from matplotlib.pyplot import figure, subplot, hist, title, \
-        savefig, tight_layout, close, xlim, legend, gca
-import setcolor
-from os import path, makedirs
-
-# Python 2/3 compatibility code
-try:
-    import builtins
-except ImportError:
-    import __builtin__ as builtins
-
-if "FileExistsError" not in dir(builtins):
-    FileExistsError = OSError
-
 """
 
 * Map to mel + vir reference (especially the cufflinks step)
@@ -27,6 +8,24 @@ if "FileExistsError" not in dir(builtins):
   also potentially less than ~1000).
 
 """
+
+from __future__ import print_function
+import pandas as pd
+import numpy as np
+import sys
+from scipy.stats import linregress, scoreatpercentile
+from matplotlib.pyplot import figure, subplot, hist, title, \
+        savefig, tight_layout, close, xlim, legend, gca
+import setcolor
+from os import path, makedirs
+# Python 2/3 compatibility code
+try:
+    import builtins
+except ImportError:
+    import __builtin__ as builtins
+
+if 'FileExistsError' not in dir(builtins):
+    FileExistsError = OSError
 
 startswith = lambda y: lambda x: x.startswith(y)
 contains = lambda y: lambda x: y not in x
@@ -72,7 +71,7 @@ outtex.write(r'''
 
 #expr = pd.read_table(expfile, converters={'gene_short_name':str})
 #expr.set_index('gene_short_name', inplace=True, verify_integrity=True)
-expr = pd.read_table(expfile, converters={"0":str})
+expr = pd.read_table(expfile, converters={"0":str, 'gene_short_name':str})
 expr.rename(columns={'0':'gene_short_name'}, inplace=True)
 expr.set_index('gene_short_name', inplace=True, verify_integrity=True)
 
