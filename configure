@@ -20,7 +20,7 @@ tophat_str = ('$(ANALYSIS_DIR)/{label}/accepted_hits.bam: '
               '--b2-sensitive '
               '--num-threads 12 '
               'Reference/{genome} '
-              '{rf1} {rf2}\n') 
+              '{rf1} {rf2}\n')
 star_str = ('$(ANALYSIS_DIR)/{label}/accepted_hits.bam: '
             ' {rfs} '
             ' Reference/{genome}/Genome '
@@ -54,7 +54,7 @@ def parse_arguments():
         import sys
         sys.stderr.write('Unrecognized mapper: "{}". \n'
                          'Valid options are: {}\n'
-                         .format(args.mapper, 
+                         .format(args.mapper,
                                  ', '.join(mappers)))
         sys.exit(1)
     return args
@@ -63,20 +63,17 @@ def parse_arguments():
 
 args = parse_arguments()
 config_file = pd.read_table(args.parameters,
+                            na_values='---', keep_default_na=False,
                             comment='#').dropna(how='all')
 
 out = open('config.make', 'w')
+out.write('RUNCONFIG = {} \n'.format(args.parameters))
 targets = ' '.join(path.join('$(ANALYSIS_DIR)',
                              label,
                              'genes.fpkm_tracking')
                    for label in config_file['Label'])
 
-targets_all = ' '.join(path.join('$(ANALYSIS_DIR)',
-                             label, 'all',
-                             'genes.fpkm_tracking')
-                   for label in config_file['Label'])
-
-out.write("FPKMS = {} {} \n".format(targets, targets_all))
+out.write("FPKMS = {}  \n".format(targets))
 
 reads = defaultdict(lambda : ([], []))
 carriers = defaultdict(list)
