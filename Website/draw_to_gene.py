@@ -2,10 +2,7 @@
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
-from StringIO import StringIO
-from sys import argv
 from os import chmod, path
 import progressbar as pb
 import PlotUtils
@@ -28,7 +25,7 @@ def parse_args():
     parser.add_argument('--max-expr', '-m', type=int, default=10000,
                         help="Maximum expression to scale to")
     parser.add_argument('file', help="File to read from")
-    parser.add_argument('genes', default=[], nargs='*', type=str, 
+    parser.add_argument('genes', default=[], nargs='*', type=str,
                         metavar='GENE',
                         help="Gene to plot (default: all)")
     return parser.parse_args()

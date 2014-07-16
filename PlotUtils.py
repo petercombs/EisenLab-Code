@@ -1,6 +1,6 @@
 from __future__ import division
 from matplotlib import pyplot as mpl
-from matplotlib.colors import hsv_to_rgb
+from matplotlib.colors import hsv_to_rgb, LinearSegmentedColormap
 from matplotlib import cm
 from scipy.stats import gaussian_kde
 from numpy import log, array, Inf, median, exp, argsort, linspace
@@ -8,6 +8,18 @@ import numpy as np
 
 import urllib, time
 from os import path
+
+ISH = LinearSegmentedColormap('ish',
+                              dict(red=((0, 1, 1),
+                                        (.7, 120/255, 120/255),
+                                        (1, 46/255,46/255)),
+                                   green=((0, 1, 1),
+                                          (.7, 129/255, 129/255),
+                                          (1, 46/255, 46/255)),
+                                   blue=((0, 1, 1),
+                                         (.7, 1, 1),
+                                         (1, 98/255, 98/255))))
+
 def imget(imname):
     """ Use cached, or fetch an image from FlyExpress
 
@@ -122,7 +134,7 @@ def plot_likelihoods(likelihoods, starts, column_headers):
 
 
 def svg_heatmap(data, filename, row_labels=None, box_size=4,
-               cmap=cm.Blues, norm_rows_by = None, draw_row_labels=False,
+               cmap=ISH, norm_rows_by = None, draw_row_labels=False,
                col_sep='', box_height=None, total_width=None,
                draw_box=False, draw_name=False, data_names=None,
                max_width=np.inf,
@@ -146,7 +158,7 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
     *box_height*, otherwise it will be equal to the width of each element. If
     neither are supplied, elements will be squares equal to *box_size*. IT IS
     STRONGLY RECOMMENDED that if if supplying *total_width*, *box_height* also be
-    specified, but this is not enforced. 
+    specified, but this is not enforced.
 
     *draw_row_labels*, if True, will label the rows on the right hand side. As
     of 2013/09/03, this won't scale the SVG properly, so including the resulting
@@ -207,6 +219,9 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
         else:
             norm_data = frame.divide(norm_rows_by, axis=0)
 
+        if not c_cmap:
+            c_cmap=ISH
+
         new_rows, new_cols = np.shape(frame)
         if hasattr(frame, 'index'):
             col_labels = frame.columns
@@ -232,7 +247,7 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
                                 .format(*[int(255*x) for x in
                                           c_cmap(norm_data.ix[i,j])])))
                 dwg.add(g)
-                col_base = col_labels[j][:col_labels[j].find(col_sep)] 
+                col_base = col_labels[j][:col_labels[j].find(col_sep)]
                 if col_base != prefix:
                     prefix = col_base
                     g.add(dwg.line((x_start+box_size*j, y_start + i*box_height),
@@ -240,11 +255,11 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
                                    style="stroke-width:{}; stroke:#000000"
                                    .format(.1 * box_size)))
         dwg.add(dwg.text(first_col, (x_start,
-                                     y_start + (i+1)*box_height))) 
+                                     y_start + (i+1)*box_height)))
         dwg.add(dwg.text(last_col, (x_start + (new_cols - 1) * box_size,
-                                     y_start + (i+1)*box_height))) 
+                                     y_start + (i+1)*box_height)))
         if draw_box:
-            dwg.add(dwg.rect((x_start, y_start + 0), 
+            dwg.add(dwg.rect((x_start, y_start + 0),
                              (new_cols*box_size, rows*box_height),
                              style="stroke-width:1; stroke:#000000; fill:none"))
         if draw_name:
