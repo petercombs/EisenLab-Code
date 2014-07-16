@@ -33,8 +33,10 @@ def parse_args():
 args = parse_args()
 
 
-data = pd.read_table(args.file, index_col=0).select(lambda x: x not in
-                                                       bad_slices, axis=1)
+data = (pd
+        .read_table(args.file, na_values='---', keep_default_na=False, index_col=0)
+        .select(lambda x: x not in bad_slices, axis=1)
+       )
 
 headers = sorted({column[:column.find('_sl')] for column in data.columns})
 
