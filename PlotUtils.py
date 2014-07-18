@@ -4,6 +4,7 @@ from matplotlib.colors import hsv_to_rgb, LinearSegmentedColormap
 from matplotlib import cm
 from scipy.stats import gaussian_kde
 from numpy import log, array, Inf, median, exp, argsort, linspace
+from itertools import repeat
 import numpy as np
 
 import urllib, time
@@ -220,27 +221,30 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
     while len(spacers) < len(data):
         spacers.append(spacers[-1])
 
+    if not isinstance(norm_rows_by, tuple):
+        norm_rows_by = repeat(norm_rows_by)
+
     x_start = 0
     y_start = 0
-    for frame, c_cmap, name, spacer in zip(data, cmap, data_names,
-                                           spacers):
+    for frame, c_cmap, name, normer, spacer in zip(data, cmap, data_names,
+                                                   norm_rows_by, spacers):
         frame = pd.DataFrame(frame)
-        if norm_rows_by is None:
+        if normer is None:
             norm_data = frame.copy()
-        elif norm_rows_by is 'mean':
+        elif normer is 'mean':
             norm_data = frame.divide(frame.mean(axis=1), axis=0)
-        elif norm_rows_by is 'max':
+        elif normer is 'max':
             norm_data = frame.divide(frame.max(axis=1), axis=0)
-        elif index is not None and hasattr(norm_rows_by, "ix"):
-            norm_data = frame.divide(norm_rows_by.ix[index], axis=0)
-        elif hasattr(norm_rows_by, "__len__") and len(norm_rows_by) == rows:
-            norm_data = frame.divide(norm_rows_by, axis=0)
+        elif index is not None and hasattr(normer, "ix"):
+            norm_data = frame.divide(normer.ix[index], axis=0)
+        elif hasattr(normer, "__len__") and len(normer) == rows:
+            norm_data = frame.divide(normer, axis=0)
 
-        elif hasattr(norm_rows_by, "__len__"):
+        elif hasattr(normer, "__len__"):
             raise TypeError("norm_rows_by should be the same shape "
                             "as the number of rows")
         else:
-            norm_data = frame.divide(norm_rows_by, axis=0)
+            norm_data = frame.divide(normer, axis=0)
 
         if not c_cmap:
             c_cmap=ISH
