@@ -4,6 +4,7 @@ from matplotlib.colors import hsv_to_rgb, LinearSegmentedColormap
 from matplotlib import cm
 from scipy.stats import gaussian_kde
 from numpy import log, array, Inf, median, exp, argsort, linspace
+from itertools import repeat
 import numpy as np
 
 import urllib, time
@@ -134,10 +135,12 @@ def plot_likelihoods(likelihoods, starts, column_headers):
 
 
 def svg_heatmap(data, filename, row_labels=None, box_size=4,
+                index=None,
                cmap=ISH, norm_rows_by = None, draw_row_labels=False,
                col_sep='', box_height=None, total_width=None,
                draw_box=False, draw_name=False, data_names=None,
                max_width=np.inf,
+                spacers=None,
                first_col='', last_col=''):
     """
     Draw heatmap as an SVG file stored in filename
@@ -164,6 +167,11 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
     of 2013/09/03, this won't scale the SVG properly, so including the resulting
     file in an html element won't display properly.
 
+    *spacers* is the distance between adjacent datasets.  Can either be a
+    number, in which case it will apply to all datasets, or an interable for
+    different distances. If the iterable is shorter than the number of datasets,
+    the last value will be repeated.
+
     """
     import svgwrite as svg
     import pandas as pd
@@ -171,6 +179,9 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
     if not isinstance(data, tuple):
         data = (data,)
 
+    rows, cols = np.shape(data[0])
+    if index is not None:
+        rows = len(index)
     if box_height is None:
         box_height = box_size
 
@@ -183,13 +194,16 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
         dwg = svg.Drawing(filename)
     dwg.add(svg.base.Title(path.basename(filename)))
 
-    rows, cols = np.shape(data[0])
     if row_labels is None:
-        if hasattr(data[0], 'index'):
+        if index is not None:
+            row_labels = index
+        elif hasattr(data[0], 'index'):
             row_labels = data[0].index
         else:
             row_labels = ['' for row in range(rows)]
 
+    if box_height is None:
+        box_height = box_size
 
     if not hasattr(cmap, "__len__"):
         cmap = [cmap for frame in data]
@@ -200,24 +214,37 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
     if len(cmap) != len(data):
         raise ValueError("cmap and data should be the same length")
 
+    if not hasattr(spacers, "__len__"):
+        spacers = [spacers]
+    else:
+        spacers = list(spacers)
+    while len(spacers) < len(data):
+        spacers.append(spacers[-1])
+
+    if not isinstance(norm_rows_by, tuple):
+        norm_rows_by = repeat(norm_rows_by)
+
     x_start = 0
     y_start = 0
-    for frame, c_cmap, name in zip(data, cmap, data_names):
+    for frame, c_cmap, name, normer, spacer in zip(data, cmap, data_names,
+                                                   norm_rows_by, spacers):
         frame = pd.DataFrame(frame)
-        if norm_rows_by is None:
+        if normer is None:
             norm_data = frame.copy()
-        elif norm_rows_by is 'mean':
+        elif normer is 'mean':
             norm_data = frame.divide(frame.mean(axis=1), axis=0)
-        elif norm_rows_by is 'max':
+        elif normer is 'max':
             norm_data = frame.divide(frame.max(axis=1), axis=0)
-        elif hasattr(norm_rows_by, "__len__") and len(norm_rows_by) == rows:
-            norm_data = frame.divide(norm_rows_by, axis=0)
+        elif index is not None and hasattr(normer, "ix"):
+            norm_data = frame.divide(normer.ix[index], axis=0)
+        elif hasattr(normer, "__len__") and len(normer) == rows:
+            norm_data = frame.divide(normer, axis=0)
 
-        elif hasattr(norm_rows_by, "__len__"):
+        elif hasattr(normer, "__len__"):
             raise TypeError("norm_rows_by should be the same shape "
                             "as the number of rows")
         else:
-            norm_data = frame.divide(norm_rows_by, axis=0)
+            norm_data = frame.divide(normer, axis=0)
 
         if not c_cmap:
             c_cmap=ISH
@@ -269,9 +296,15 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
                              style="text-anchor: middle;"))
 
         if total_width is not None:
-            x_start += total_width * 1.1
+            if spacer is None:
+                x_start += total_width * 1.1
+            else:
+                x_start += total_width + spacer
         else:
-            x_start += new_cols * box_size + box_size
+            if spacer is None:
+                x_start += new_cols * box_size + box_size
+            else:
+                x_start += new_cols * box_size + spacer
 
         if x_start > max_width:
             x_start = 0
