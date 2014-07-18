@@ -20,7 +20,7 @@ tophat_str = ('$(ANALYSIS_DIR)/{label}/accepted_hits.bam: '
               '--b2-sensitive '
               '--num-threads 12 '
               'Reference/{genome} '
-              '{rf1} {rf2}\n') 
+              '{rf1} {rf2}\n')
 star_str = ('$(ANALYSIS_DIR)/{label}/accepted_hits.bam: '
             ' {rfs} '
             ' Reference/{genome}/Genome '
@@ -54,7 +54,7 @@ def parse_arguments():
         import sys
         sys.stderr.write('Unrecognized mapper: "{}". \n'
                          'Valid options are: {}\n'
-                         .format(args.mapper, 
+                         .format(args.mapper,
                                  ', '.join(mappers)))
         sys.exit(1)
     return args
@@ -83,7 +83,7 @@ carriers = defaultdict(list)
 carrier_species = {}
 for i, row in config_file.iterrows():
     label = row['Label']
-    index = row['Index']
+    index = int(row['Index'])
     mbepc = int(row['MBEPC'])
     carrier = row['CarrierID']
     species = row['CarrierSpecies']
