@@ -139,6 +139,7 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
                col_sep='', box_height=None, total_width=None,
                draw_box=False, draw_name=False, data_names=None,
                max_width=np.inf,
+                spacers=None,
                first_col='', last_col=''):
     """
     Draw heatmap as an SVG file stored in filename
@@ -164,6 +165,11 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
     *draw_row_labels*, if True, will label the rows on the right hand side. As
     of 2013/09/03, this won't scale the SVG properly, so including the resulting
     file in an html element won't display properly.
+
+    *spacers* is the distance between adjacent datasets.  Can either be a
+    number, in which case it will apply to all datasets, or an interable for
+    different distances. If the iterable is shorter than the number of datasets,
+    the last value will be repeated.
 
     """
     import svgwrite as svg
@@ -207,9 +213,17 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
     if len(cmap) != len(data):
         raise ValueError("cmap and data should be the same length")
 
+    if not hasattr(spacers, "__len__"):
+        spacers = [spacers]
+    else:
+        spacers = list(spacers)
+    while len(spacers) < len(data):
+        spacers.append(spacers[-1])
+
     x_start = 0
     y_start = 0
-    for frame, c_cmap, name in zip(data, cmap, data_names):
+    for frame, c_cmap, name, spacer in zip(data, cmap, data_names,
+                                           spacers):
         frame = pd.DataFrame(frame)
         if norm_rows_by is None:
             norm_data = frame.copy()
@@ -278,9 +292,15 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
                              style="text-anchor: middle;"))
 
         if total_width is not None:
-            x_start += total_width * 1.1
+            if spacer is None:
+                x_start += total_width * 1.1
+            else:
+                x_start += total_width + spacer
         else:
-            x_start += new_cols * box_size + box_size
+            if spacer is None:
+                x_start += new_cols * box_size + box_size
+            else:
+                x_start += new_cols * box_size + spacer
 
         if x_start > max_width:
             x_start = 0
