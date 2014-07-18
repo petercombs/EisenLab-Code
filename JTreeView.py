@@ -101,7 +101,7 @@ if __name__ == "__main__":
         step = 10
     else:
         step = 1
-    wt = pd.read_table('prereqs/WT5.53_summary.tsv', index_col=0)[::step]
+    wt = pd.read_table('prereqs/WT5.57.merged.tsv', index_col=0)[::step]
     try:
         wt.drop(bad_cols, axis=1)
     except ValueError:
