@@ -136,12 +136,12 @@ def plot_likelihoods(likelihoods, starts, column_headers):
 
 def svg_heatmap(data, filename, row_labels=None, box_size=4,
                 index=None,
-               cmap=ISH, norm_rows_by = None, draw_row_labels=False,
-               col_sep='', box_height=None, total_width=None,
-               draw_box=False, draw_name=False, data_names=None,
-               max_width=np.inf,
+                cmap=ISH, norm_rows_by = None, draw_row_labels=False,
+                col_sep='', box_height=None, total_width=None,
+                draw_box=False, draw_name=False, data_names=None,
+                max_width=np.inf,
                 spacers=None,
-               first_col='', last_col=''):
+                first_col='', last_col=''):
     """
     Draw heatmap as an SVG file stored in filename
 
