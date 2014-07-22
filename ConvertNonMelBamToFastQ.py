@@ -7,6 +7,14 @@ import gzip
 import shutil
 from sys import argv
 
+def fastq_write(outfile, read, force_r1=False):
+    outfile.write('@{}/{}\n{}\n+\n{}\n'
+                  .format(read.qname,
+                          1 if force_r1 else [1,2][read.is_read2],
+                          read.seq,
+                          read.qual))
+
+
 def convert_files(fn):
     """ Converts a set of files to fastq
 
@@ -20,60 +28,80 @@ def convert_files(fn):
     # way, but I'm in a hurry.
     basename = Counter(call.split('/')).most_common(1)[0][0]
 
+    orphans = [{}, {}]
+
     outname_r1 = path.join(
         #'/data3/fly/data/species_embryo/slice_carriers/',
         'carrier_fastqs2',
-        basename+ '_R1.fastq')
+        basename+ '_R1')
     print("Converting {} to {}".format(fn, outname_r1))
-    outname_r2 = outname_r1.replace('_R1.', '_R2.')
+    outname_r2 = outname_r1.replace('_R1', '_R2')
+    outname_orphans = outname_r1.replace('_R1', '_orphans')
     fn2 = [f for f in glob(path.join(path.dirname(fn), 'ambig_d*.bam'))
            if 'mel' not in f][0]
     print(fn2)
     # Uncomment next line to just list files
     #continue
-    outfile_r1 = gzip.GzipFile(outname_r1+'.gz', 'wb')
-    outfile_r2 = gzip.GzipFile(outname_r2+'.gz', 'wb')
+    outfile_r1 = gzip.GzipFile(outname_r1+'.fastq.gz', 'wb')
+    outfile_r2 = gzip.GzipFile(outname_r2+'.fastq.gz', 'wb')
+    outfile_orphans = gzip.GzipFile(outname_orphans+'.fastq.gz', 'wb')
     for read in sf:
-        outfile = [outfile_r1, outfile_r2][read.is_read2]
-        outfile.write('@{}/{}\n{}\n+\n{}\n'
-                      .format(read.qname,
-                              [1,2][read.is_read2],
-                              read.seq,
-                              read.qual))
-
+        orphans[read.is_read2][read.qname] = read
+        if read.qname in orphans[0] and read.qname in orphans[1]:
+            fastq_write(outfile_r1, orphans[0].pop(read.qname))
+            fastq_write(outfile_r2, orphans[1].pop(read.qname))
+                       
     outfile_r1.close()
     outfile_r2.close()
+
+    while orphans[0]:
+        fastq_write(outfile_orphans, orphans[0].popitem()[1])
+    while orphans[1]:
+        fastq_write(outfile_orphans, orphans[1].popitem()[1], force_r1=True)
+    outfile_orphans.close()
+
 
     sf2 = Samfile(fn2)
     outfile_r1 = gzip.GzipFile(outname_r1+'_ambig.fastq.gz', 'wb')
     outfile_r2 = gzip.GzipFile(outname_r2+'_ambig.fastq.gz', 'wb')
+    outfile_orphans = gzip.GzipFile(outname_orphans+'_ambig.fastq.gz', 'wb')
     for read in sf2:
-        outfile = [outfile_r1, outfile_r2][read.is_read2]
-        outfile.write('@{}/{}\n{}\n+\n{}\n'
-                      .format(read.qname,
-                              [1,2][read.is_read2],
-                              read.seq,
-                              read.qual))
+        orphans[read.is_read2][read.qname] = read
+        if read.qname in orphans[0] and read.qname in orphans[1]:
+            fastq_write(outfile_r1, orphans[0].pop(read.qname))
+            fastq_write(outfile_r2, orphans[1].pop(read.qname))
+                       
+    outfile_r1.close()
+    outfile_r2.close()
 
     outfile_r1.close()
     outfile_r2.close()
 
+    while orphans[0]:
+        fastq_write(outfile_orphans, orphans[0].popitem()[1])
+    while orphans[1]:
+        fastq_write(outfile_orphans, orphans[1].popitem()[1], force_r1=True)
+    outfile_orphans.close()
+
     if path.exists(path.join(path.dirname(fn), 'unmapped.bam')):
         outfile_r1 = gzip.GzipFile(outname_r1+'_unmapped.fastq.gz', 'wb')
         outfile_r2 = gzip.GzipFile(outname_r2+'_unmapped.fastq.gz', 'wb')
+        outfile_orphans = gzip.GzipFile(outname_orphans+'_unmapped.fastq.gz', 'wb')
         sf3 = Samfile(path.join(path.dirname(fn), 'unmapped.bam'))
         for read in sf3:
-            outfile = [outfile_r1, outfile_r2][read.is_read2]
-            outfile.write('@{}/{}\n{}\n+\n{}\n'
-                          .format(read.qname,
-                                  [1,2][read.is_read2],
-                                  read.seq,
-                                  read.qual))
-
+            orphans[read.is_read2][read.qname] = read
+            if read.qname in orphans[0] and read.qname in orphans[1]:
+                fastq_write(outfile_r1, orphans[0].pop(read.qname))
+                fastq_write(outfile_r2, orphans[1].pop(read.qname))
 
         outfile_r1.close()
         outfile_r2.close()
 
+        while orphans[0]:
+            fastq_write(outfile_orphans, orphans[0].popitem()[1])
+        while orphans[1]:
+            fastq_write(outfile_orphans, orphans[1].popitem()[1], force_r1=True)
+        outfile_orphans.close()
 
 if __name__ == "__main__":
     fns = [f for f in glob('analysis-multi/*/assigned*.bam') if 'mel' not in f]
