@@ -7,13 +7,15 @@ noted) is released under the CRAPL v0 license.  Please contact me direclty
 (peter.combs@berkeley.edu) for any data I've generated, as it's most likely too
 large to fit on github anyways.
 
-The Fall2012 Branch is used for RNA-seq analysis of sliced single _Drosophila_
-embryos, in particular for the submission of the paper "Sequencing mRNA from
-cryo-siced _Drosophila_ embryos to determine genome-wide spatial patterns of
-gene expression".  With the right configuration and data files[\*], everything from
-raw reads to final figures should be able to be accomplished with a run of
+The Fall2012 and Spring2013 branches are used for RNA-seq analysis of sliced
+single _Drosophila melanogaster_ embryos, in particular for the submission of
+the paper "Sequencing mRNA from cryo-siced _Drosophila_ embryos to determine
+genome-wide spatial patterns of gene expression".  With the right configuration
+and data files[\*], everything from raw reads to final figures should be able
+to be accomplished with a run of
 
-    $ python do_research.py
+    $ ./configure
+	$ make
 
 The data for that paper is available at the Gene Expression Omnibus, under
 accession GSE43506
@@ -25,8 +27,6 @@ accession GSE43506
  * `RunConfig.cfg` A tab-delimited file indicating, for each sample, the carrier
    species and sequencing index, among other statistics.  Please contact me for
    my copy if there's any trouble
- * `analysis-multi/design.tab` A file indicating which samples are to be pooled
-   together as replicates in cuffdiff.
  * `fig2_list.txt` A list of genes for making the table comparing FlyExpress
    thumbnails to the sliced expression patterns.
 
@@ -85,40 +85,12 @@ variables.  Example usage:
 which loads all of the data from the first timepoint with Bicoid into the
 bcddata list.
 
-RNA\_prot\_corr.py
-------------------
-Calculates the correlation coefficient between RNA and protein expression
-levels for different time points in the BDTNP virtual embryos.  As of
-09/23/2011, this contains attempts to see whether taking account for diffusion
-improves the corerlation at all (hint: it doesn't, but it doesn't make it much
-worse, either).
-
-MatchSlices.py
+BayesMatch.py
 --------------
 This takes RNA-seq data from slices of drosophila embryos and attempts to find
 the location in a BDTNP virtual embryo that has the best (Speaman) correlation
 to that slice.
 
-
-do\_tux.py
----------
-
-This is an automated script I first wrote to run the Tuxedo suite (tophat,
-bowtie, and cufflinks; http://www.cbcb.umd.edu/software/) of bioinformatics
-tools on a couple of RNA-seq runs that I did almost literally right before the
-2011 Drosophila Conference.
-
-All of the modifications to get it to work on a separate data set should be
-below the first line of #'s, and all of the installation-specific software
-calls below the second line of #'s. Some day I'll use optparse or argparse to
-make these configurable options, but that day is not today.
-
-Other than those lines, it expects the following:
-
- * Two FASTQ files corresponding to the reads (any name should work)
-
- * A number of files with names matching  Genes\*.txt, containing lists of genes
-   to plot on the loglog graph.
 
 FB2name.py
 ----------
