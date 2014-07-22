@@ -76,7 +76,7 @@ if args.has_params:
     params = pandas.read_table(has_params,
                                comment='#',
                                converters={'Label':str},
-                               keep_default_na=False, na_values='-'
+                               keep_default_na=False, na_values='---'
                               ).drop_duplicates(cols=['Label'])
     params.set_index('Label', inplace=True)
     params = params.dropna(how='any')
