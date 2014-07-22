@@ -16,8 +16,10 @@ I'm attempting to use a makefile as much as possible (See, for example, [this
 blog
 post](http://www.bioinformaticszen.com/post/decomplected-workflows-makefiles/)).
 Thus, to do "everything", for some minimal definition of "everything", simply
-run: $ make
+run: 
 
+    $ ./configure
+	$ make
 
 Dependencies
 ------------
