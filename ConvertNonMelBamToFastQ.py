@@ -50,7 +50,7 @@ def convert_files(fn):
         if read.qname in orphans[0] and read.qname in orphans[1]:
             fastq_write(outfile_r1, orphans[0].pop(read.qname))
             fastq_write(outfile_r2, orphans[1].pop(read.qname))
-                       
+
     outfile_r1.close()
     outfile_r2.close()
 
@@ -70,7 +70,7 @@ def convert_files(fn):
         if read.qname in orphans[0] and read.qname in orphans[1]:
             fastq_write(outfile_r1, orphans[0].pop(read.qname))
             fastq_write(outfile_r2, orphans[1].pop(read.qname))
-                       
+
     outfile_r1.close()
     outfile_r2.close()
 
@@ -114,7 +114,7 @@ if __name__ == "__main__":
 
     import multiprocessing as mp
 
-    p = mp.Pool(10)
+    p = mp.Pool(20)
     p.map(convert_files, fns)
     #for the_fn in fns:
         #convert_files(the_fn)
