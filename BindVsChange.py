@@ -14,18 +14,18 @@ for i, row in zldbind.iterrows():
 assert not zldbind.TSS_gene[0].startswith(' ')
 
 wt_exp = pd.read_table('prereqs/WT5.53_summary.tsv', index_col=0)
-zld_exp = pd.read_table('analysis/summary.tsv', index_col=0)
+zld_exp = pd.read_table('analysis/summary_merged.tsv', index_col=0)
 wt_exp.sort_index(inplace=True)
 zld_exp.sort_index(inplace=True)
-assert (wt_exp.index == zld_exp.index).all()
+assert np.all(wt_exp.index == zld_exp.index)
 
-wt_14 =  wt_exp .select(lambda x: x.startswith('cyc14A'), axis=1)
-zld_14 = zld_exp.select(lambda x: x.startswith('cyc14A'), axis=1)
+wt_14 =  wt_exp .select(lambda x: x.startswith('cyc14A'), axis=1)+.1
+zld_14 = zld_exp.select(lambda x: x.startswith('cyc14A'), axis=1)+.1
 
 pbar = pb.ProgressBar()
 diffs = pd.Series(index=wt_exp.index)
 for gene in pbar(diffs.index):
-    metric = DistributionDifference.diff_stat
+    metric = DistributionDifference.earth_mover
     diffs[gene] = metric(wt_14.ix[gene], zld_14.ix[gene])
 
 diffs.sort()
@@ -62,8 +62,10 @@ mpl.figure()
 mpl.semilogx(xs, ys)
 mpl.xlabel('Difference metric: ' + metric.__name__)
 mpl.ylabel('$P_{zld bind}$')
+mpl.savefig('analysis/results/PbindVsEMD.png')
 
 mpl.figure()
 mpl.semilogx(xs2, ys2)
 mpl.xlabel('Difference metric: ' + metric.__name__)
 mpl.ylabel(quartile + 'quartile')
+mpl.savefig('analysis/results/QuartileVsEMD.png')
