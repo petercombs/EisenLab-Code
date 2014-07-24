@@ -1,3 +1,19 @@
+from matplotlib.pyplot import (figure, plot, title, yticks, xticks, savefig,
+                               subplot)
+from numpy import linspace, shape, all
+import pandas as pd
+
+startswith = lambda y: lambda x: x.startswith(y)
+
+wt_exp = pd.read_table('prereqs/WT5.53_summary.tsv',
+                       na_values='-', keep_default_na=False)
+zld_exp = pd.read_table('analysis/summary_merged.tsv',
+                       na_values='-', keep_default_na=False)
+
+wt_exp.sort_index(inplace=True)
+zld_exp.sort_index(inplace=True)
+assert(all(wt_exp.index == zld_exp.index))
+
 gl = {line.strip() for line in open('prereqs/mikezyg.txt')}
 figure()
 wt_embs = set(column.split('_sl')[0] for column in wt_exp.columns)
