@@ -3,10 +3,10 @@ import pandas as pd
 import numpy as np
 from matplotlib.pyplot import (clf, plot, xlabel, ylabel, savefig)
 
-zld = pd.read_table("analysis/summary_merged.tsv", index_col=0, 
+zld = pd.read_table("analysis/summary_merged.tsv", index_col=0,
                                         na_values='-', keep_default_na=False)
 
-wt = pd.read_table("prereqs/WT5.53_summary.tsv", index_col=0, 
+wt = pd.read_table("prereqs/WT5.57_summary.tsv", index_col=0,
                                         na_values='-', keep_default_na=False)
 
 contains = lambda y: lambda x: y in x
@@ -26,7 +26,7 @@ for i in emds1_2.index:
     if max(rep1.ix[i]) > 1 or max(rep2.ix[i]) > 1:
         emds1_2.ix[i] = emd(linspace(0,1,len(rep1.columns), endpoint=True),
                             linspace(0,1,len(rep2.columns), endpoint=True),
-                            rep1.ix[i]/sum(rep1.ix[i]+.001)+.001, 
+                            rep1.ix[i]/sum(rep1.ix[i]+.001)+.001,
                             rep2.ix[i]/sum(rep2.ix[i]+.001)+.001,
                            )
 
@@ -34,14 +34,14 @@ for i in emds2_3.index:
     if max(rep2.ix[i]) > 1 or max(rep3.ix[i]) > 1:
         emds2_3.ix[i] = emd(linspace(0,1,len(rep2.columns), endpoint=True),
                             linspace(0,1,len(rep3.columns), endpoint=True),
-                            rep2.ix[i]/sum(rep2.ix[i]+.001)+.001, 
+                            rep2.ix[i]/sum(rep2.ix[i]+.001)+.001,
                             rep3.ix[i]/sum(rep3.ix[i]+.001)+.001,
                            )
 for i in emds1_2.index:
     if max(rep1.ix[i]) > 1 or max(rep3.ix[i]) > 1:
         emds1_3.ix[i] = emd(linspace(0,1,len(rep1.columns), endpoint=True),
                             linspace(0,1,len(rep3.columns), endpoint=True),
-                            rep1.ix[i]/sum(rep1.ix[i]+.001)+.001, 
+                            rep1.ix[i]/sum(rep1.ix[i]+.001)+.001,
                             rep3.ix[i]/sum(rep3.ix[i]+.001)+.001,
                            )
 print median(emds1_2.dropna())
@@ -73,8 +73,8 @@ ys = []
 print "figuring out plot"
 for i in range(0, len(allEMDsg), bin):
     xs.append( mean(allEMDsg.ix[i:i+bin]))
-    ys.append(100.0 * sum(i in zld_bind 
-                          for i in allEMDsg.index[i:i+bin]) 
+    ys.append(100.0 * sum(i in zld_bind
+                          for i in allEMDsg.index[i:i+bin])
               / len(allEMDsg.index[i:i+bin]))
 
 
