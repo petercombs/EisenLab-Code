@@ -46,7 +46,7 @@ def PlotSet(theset, wt, zld,
         is_zyg = mean(w14B, axis=1) < mean(w11, axis=1)
         myset.difference_update(is_zyg[is_zyg].index)
 
-    normer = (wt.select(startswith(normstage), axis=1).mean(axis=1))
+    normer = (wt.select(startswith(normstage), axis=1).mean(axis=1))/100.
 
     max_val = 0
     figure(figsize=(16,12))
@@ -112,5 +112,7 @@ def PlotSet(theset, wt, zld,
         ylim(0, max_val)
     subplot(1,4,1)
     legend(numpoints=1)
+    ylabel('% of average expression at ' + normstage)
+
     if outfn:
         savefig(outfn)
