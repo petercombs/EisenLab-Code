@@ -4,7 +4,6 @@ import pandas as pd
 from os import path
 from glob import glob
 from collections import defaultdict
-from sys import argv
 
 tophat_str = ('$(ANALYSIS_DIR)/{label}/accepted_hits.bam: '
               ' {rfs} '
@@ -17,10 +16,13 @@ tophat_str = ('$(ANALYSIS_DIR)/{label}/accepted_hits.bam: '
               '--output-dir $(ANALYSIS_DIR)/{label}/ '
               '--transcriptome-index Reference/{genome}/transcriptome '
               '--transcriptome-only '
+              # No need to sort automatically, for compatibility with
+              # the STAR-based pipeline
+              '--no-sort-bam '
               '--b2-sensitive '
               '--num-threads 12 '
               'Reference/{genome} '
-              '{rf1} {rf2}\n') 
+              '{rf1} {rf2}\n')
 star_str = ('$(ANALYSIS_DIR)/{label}/accepted_hits.bam: '
             ' {rfs} '
             ' Reference/{genome}/Genome '
@@ -54,7 +56,7 @@ def parse_arguments():
         import sys
         sys.stderr.write('Unrecognized mapper: "{}". \n'
                          'Valid options are: {}\n'
-                         .format(args.mapper, 
+                         .format(args.mapper,
                                  ', '.join(mappers)))
         sys.exit(1)
     return args
@@ -79,14 +81,12 @@ targets_all = ' '.join(path.join('$(ANALYSIS_DIR)',
 out.write("FPKMS = {} {} \n".format(targets, targets_all))
 
 reads = defaultdict(lambda : ([], []))
-carriers = defaultdict(list)
-carrier_species = {}
+sample_species = {}
 for i, row in config_file.iterrows():
     label = row['Label']
     index = row['Index']
     mbepc = int(row['MBEPC'])
-    carrier = row['CarrierID']
-    species = row['CarrierSpecies']
+    species = row['SampleSpecies']
     glob_spec = ('{seqdir}/*/*{label}*/*_{{read}}_*.fastq*'
                .format(seqdir=args.seqdir, label=label, index=index, id=mbepc))
     rf1 = glob(glob_spec.format(read='R1'))
@@ -104,8 +104,7 @@ for i, row in config_file.iterrows():
 
     reads[label][0].extend(sorted(rf1))
     reads[label][1].extend(sorted(rf2))
-    carriers[label].append(carrier)
-    carrier_species[label] = species
+    sample_species[label] = species
 
 for label in reads:
     reads1, reads2 = reads[label]
@@ -116,38 +115,5 @@ for label in reads:
                      rf2=','.join(reads2),
                      rfs=' '.join(reads1 + reads2),
                      label=label,
-                     genome='Dmel' + carrier_species[label],
+                     genome=sample_species[label],
                     ))
-    out.write('$(ANALYSIS_DIR)/{label}/{yeast}.bam:  '
-              '$(ANALYSIS_DIR)/{label}/assigned_scer.bam\n'
-              '\t@echo {yeast} \n'
-              # Sort
-              '\tsamtools sort $(ANALYSIS_DIR)/{label}/assigned_scer.bam '
-              ' $(ANALYSIS_DIR)/{label}/assigned_scer_sorted \n'
-              # Make new header
-              "\tsamtools view -H $(ANALYSIS_DIR)/{label}/assigned_scer.bam"
-              " | grep -Pv 'SN:(?!scer)' "
-              " | python ReheaderYeast.py "
-              " > $(ANALYSIS_DIR)/{label}/cer_only.header.sam\n"
-              # Apply new header e.g.
-              # samtools view analysis/ZE15/assigned_scer_sorted.bam \
-              #  | cat analysis/ZE15/cer_only.header.sam - \
-              #  | samtools view -bS -o analysis/ZE15/Y22.bam -
-              "\tsamtools view $(ANALYSIS_DIR)/{label}/assigned_scer_sorted.bam"
-              " | python ReheaderYeast.py "
-              " | cat  $(ANALYSIS_DIR)/{label}/cer_only.header.sam -"
-              " | samtools view -bS -o $@ - \n"
-              # Remove temporary
-              "\t rm $(ANALYSIS_DIR)/{label}/assigned_scer_sorted.bam\n"
-              .format(label=label, yeast='+'.join(carriers[label])))
-
-
-yeasts = ' '.join(path.join('$(ANALYSIS_DIR)',
-                            label,
-                            '+'.join(carriers)+'.bam')
-                  for label, carriers in carriers.iteritems())
-
-out.write("yeasts : " + yeasts +
-          "\n\ttar -cvf $(ANALYSIS_DIR)/yeast.tar "
-          + yeasts +
-          "\n\t@echo 'Done making yeast'\n")
