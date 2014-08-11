@@ -6,7 +6,7 @@ STARCONFIG = Parameters/STAR_params.in
 ANALYSIS_DIR = analysis
 
 # Reference FASTA and GFF files from FlyBase and SGD
-MELRELEASE = r5.55_FB2014_01
+MELRELEASE = r6.01_FB2014_04
 MELVERSION = $(word 1, $(subst _FB, ,$(MELRELEASE)))
 MELDATE = $(word 2, $(subst _FB, ,$(MELRELEASE)))
 
@@ -90,5 +90,8 @@ $(REFDIR) :
 	mkdir $@
 
 $(REFDIR)/Dmel:
-	bowtie2-build --offrate 1 $(MELFASTA) $@
+	bowtie2-build --offrate 1 $(MELFASTA2) $@
+	mkdir $@
 
+$(MELFASTA2): $(MELFASTA)| $(REFDIR)
+	perl -pe 's/>/>dmel_/' $(MELFASTA) > $@
