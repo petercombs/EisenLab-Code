@@ -42,14 +42,12 @@ FlyBase/FlyBase.tgz: analysis/summary_flybase.tsv | FlyBase FlyBase/imgs
 	tar -cvzf FlyBase/FlyBase.tgz \
 		FlyBase/imgs FlyBase/versions.txt FlyBase/summary_flybase.tsv
 
-analysis/summary_flybase.tsv:
-	if [ -a analysis/summary.tsv]; \
-		then mv analysis/summary.tsv analysis/tmptmptmp.tmp; fi;
-	python MakeSummaryTable.py --params $(RUNCONFIG) --key tracking_id \
+$(ANALYSIS_DIR)/summary_flybase.tsv: $(FPKMS) $(RUNCONFIG) | $(ANALYSIS_DIR)
+	python MakeSummaryTable.py \
+		--params $(RUNCONFIG) \
+		--out-basename summary_flybase \
+		--key tracking_id \
 		$(ANALYSIS_DIR)
-	mv analysis/summary.tsv analysis/summary_flybase.tsv
-	if [ -a analysis/tmptmptmp.tmp]; \
-		then mv analysis/tmptmptmp.tmp analysis/summary.tsv; fi;
 
 
 FlyBase:

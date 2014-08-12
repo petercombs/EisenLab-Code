@@ -7,7 +7,6 @@ the data as a CSV file.  Arguments:
 
 """
 import pandas
-import os
 from os import path
 from glob import glob
 from sys import argv
@@ -41,6 +40,11 @@ def parse_args():
     parser.add_argument('--no-header', dest='header', action='store_false',
                         default=True,
                         help='No header line in the file')
+    parser.add_argument('--out-basename', '-o', dest='basefile',
+                        default='summary',
+                        help='The base of the output filename to which'
+                        ' modifiers may be appended depending on options'
+                        '(defaults to "summary")')
     parser.add_argument('basedir',
                         help='The directory containing directories, which '
                         'contain genes.fpkm_tracking files')
@@ -126,7 +130,7 @@ for fname in sorted(fnames):
 
 
 df.sort_index(axis=1).to_csv(path.join(args.basedir,
-                                       'summary'
+                                       args.basefile
                                        + ('_in_{}'.format(args.in_subdirectory)
                                           * bool(args.in_subdirectory) )
                                        + ('_with_conf' * args.conf)
