@@ -29,8 +29,20 @@ star_str = ('$(ANALYSIS_DIR)/{label}/accepted_hits.bam: '
             '--genomeDir Reference/{genome} '
             '--outFileNamePrefix $(ANALYSIS_DIR)/{label}/ '
             '--readFilesIn {rf1} {rf2}\n'
+            '''\tawk 'BEGIN {{OFS="\\t"}} \\
+\t                          {{split($$6,C,/[0-9]*/); \\
+\t                           split($$6,L,/[SMDIN]/); \\
+\t                           if (C[2]=="S") {{$$10=substr($$10,L[1]+1); \\
+\t                                                  $$11=substr($$11,L[1]+1)}}; \\
+\t                           if (C[length(C)]=="S") {{L1=length($$10)-L[length(L)-1]; \\
+\t                                   $$10=substr($$10,1,L1); $$11=substr($$11,1,L1); }}; \\
+\t                           gsub(/[0-9]*S/,"",$$6); \\
+\t                           print \\
+\t                          }}' \\
+\t           $(ANALYSIS_DIR)/{label}/Aligned.out.sam > $(ANALYSIS_DIR)/{label}/Aligned.noS.sam \n'''
             '\tsamtools view -bS -o $(ANALYSIS_DIR)/{label}/accepted_hits.bam'
-            ' $(ANALYSIS_DIR)/{label}/Aligned.out.sam\n'
+            ' $(ANALYSIS_DIR)/{label}/Aligned.noS.sam\n'
+            '\trm $(ANALYSIS_DIR)/{label}/Aligned.noS.sam\n'
             '\trm $(ANALYSIS_DIR)/{label}/Aligned.out.sam\n')
 
 mappers = {'star': star_str, 'tophat' : tophat_str}
