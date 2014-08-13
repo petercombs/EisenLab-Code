@@ -4,7 +4,6 @@ import pandas as pd
 from os import path
 from glob import glob
 from collections import defaultdict
-from sys import argv
 
 tophat_str = ('$(ANALYSIS_DIR)/{label}/accepted_hits.bam: '
               ' {rfs} '

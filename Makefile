@@ -7,7 +7,7 @@ STARCONFIG = Parameters/STAR_params.in
 ANALYSIS_DIR = analysis
 
 # Reference FASTA and GFF files from FlyBase and SGD
-MELRELEASE = r5.57_FB2014_03
+MELRELEASE = r6.01_FB2014_04
 VIRRELEASE = r1.2_FB2012_01
 MELVERSION = $(word 1, $(subst _FB, ,$(MELRELEASE)))
 VIRVERSION = $(word 1, $(subst _FB, ,$(VIRRELEASE)))
@@ -39,9 +39,9 @@ MELVIRGTF_FILT= $(REFDIR)/melvir_withgenename.gtf
 MELVIRFASTA=$(REFDIR)/melvir.fa
 
 
-all : $(ANALYSIS_DIR)/summary.tsv 
+all : $(ANALYSIS_DIR)/summary.tsv
 
-genomes: Reference/DmelDwil/Genome Reference/DmelDvir/Genome Reference/DmelDper/Genome Reference/DmelDmoj/Genome
+genomes: Reference/DmelScer/Genome Reference/DmelTdel/Genome
 	echo "Genomes Made"
 
 
@@ -49,7 +49,7 @@ genomes: Reference/DmelDwil/Genome Reference/DmelDvir/Genome Reference/DmelDper/
 include config.make
 include analyze.make
 
-.SECONDARY: 
+.SECONDARY:
 
 $(ANALYSIS_DIR) :
 	mkdir $(ANALYSIS_DIR)
@@ -61,7 +61,8 @@ $(ANALYSIS_DIR)/summary.tsv : MakeSummaryTable.py $(FPKMS) $(RUNCONFIG) | $(ANAL
 	python MakeSummaryTable.py \
 		--params $(RUNCONFIG) \
 		--strip-low-reads 100000 \
-		$(ANALYSIS_DIR) 
+		$(ANALYSIS_DIR)
+
 
 %/genes.fpkm_tracking : %/assigned_dmelR.bam $(MELGTF) $(MELFASTA2)
 	@echo '============================='
