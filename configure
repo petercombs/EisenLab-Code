@@ -91,7 +91,7 @@ for i, row in config_file.iterrows():
                .format(seqdir=args.seqdir, label=label, index=index, id=mbepc))
     rf1 = glob(glob_spec.format(read='R1'))
     if rf1 == []:
-        glob_spec = ('{seqdir}/*{id}*{index}*/*_{{read}}*.fastq*'
+        glob_spec = ('{seqdir}/*{index}*/*_{{read}}*.fastq*'
                     .format(seqdir=args.seqdir, label=label, index=index,
                             id=mbepc))
         rf1 = glob(glob_spec.format(read='R1'))
