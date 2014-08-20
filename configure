@@ -78,7 +78,7 @@ targets_all = ' '.join(path.join('$(ANALYSIS_DIR)',
                              'genes.fpkm_tracking')
                    for label in config_file['Label'])
 
-out.write("FPKMS = {} {} \n".format(targets, targets_all))
+out.write("FPKMS = {}  \n".format(targets))
 
 reads = defaultdict(lambda : ([], []))
 sample_species = {}
