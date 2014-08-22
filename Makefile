@@ -43,6 +43,8 @@ $(ANALYSIS_DIR)/summary.tsv : MakeSummaryTable.py $(FPKMS) $(RUNCONFIG) | $(ANAL
 	@echo '============================='
 	python MakeSummaryTable.py \
        --params $(RUNCONFIG) \
+	   --strip-low-reads 1000000 \
+	   --mapped-bamfile accepted_hits_sorted.bam \
 		$(ANALYSIS_DIR)
 
 %/genes.fpkm_tracking : %/accepted_hits_sorted.bam $(MELGTF) $(MELFASTA2)
