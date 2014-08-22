@@ -246,7 +246,7 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
         else:
             norm_data = frame.divide(normer, axis=0)
 
-        if not c_cmap:
+        if not c_cmap or str(c_cmap).lower() == 'default':
             c_cmap=ISH
 
         new_rows, new_cols = np.shape(frame)
