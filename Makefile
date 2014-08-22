@@ -21,6 +21,8 @@ ORTHOLOGS = prereqs/gene_orthologs_fb_$(MELDATE).tsv
 MELGFF   = prereqs/dmel-all-$(MELVERSION).gff
 MELGTF   = $(REFDIR)/mel_good.gtf
 
+GENEMAPTABLE = gene_map_table_fb_$(MELDATE).tsv
+
 
 all : $(ANALYSIS_DIR)/summary.tsv
 
@@ -37,7 +39,7 @@ include analyze.make
 $(ANALYSIS_DIR) :
 	mkdir $(ANALYSIS_DIR)
 
-$(ANALYSIS_DIR)/summary.tsv : MakeSummaryTable.py $(FPKMS) $(RUNCONFIG) | $(ANALYSIS_DIR)
+$(ANALYSIS_DIR)/summary.tsv : MakeSummaryTable.py $(FPKMS) $(RUNCONFIG) Makefile | $(ANALYSIS_DIR)
 	@echo '============================='
 	@echo 'Making summary table'
 	@echo '============================='
@@ -97,3 +99,10 @@ $(REFDIR)/Dmel:
 
 $(MELFASTA2): $(MELFASTA)| $(REFDIR)
 	perl -pe 's/>/>dmel_/' $(MELFASTA) > $@
+
+$(GENEMAPTABLE):
+	wget ftp://ftp.flybase.net/releases/$(MELDATE)/precomputed_files/genes/$(GENEMAPTABLE).gz \
+		-O $(GENEMAPTABLE).gz
+	gunzip $(GENEMAPTABLE).gz
+
+
