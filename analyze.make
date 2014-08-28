@@ -19,3 +19,55 @@ analysis/results:
 
 Reference/unmapped:
 	mkdir $@
+
+
+BDTNPVER=2.1
+prereqs/current_bdtnp:
+	wget -O prereqs/current_bdtnp.tgz http://bdtnp.lbl.gov/Fly-Net/archives/chipper/BDTNP_in_vivo_binding_Release.$(BDTNPVER).tar.gz
+	tar -xzf prereqs/current_bdtnp.tgz
+	cp -r prereqs/BDTNP_in_vivo_binding_Release.$(BDTNPVER)/Supplemental_Tables/ $@
+
+
+Reference/bcd_peaks: prereqs/current_bdtnp
+	cat prereqs/current_bdtnp/bcd* \
+		| awk 'NR > 1 {print $$2":"$$6}' \
+		> /tmp/bcd_peaks
+	echo 'OldPeak	NewPeak' > $@
+	curl -L  'http://flybase.org/cgi-bin/coord_converter.html' \
+		-H 'Referer: http://flybase.org/static_pages/downloads/COORD.html' \
+		-F species=dmel \
+		-F inr=4\
+		-F outr=6\
+		-F saveas=File\
+		-F ids="" \
+		-F idfile="@/tmp/bcd_peaks" \
+		-F .submit=Go \
+		| grep -v '?' \
+		>> $@
+
+
+Reference/zld_peaks: prereqs/journal.pgen.1002266.s005.xls
+	perl -pe 's//\n/g' $< \
+		| awk 'NR > 2 {print $$2":"$$5}' \
+		> /tmp/zld_peaks
+	echo 'OldPeak	NewPeak' > $@
+	curl -L  'http://flybase.org/cgi-bin/coord_converter.html' \
+		-H 'Referer: http://flybase.org/static_pages/downloads/COORD.html' \
+		-F species=dmel \
+		-F inr=5\
+		-F outr=6\
+		-F saveas=File\
+		-F ids="" \
+		-F idfile="@/tmp/zld_peaks" \
+		-F .submit=Go \
+		| grep -v '?' \
+		>> $@
+
+Reference/tss: $(MELGTF)
+	cat $< \
+		| python FindTSSs.py \
+		| rev \
+		| uniq -f 1 \
+		| rev \
+		> $@
+
