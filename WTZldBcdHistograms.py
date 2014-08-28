@@ -2,10 +2,13 @@ from __future__ import print_function, division
 import pandas as pd
 import matplotlib.pyplot as mpl
 from numpy import arange
-from os.path import join
 import DistributionDifference as DD
+from bisect import bisect
+
 
 read_table_args = dict(keep_default_na=False, na_values='---', index_col=0)
+
+bind_dist = 1000
 
 try:
     wt = locals()['wt']
@@ -13,38 +16,48 @@ except KeyError:
     wt = pd.read_table('prereqs/WT6.01.summary.tsv', **read_table_args)
     zld = pd.read_table('prereqs/Zld6.01.summary_merged.tsv', **read_table_args)
     bcd = pd.read_table('analysis/summary.tsv', **read_table_args)
+    bcd = bcd.dropna(how='all', axis=1)
 
 try:
-    zld_bind = locals()['zld_bind']
-except:
-    zldbind = pd.read_table('prereqs/journal.pgen.1002266.s005.xls', skiprows=1)
-    has_zld = set(item.strip() for item in zldbind.TSS_gene)
-
-binding_directory = "prereqs/BDTNP_in_vivo_binding_Release.2.1/Supplemental_Tables"
-
-try:
-    mapping = locals()['mapping']
-
+    tss_dict = locals()['tss_dict']
 except KeyError:
-    mapping = pd.read_table('prereqs/gene_map_table_fb_2014_04.tsv', skiprows=5)
+    from collections import defaultdict
+    tss_dict = defaultdict(list)
+    for i, row in pd.read_table('Reference/tss').iterrows():
+        tss_dict[row['chr'].replace('dmel_', '')].append((row['TSS_start'], row['gene_name']))
 
-    print("Reading in mapping table...")
-    fbgn_to_name = {row['primary_FBid'] : row['##current_symbol']
-                    for i, row in mapping.iterrows()}
-    name_to_fbgn = {row['##current_symbol']: row['primary_FBid']
-                    for i, row in mapping.iterrows()}
-    print("...done")
+    for chrom in tss_dict.itervalues():
+        chrom.sort()
 
-try:
-    has_bcd = locals()['has_bcd']
-except KeyError:
-    from glob import glob
-    bcd_bind_files = glob(join(binding_directory, 'bcd*'))
-    has_bcd = {fbgn_to_name[row.split()[-2]]
-               for fname in bcd_bind_files
-               for row in open(fname)
-               if row.split()[-2] in fbgn_to_name
-              }
+def find_near(chrom, coord, dist):
+    out = set()
+    center = bisect([i[0] for i in chrom], coord)
+    for (coord2, gene) in reversed(chrom[:center]):
+        if coord - coord2 > dist: break
+        out.add(gene)
+
+    for (coord2, gene) in chrom[center:]:
+        if coord2 - coord > dist: break
+        out.add(gene)
+
+    return out
+
+
+
+
+zld_bind = pd.read_table('Reference/zld_peaks')
+has_zld = set()
+for coord in zld_bind.NewPeak:
+    chr, coord = coord.split(':')
+    has_zld.update(find_near(tss_dict[chr], int(coord), bind_dist))
+
+bcd_bind = pd.read_table('Reference/bcd_peaks')
+has_bcd = set()
+for coord in bcd_bind.NewPeak:
+    chr, coord = coord.split(':')
+    has_bcd.update(find_near(tss_dict[chr], int(coord), bind_dist))
+
+
 
 startswith = lambda x: lambda y: y.startswith(x)
 
