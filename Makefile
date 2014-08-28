@@ -7,6 +7,7 @@ ANALYSIS_DIR = analysis
 
 # Reference FASTA and GFF files from FlyBase and SGD
 MELRELEASE = r6.01_FB2014_04
+MELMAJORVERSION = $(word 1, $(subst ., , $(MELRELEASE)))
 MELVERSION = $(word 1, $(subst _FB, ,$(MELRELEASE)))
 MELDATE = $(word 2, $(subst _FB, ,$(MELRELEASE)))
 
@@ -66,11 +67,11 @@ $(MELGTF): $(MELGFF) | $(REFDIR)
 		grep -vP '(snoRNA|CR[0-9]{4}|Rp[ILS]|mir-|tRNA|unsRNA|snRNA|snmRNA|scaRNA|rRNA|RNA:|mt:)' > \
 		$@
 
-$(MELFASTA): | $(REFDIR)
+$(MELFASTA): $(REFDIR)/$(MELMAJORVERSION) | $(REFDIR)
 	wget -O $@.gz ftp://ftp.flybase.net/genomes/Drosophila_melanogaster/dmel_$(MELRELEASE)/fasta/dmel-all-chromosome-$(MELVERSION).fasta.gz
 	gunzip $@.gz
 
-$(MELGFF): | $(REFDIR)
+$(MELGFF): $(REFDIR)/$(MELVERSION) | $(REFDIR) 
 	wget -O $@.gz ftp://ftp.flybase.net/genomes/Drosophila_melanogaster/dmel_$(MELRELEASE)/gff/dmel-all-$(MELVERSION).gff.gz
 	gunzip $@.gz
 
@@ -97,7 +98,7 @@ $(REFDIR)/Dmel:
 	bowtie2-build --offrate 1 $(MELFASTA2) $@
 	mkdir $@
 
-$(MELFASTA2): $(MELFASTA)| $(REFDIR)
+$(MELFASTA2): $(MELFASTA) | $(REFDIR)
 	perl -pe 's/>/>dmel_/' $(MELFASTA) > $@
 
 $(GENEMAPTABLE):
@@ -105,4 +106,8 @@ $(GENEMAPTABLE):
 		-O $(GENEMAPTABLE).gz
 	gunzip $(GENEMAPTABLE).gz
 
+$(REFDIR)/$(MELVERSION):
+	touch $@
 
+$(REFDIR)/$(MELMAJORVERSION):
+	touch $@
