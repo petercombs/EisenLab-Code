@@ -5,6 +5,7 @@ from numpy import arange
 import DistributionDifference as DD
 from bisect import bisect
 
+cyc_of_interest = 'cyc14D'
 
 read_table_args = dict(keep_default_na=False, na_values='---', index_col=0)
 
@@ -66,27 +67,46 @@ try:
     wt_zld = locals()['wt_zld']
     wt_bcd = locals()['wt_bcd']
 except (KeyError, AssertionError):
-    wt_zld = pd.Series(index=wt.index)
-    wt_bcd = pd.Series(index=wt.index)
-
-
+    wt_zld = pd.Series(index=wt.index
+                       .intersection(zld.index)
+                       .intersection(bcd.index),
+                      data=0)
+    wt_bcd = pd.Series(index=wt_zld.index,
+                      data=0)
 
     print("Calculating Distances")
-    for gene in wt.index.intersection(zld.index):
-        wt_zld.ix[gene] = (DD.earth_mover(wt.ix[gene].select(startswith('cyc14D'))+.01,
-                                          zld.ix[gene].select(startswith('cyc14D'))+.01)
-                          )
+    zld_reps = {col.split('sl')[0]
+                for col in zld.columns
+                if col.startswith(cyc_of_interest)
+               }
+    for zld_rep in zld_reps:
+        print('Calculating distance for ', zld_rep)
+        for gene in wt_zld.index:
+            wt_zld.ix[gene] += (
+                DD.earth_mover(wt.ix[gene].select(startswith(cyc_of_interest))+.01,
+                               zld.ix[gene].select(startswith(zld_rep))+.01)
+            )
+    wt_zld /= len(zld_reps)
 
-    for gene in wt.index.intersection(bcd.index):
-        wt_bcd.ix[gene] = (DD.earth_mover(wt.ix[gene].select(startswith('cyc14D'))+.01,
-                                          bcd.ix[gene].select(startswith('cyc14D_rep1'))+.01)
-                           +DD.earth_mover(wt.ix[gene].select(startswith('cyc14D'))+.01,
-                                           bcd.ix[gene].select(startswith('cyc14D_rep2'))+.01))/2
+    bcd_reps = {col.split('sl')[0]
+                for col in bcd.columns
+                if col.startswith(cyc_of_interest)
+               }
+    for bcd_rep in bcd_reps:
+        print('Calculating distance for ', bcd_rep)
+        for gene in wt_bcd.index:
+            wt_bcd.ix[gene] += (
+                DD.earth_mover(wt.ix[gene].select(startswith(cyc_of_interest))+.01,
+                               bcd.ix[gene].select(startswith(bcd_rep))+.01)
+            )
+    wt_bcd /= len(bcd_reps)
+
+    keep_old = True
 
 
 
 both = wt_zld.dropna().index.intersection(wt_bcd.dropna().index)
-wt14D_hi = wt.select(startswith('cyc14D'), axis=1).max(axis=1) > 3
+wt_hi = wt.select(startswith(cyc_of_interest), axis=1).max(axis=1) > 3
 
 print("Plotting")
 
@@ -107,11 +127,17 @@ cmaps2.index = cmaps.index
 
 mpl.clf()
 mpl.plot([0,1], [0,1], 'r:')
-mpl.scatter(x=wt_zld.ix[both].ix[wt14D_hi],
-            y=wt_bcd.ix[both].ix[wt14D_hi],
-            c=cmaps2.ix[both].ix[wt14D_hi],
+mpl.scatter(x=wt_zld.ix[both].ix[wt_hi],
+            y=wt_bcd.ix[both].ix[wt_hi],
+            c=cmaps2.ix[both].ix[wt_hi],
             marker = '.',
             edgecolors='none',
-            alpha=0.2)
-mpl.xlabel('WT vs Zld'); mpl.ylabel('WT vs Bcd')
-mpl.savefig('analysis/results/WTBcdWTZldCorr.png', dpi=600)
+            alpha=0.999999999)
+mpl.xlabel('WT vs Zld')
+mpl.ylabel('WT vs Bcd')
+mpl.xlim(0, 1)
+mpl.ylim(0, 1)
+mpl.title('{cyc} - {dist:3.1f}kb'
+          .format(cyc=cyc_of_interest,
+                  dist=bind_dist/1000.))
+mpl.savefig('analysis/results/WTBcdWTZldCorr-{}.png'.format(cyc_of_interest), dpi=600)
