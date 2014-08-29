@@ -30,6 +30,8 @@ def parse_args():
     parser.add_argument('--strip-low-reads', '-s', default=0, type=int,
                         help='Remove samples with fewer than N counts (off by'
                         'default')
+    parser.add_argument('--mapped-bamfile', '-b', default='assigned_dmelR.bam',
+                        help='The bam file to look in for mapped reads')
     parser.add_argument('--in-subdirectory', default=None,
                         help='Subdirectory in '
                         'basedir/sample/subdirectory/genes.fpkm_tracking')
@@ -111,7 +113,7 @@ for fname in sorted(fnames):
 
     if args.strip_low_reads:
         from pysam import Samfile
-        sf = Samfile(path.join(alldir, 'assigned_dmelR.bam'))
+        sf = Samfile(path.join(alldir,args.mapped_bamfile))
         if sf.mapped < args.strip_low_reads:
             print "Skipping", dirname
             continue
@@ -135,5 +137,5 @@ df.sort_index(axis=1).to_csv(path.join(args.basedir,
                                           * bool(args.in_subdirectory) )
                                        + ('_with_conf' * args.conf)
                                        + '.tsv'),
-                             sep='\t')
+                             sep='\t', na_rep='---')
 
