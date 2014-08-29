@@ -7,6 +7,7 @@ from bisect import bisect
 from scipy.stats import scoreatpercentile, chi2_contingency
 
 cyc_of_interest = 'cyc14D'
+eps = .1
 
 read_table_args = dict(keep_default_na=False, na_values='---', index_col=0)
 
@@ -84,8 +85,8 @@ except (KeyError, AssertionError):
         print('Calculating distance for ', zld_rep)
         for gene in wt_zld.index:
             wt_zld.ix[gene] += (
-                DD.earth_mover(wt.ix[gene].select(startswith(cyc_of_interest))+.01,
-                               zld.ix[gene].select(startswith(zld_rep))+.01)
+                DD.earth_mover(wt.ix[gene].select(startswith(cyc_of_interest))+eps,
+                               zld.ix[gene].select(startswith(zld_rep))+eps)
             )
     wt_zld /= len(zld_reps)
 
@@ -97,8 +98,8 @@ except (KeyError, AssertionError):
         print('Calculating distance for ', bcd_rep)
         for gene in wt_bcd.index:
             wt_bcd.ix[gene] += (
-                DD.earth_mover(wt.ix[gene].select(startswith(cyc_of_interest))+.01,
-                               bcd.ix[gene].select(startswith(bcd_rep))+.01)
+                DD.earth_mover(wt.ix[gene].select(startswith(cyc_of_interest))+eps,
+                               bcd.ix[gene].select(startswith(bcd_rep))+eps)
             )
     wt_bcd /= len(bcd_reps)
 
