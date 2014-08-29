@@ -8,6 +8,7 @@ ANALYSIS_DIR = analysis
 # Reference FASTA and GFF files from FlyBase and SGD
 MELRELEASE = r6.01_FB2014_04
 VIRRELEASE = r1.2_FB2012_01
+MELMAJORVERSION = $(word 1, $(subst ., , $(MELRELEASE)))
 MELVERSION = $(word 1, $(subst _FB, ,$(MELRELEASE)))
 VIRVERSION = $(word 1, $(subst _FB, ,$(VIRRELEASE)))
 MELDATE = $(word 2, $(subst _FB, ,$(MELRELEASE)))
@@ -34,6 +35,8 @@ MELVIRGTF= $(REFDIR)/melvir.gtf
 MELVIRGTF_FILT= $(REFDIR)/melvir_withgenename.gtf
 MELVIRFASTA=$(REFDIR)/melvir.fa
 
+GENEMAPTABLE = gene_map_table_fb_$(MELDATE).tsv
+
 
 all : $(ANALYSIS_DIR)/summary.tsv 
 
@@ -50,13 +53,15 @@ include analyze.make
 $(ANALYSIS_DIR) :
 	mkdir $(ANALYSIS_DIR)
 
-$(ANALYSIS_DIR)/summary.tsv : MakeSummaryTable.py $(FPKMS) $(RUNCONFIG) | $(ANALYSIS_DIR)
+$(ANALYSIS_DIR)/summary.tsv : MakeSummaryTable.py $(FPKMS) $(RUNCONFIG) Makefile | $(ANALYSIS_DIR)
 	@echo '============================='
 	@echo 'Making summary table'
 	@echo '============================='
 	python MakeSummaryTable.py \
        --params $(RUNCONFIG) \
-		$(ANALYSIS_DIR) 
+	   --strip-low-reads 1000000 \
+	   --mapped-bamfile accepted_hits_sorted.bam \
+		$(ANALYSIS_DIR)
 
 %/genes.fpkm_tracking : %/assigned_dmelR.bam $(MELGTF) $(MELFASTA2)
 	@echo '============================='
@@ -97,11 +102,11 @@ $(VIRGTF): $(VIRGFF) $(ORTHOLOGS) | $(REFDIR)
 		| python FilterOrthologs.py $(ORTHOLOGS) \
 		> $@
 
-$(MELFASTA): | $(REFDIR)
+$(MELFASTA): $(REFDIR)/$(MELMAJORVERSION) | $(REFDIR)
 	wget -O $@.gz ftp://ftp.flybase.net/genomes/Drosophila_melanogaster/dmel_$(MELRELEASE)/fasta/dmel-all-chromosome-$(MELVERSION).fasta.gz
 	gunzip $@.gz
 
-$(MELGFF): | $(REFDIR)
+$(MELGFF): $(REFDIR)/$(MELVERSION) | $(REFDIR) 
 	wget -O $@.gz ftp://ftp.flybase.net/genomes/Drosophila_melanogaster/dmel_$(MELRELEASE)/gff/dmel-all-$(MELVERSION).gff.gz
 	gunzip $@.gz
 
@@ -172,3 +177,14 @@ Reference/DmelDvir:
 	mkdir $@
 Reference/DmelDmoj:
 	mkdir $@
+
+$(GENEMAPTABLE):
+	wget ftp://ftp.flybase.net/releases/$(MELDATE)/precomputed_files/genes/$(GENEMAPTABLE).gz \
+		-O $(GENEMAPTABLE).gz
+	gunzip $(GENEMAPTABLE).gz
+
+$(REFDIR)/$(MELVERSION):
+	touch $@
+
+$(REFDIR)/$(MELMAJORVERSION):
+	touch $@
