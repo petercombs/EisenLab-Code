@@ -1,15 +1,16 @@
 from __future__ import print_function, division
 import pandas as pd
 import matplotlib.pyplot as mpl
-from numpy import arange
+from numpy import arange, array, histogram
 import DistributionDifference as DD
 from bisect import bisect
+from scipy.stats import scoreatpercentile, chi2_contingency
 
 cyc_of_interest = 'cyc14D'
 
 read_table_args = dict(keep_default_na=False, na_values='---', index_col=0)
 
-bind_dist = 1000
+bind_dist = 5000
 
 try:
     wt = locals()['wt']
@@ -122,17 +123,47 @@ for gene in cmaps.index:
     for i, has_bind in enumerate([has_zld, has_bcd]):
             cmaps.ix[gene] += 2**i * (gene in has_bind)
 
+cmaps.sort(ascending=False)
 cmaps2 = colors[cmaps]
 cmaps2.index = cmaps.index
 
+wt_hi = wt_hi.ix[cmaps.index]
+
+yy = scoreatpercentile(wt_bcd, 80)
+xx = scoreatpercentile(wt_zld, 80)
 mpl.clf()
-mpl.plot([0,1], [0,1], 'r:')
-mpl.scatter(x=wt_zld.ix[both].ix[wt_hi],
-            y=wt_bcd.ix[both].ix[wt_hi],
-            c=cmaps2.ix[both].ix[wt_hi],
-            marker = '.',
-            edgecolors='none',
-            alpha=0.999999999)
+
+import matplotlib.path as mpath
+import matplotlib.patches as mpatches
+
+bcd_only = mpath.Path([[0, yy], [xx/2, yy], [.5*(1+xx-yy), 1], [0, 1], [0, yy]])
+zld_only = mpath.Path([[xx, 0], [xx, yy/2], [1, .5*(yy - xx + 1)],
+                       [1, 0], [xx, 0]])
+both_change = mpath.Path([[xx/2, yy], [.5*(1+xx-yy), 1], [1,1],
+                          [1, .5*(yy - xx + 1)], [xx, yy/2], [xx, yy],
+                          [xx/2, yy]])
+
+wt_zld_exp = wt_zld.ix[cmaps.index].ix[wt_hi]
+wt_bcd_exp = wt_bcd.ix[cmaps.index].ix[wt_hi]
+cmaps_exp =  cmaps .ix[cmaps.index].ix[wt_hi]
+
+ax = mpl.gca()
+ax.add_patch(mpatches.PathPatch(bcd_only, facecolor='b', alpha=0.1))
+ax.add_patch(mpatches.PathPatch(zld_only, facecolor='g', alpha=0.1))
+ax.add_patch(mpatches.PathPatch(both_change, facecolor='c', alpha=0.1))
+
+mpl.plot([0,1], [0,1], 'r:', zorder=5)
+mpl.plot([0, xx, xx], [yy, yy, 0], 'k-', zorder=5, alpha=0.4)
+mpl.plot([xx/2, .5*(1+xx-yy)], [yy, 1], 'k:', zorder=5, alpha=0.4)
+mpl.plot([xx, 1], [yy/2, .5*(yy-xx+1)], 'k:', zorder=5, alpha=0.4)
+for c in range(4):
+    mpl.scatter(x=wt_zld.ix[both].ix[wt_hi * (cmaps == c)],
+                y=wt_bcd.ix[both].ix[wt_hi * (cmaps == c)],
+                c=cmaps2.ix[both].ix[wt_hi * (cmaps == c)],
+                marker = '.',
+                edgecolors='none',
+                zorder=c,
+                alpha=0.999999999)
 mpl.xlabel('WT vs Zld')
 mpl.ylabel('WT vs Bcd')
 mpl.xlim(0, 1)
@@ -140,4 +171,18 @@ mpl.ylim(0, 1)
 mpl.title('{cyc} - {dist:3.1f}kb'
           .format(cyc=cyc_of_interest,
                   dist=bind_dist/1000.))
+ax = mpl.gca()
+ax.set_aspect(1)
 mpl.savefig('analysis/results/WTBcdWTZldCorr-{}.png'.format(cyc_of_interest), dpi=600)
+
+
+contingency = array(
+    [histogram(cmaps_exp.ix[bcd_only.contains_points(zip(wt_zld_exp, wt_bcd_exp))],
+               bins=arange(5))[0],
+     histogram(cmaps_exp.ix[zld_only.contains_points(zip(wt_zld_exp, wt_bcd_exp))],
+               bins=arange(5))[0],
+     histogram(cmaps_exp.ix[both_change.contains_points(zip(wt_zld_exp, wt_bcd_exp))],
+               bins=arange(5))[0]])
+
+print(contingency)
+print(chi2_contingency(contingency))
