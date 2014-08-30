@@ -211,3 +211,16 @@ contingency = array(
 
 print(contingency)
 print(chi2_contingency(contingency))
+
+with open('analysis/results/change_bcd.txt', 'w') as outfile:
+    for gene in wt_zld_exp.ix[in_bcd].index:
+        outfile.write('{}\n'.format(gene))
+
+with open('analysis/results/change_zld.txt', 'w') as outfile:
+    for gene in wt_zld_exp.ix[in_zld].index:
+        outfile.write('{}\n'.format(gene))
+
+with open('analysis/results/change_both.txt', 'w') as outfile:
+    for gene in wt_zld_exp.ix[in_both].index:
+        outfile.write('{}\n'.format(gene))
+
