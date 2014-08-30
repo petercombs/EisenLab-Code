@@ -11,7 +11,9 @@ eps = .1
 
 read_table_args = dict(keep_default_na=False, na_values='---', index_col=0)
 
-bind_dist = 5000
+bind_dist = 1000
+
+exp_cutoff = 5
 
 try:
     wt = locals()['wt']
@@ -120,7 +122,7 @@ except (KeyError, AssertionError):
 
 
 both = wt_zld.dropna().index.intersection(wt_bcd.dropna().index)
-wt_hi = wt.select(startswith(cyc_of_interest), axis=1).max(axis=1) > 3
+wt_hi = wt.select(startswith(cyc_of_interest), axis=1).max(axis=1) > exp_cutoff
 
 print("Plotting")
 
@@ -198,14 +200,14 @@ mpl.colorbar()
 mpl.savefig('analysis/results/WT_Zld_Bcd_3way.png')
 
 
+in_bcd = bcd_only.contains_points(zip(wt_zld_exp, wt_bcd_exp))
+in_zld = zld_only.contains_points(zip(wt_zld_exp, wt_bcd_exp))
+in_both = both_change.contains_points(zip(wt_zld_exp, wt_bcd_exp))
 
 contingency = array(
-    [histogram(cmaps_exp.ix[bcd_only.contains_points(zip(wt_zld_exp, wt_bcd_exp))],
-               bins=arange(5))[0],
-     histogram(cmaps_exp.ix[zld_only.contains_points(zip(wt_zld_exp, wt_bcd_exp))],
-               bins=arange(5))[0],
-     histogram(cmaps_exp.ix[both_change.contains_points(zip(wt_zld_exp, wt_bcd_exp))],
-               bins=arange(5))[0]])
+    [histogram(cmaps_exp.ix[in_bcd],  bins=arange(5))[0],
+     histogram(cmaps_exp.ix[in_zld],  bins=arange(5))[0],
+     histogram(cmaps_exp.ix[in_both], bins=arange(5))[0]])
 
 print(contingency)
 print(chi2_contingency(contingency))
