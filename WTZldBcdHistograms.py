@@ -75,6 +75,8 @@ except (KeyError, AssertionError):
                       data=0)
     wt_bcd = pd.Series(index=wt_zld.index,
                       data=0)
+    bcd_zld= pd.Series(index=wt_zld.index,
+                       data = 0)
 
     print("Calculating Distances")
     zld_reps = {col.split('sl')[0]
@@ -102,6 +104,16 @@ except (KeyError, AssertionError):
                                bcd.ix[gene].select(startswith(bcd_rep))+eps)
             )
     wt_bcd /= len(bcd_reps)
+
+    for bcd_rep in bcd_reps:
+        for zld_rep in zld_reps:
+            print('Calculating distance for ', bcd_rep, zld_rep)
+            for gene in wt_bcd.index:
+                bcd_zld.ix[gene] += (
+                    DD.earth_mover(zld.ix[gene].select(startswith(zld_rep))+.01,
+                                   bcd.ix[gene].select(startswith(bcd_rep))+.01)
+                )
+    bcd_zld /= (len(bcd_reps)*len(zld_reps))
 
     keep_old = True
 
@@ -146,6 +158,7 @@ both_change = mpath.Path([[xx/2, yy], [.5*(1+xx-yy), 1], [1,1],
 
 wt_zld_exp = wt_zld.ix[cmaps.index].ix[wt_hi]
 wt_bcd_exp = wt_bcd.ix[cmaps.index].ix[wt_hi]
+bcd_zld_exp = bcd_zld.ix[cmaps.index].ix[wt_hi]
 cmaps_exp =  cmaps .ix[cmaps.index].ix[wt_hi]
 
 ax = mpl.gca()
@@ -175,6 +188,15 @@ mpl.title('{cyc} - {dist:3.1f}kb'
 ax = mpl.gca()
 ax.set_aspect(1)
 mpl.savefig('analysis/results/WTBcdWTZldCorr-{}.png'.format(cyc_of_interest), dpi=600)
+mpl.clf()
+mpl.scatter(x=wt_zld_exp, y=wt_bcd_exp, c = bcd_zld_exp)
+mpl.xlabel('WT vs Zld')
+mpl.ylabel('WT vs Bcd')
+mpl.xlim(0, 1)
+mpl.ylim(0, 1)
+mpl.colorbar()
+mpl.savefig('analysis/results/WT_Zld_Bcd_3way.png')
+
 
 
 contingency = array(
