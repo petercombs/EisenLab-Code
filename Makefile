@@ -47,6 +47,8 @@ $(ANALYSIS_DIR)/summary.tsv : MakeSummaryTable.py $(FPKMS) $(RUNCONFIG) Makefile
 	python MakeSummaryTable.py \
        --params $(RUNCONFIG) \
 	   --strip-low-reads 1000000 \
+	   --strip-on-unique \
+	   --strip-as-nan \
 	   --mapped-bamfile accepted_hits_sorted.bam \
 		$(ANALYSIS_DIR)
 
@@ -73,7 +75,7 @@ $(MELFASTA): $(REFDIR)/$(MELMAJORVERSION) | $(REFDIR)
 	wget -O $@.gz ftp://ftp.flybase.net/genomes/Drosophila_melanogaster/dmel_$(MELRELEASE)/fasta/dmel-all-chromosome-$(MELVERSION).fasta.gz
 	gunzip $@.gz
 
-$(MELGFF): $(REFDIR)/$(MELVERSION) | $(REFDIR) 
+$(MELGFF): $(REFDIR)/$(MELVERSION) | $(REFDIR)
 	wget -O $@.gz ftp://ftp.flybase.net/genomes/Drosophila_melanogaster/dmel_$(MELRELEASE)/gff/dmel-all-$(MELVERSION).gff.gz
 	gunzip $@.gz
 

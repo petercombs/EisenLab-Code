@@ -29,7 +29,15 @@ def parse_args():
                         help='The column to combine on (FBgn in tracking_id)')
     parser.add_argument('--strip-low-reads', '-s', default=0, type=int,
                         help='Remove samples with fewer than N counts (off by'
-                        'default')
+                        'default)')
+    parser.add_argument('--strip-on-unique', '-u', default=False,
+                        action='store_true',
+                        help='When removing samples, use the number of unique '
+                        'reads, not total number of mappings')
+    parser.add_argument('--strip-as-nan', '-n', default=False,
+                        action='store_true',
+                        help='When stripping a sample, replace all data with'
+                        ' NaN')
     parser.add_argument('--mapped-bamfile', '-b', default='assigned_dmelR.bam',
                         help='The bam file to look in for mapped reads')
     parser.add_argument('--in-subdirectory', default=None,
@@ -114,9 +122,21 @@ for fname in sorted(fnames):
     if args.strip_low_reads:
         from pysam import Samfile
         sf = Samfile(path.join(alldir,args.mapped_bamfile))
-        if sf.mapped < args.strip_low_reads:
-            print "Skipping", dirname
-            continue
+        if args.strip_on_unique:
+            reads = 0
+            for read in sf:
+                reads += not read.is_secondary
+            skip = reads < args.strip_low_reads
+        else:
+            skip = sf.mapped < args.strip_low_reads
+        if skip:
+            if args.strip_as_nan:
+                from numpy import nan
+                print "NaNing", dirname
+                table.ix[:] = nan
+            else:
+                print "Skipping", dirname
+                continue
     if df is None:
         df = pandas.DataFrame({dirname+"_FPKM": table.ix[:,args.column]})
     else:
