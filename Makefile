@@ -38,7 +38,7 @@ MELVIRFASTA=$(REFDIR)/melvir.fa
 GENEMAPTABLE = gene_map_table_fb_$(MELDATE).tsv
 
 
-all : $(ANALYSIS_DIR)/summary.tsv 
+all : $(ANALYSIS_DIR)/summary.tsv
 
 genomes: Reference/DmelDwil/Genome Reference/DmelDvir/Genome Reference/DmelDper/Genome Reference/DmelDmoj/Genome
 	echo "Genomes Made"
@@ -48,7 +48,7 @@ genomes: Reference/DmelDwil/Genome Reference/DmelDvir/Genome Reference/DmelDper/
 include config.make
 include analyze.make
 
-.SECONDARY: 
+.SECONDARY:
 
 $(ANALYSIS_DIR) :
 	mkdir $(ANALYSIS_DIR)
@@ -60,6 +60,8 @@ $(ANALYSIS_DIR)/summary.tsv : MakeSummaryTable.py $(FPKMS) $(RUNCONFIG) Makefile
 	python MakeSummaryTable.py \
        --params $(RUNCONFIG) \
 	   --strip-low-reads 1000000 \
+	   --strip-on-unique \
+	   --strip-as-nan \
 	   --mapped-bamfile assigned_dmelR.bam \
 		$(ANALYSIS_DIR)
 
@@ -67,10 +69,12 @@ $(ANALYSIS_DIR)/summary.tsv : MakeSummaryTable.py $(FPKMS) $(RUNCONFIG) Makefile
 	@echo '============================='
 	@echo 'Calculating Abundances'
 	@echo '============================='
+	touch $@
 	cufflinks --num-threads 8 --output-dir $(@D) -u \
 		--frag-bias-correct $(MELFASTA2) -G $(MELGTF) $<
 
 %/accepted_hits_sorted.bam: %/accepted_hits.bam
+	touch $@
 	samtools sort $< $(@D)/accepted_hits_sorted
 	samtools index $@
 
