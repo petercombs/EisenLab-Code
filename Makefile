@@ -64,6 +64,8 @@ $(ANALYSIS_DIR)/summary.tsv : MakeSummaryTable.py $(FPKMS) $(RUNCONFIG) Makefile
 	python MakeSummaryTable.py \
 		--params $(RUNCONFIG) \
 		--strip-low-reads 100000 \
+		--strip-on-unique \
+		--strip-as-nan \
 		$(ANALYSIS_DIR)
 
 
@@ -71,10 +73,12 @@ $(ANALYSIS_DIR)/summary.tsv : MakeSummaryTable.py $(FPKMS) $(RUNCONFIG) Makefile
 	@echo '============================='
 	@echo 'Calculating Abundances'
 	@echo '============================='
+	touch $@
 	cufflinks --num-threads 8 --output-dir $(@D) -u \
 		--frag-bias-correct $(MELFASTA2) -G $(MELGTF) $<
 
 %/accepted_hits_sorted.bam: %/accepted_hits.bam
+	touch $@
 	samtools sort $< $(@D)/accepted_hits_sorted
 	samtools index $@
 

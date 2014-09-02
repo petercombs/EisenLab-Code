@@ -3,7 +3,7 @@ from matplotlib import pyplot as mpl
 from matplotlib.colors import hsv_to_rgb, LinearSegmentedColormap
 from matplotlib import cm
 from scipy.stats import gaussian_kde
-from numpy import log, array, Inf, median, exp, argsort, linspace
+from numpy import log, array, Inf, median, exp, argsort, linspace, isfinite
 from itertools import repeat
 import numpy as np
 
@@ -194,6 +194,15 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
         dwg = svg.Drawing(filename)
     dwg.add(svg.base.Title(path.basename(filename)))
 
+    pat = dwg.pattern(id='hatch', insert=(0,0), size=(25,25),
+                                        patternUnits='userSpaceOnUse')
+    g = pat.add(dwg.g(style="fill:none; stroke:#B0B0B0; stroke-width:1"))
+    g.add(dwg.path(('M0,0', 'l25,25')))
+    g.add(dwg.path(('M25,0 l-25,25'.split())))
+
+    dwg.add(pat)
+
+
     if row_labels is None:
         if index is not None:
             row_labels = index
@@ -232,9 +241,9 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
         if normer is None:
             norm_data = frame.copy()
         elif normer is 'mean':
-            norm_data = frame.divide(frame.mean(axis=1), axis=0)
+            norm_data = frame.divide(frame.dropna(axis=1).mean(axis=1), axis=0)
         elif normer is 'max':
-            norm_data = frame.divide(frame.max(axis=1), axis=0)
+            norm_data = frame.divide(frame.dropna(axis=1).max(axis=1), axis=0)
         elif index is not None and hasattr(normer, "ix"):
             norm_data = frame.divide(normer.ix[index], axis=0)
         elif hasattr(normer, "__len__") and len(normer) == rows:
@@ -268,12 +277,28 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
                 g.add(svg.base.Title("{}, {}: {:.2f}".format(row_labels[i],
                                                              col_labels[j],
                                                              frame.ix[i,j])))
+                hatch = not isfinite(norm_data.ix[i, j])
+                if hatch:
+                    n = 0
+                    norm_data.ix[i, j] = 0
+                    if j > 0:
+                        norm_data.ix[i, j] += norm_data.ix[i, j-1]
+                        n += 1
+                    if j + 1 < len(norm_data.columns):
+                        norm_data.ix[i, j] += norm_data.ix[i, j+1]
+                        n += 1
+                    norm_data.ix[i, j] /= n
                 g.add(dwg.rect((x_start + box_size*j, y_start + i*box_height),
                                (box_size, box_height),
                                style="fill:#{:02x}{:02x}{:02x}"
                                 .format(*[int(255*x) for x in
                                           c_cmap(norm_data.ix[i,j])])))
                 dwg.add(g)
+                if hatch:
+                    g.add(dwg.rect((x_start + box_size*j, y_start + i*box_height),
+                                   (box_size, box_height),
+                                   style="fill:url(#hatch)"
+                                  ))
                 col_base = col_labels[j][:col_labels[j].find(col_sep)]
                 if col_base != prefix:
                     prefix = col_base
