@@ -157,5 +157,6 @@ df.sort_index(axis=1).to_csv(path.join(args.basedir,
                                           * bool(args.in_subdirectory) )
                                        + ('_with_conf' * args.conf)
                                        + '.tsv'),
+                             float_format='%8.2f',
                              sep='\t', na_rep='---')
 
