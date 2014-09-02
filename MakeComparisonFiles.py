@@ -8,35 +8,16 @@ from numpy import nan
 
 startswith = lambda x: lambda y: y.startswith(x)
 
-read_table_args = dict(index_col=0,
-                       keep_default_na=False,
-                       na_values=['---', ''])
-wt  = (pd.read_table('prereqs/WT6.01.summary.tsv', **read_table_args)
-              #.dropna(how='any')
-              .sort_index())
-bcd = (pd.read_table('analysis/summary.tsv', **read_table_args)
-              #.dropna(how='any', axis=1)
-              .sort_index())
-zld = (pd.read_table('prereqs/Zld6.01.summary_merged.tsv', **read_table_args)
-              #.dropna(how='any', axis=1)
-              .sort_index())
-assert all(wt.index == bcd.index)
-assert all(wt.index == zld.index)
-assert all(zld.index == bcd.index)
+def chunks(l, n):
+    """ Return successive n-sized chunks from l.
+    """
+    return [l[i:i+n] for i in xrange(0, len(l), n)]
 
-outdir='analysis/results/svgs-withzld'
-
-try:
-        os.makedirs(outdir)
-except OSError:
-        pass
-
-pbar = ProgressBar()
-for gene in pbar(wt.index):
+def make_comparison_file(gene):
     if max(wt.ix[gene]) < 3 and max(bcd.ix[gene] < 3):
-        continue
+        return
     if gene is nan:
-        continue
+        return
     data = (wt .select(startswith('cyc13'),       axis=1).ix[[gene]],
             wt .select(startswith('cyc14D'),      axis=1).ix[[gene]],
             bcd.select(startswith('cyc13_rep1'),  axis=1).ix[[gene]],
@@ -67,4 +48,33 @@ for gene in pbar(wt.index):
                           box_height=130,
                           max_width=840,
                          )
+
+read_table_args = dict(index_col=0,
+                       keep_default_na=False,
+                       na_values=['---', ''])
+wt  = (pd.read_table('prereqs/WT6.01.summary.tsv', **read_table_args)
+              #.dropna(how='any')
+              .sort_index())
+bcd = (pd.read_table('analysis/summary.tsv', **read_table_args)
+              #.dropna(how='any', axis=1)
+              .sort_index())
+zld = (pd.read_table('prereqs/Zld6.01.summary_merged.tsv', **read_table_args)
+              #.dropna(how='any', axis=1)
+              .sort_index())
+assert all(wt.index == bcd.index)
+assert all(wt.index == zld.index)
+assert all(zld.index == bcd.index)
+
+outdir='analysis/results/svgs-withzld'
+
+try:
+        os.makedirs(outdir)
+except OSError:
+        pass
+
+from multiprocessing import Pool
+pbar = ProgressBar()
+pool = Pool()
+for genes_list in pbar(chunks(wt.index, 100)):
+    pool.map(make_comparison_file, genes_list)
 
