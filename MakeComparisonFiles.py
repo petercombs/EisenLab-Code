@@ -12,20 +12,22 @@ read_table_args = dict(index_col=0,
                        keep_default_na=False,
                        na_values=['---', ''])
 wt  = (pd.read_table('prereqs/WT6.01.summary.tsv', **read_table_args)
-              .dropna(how='any')
+              #.dropna(how='any')
               .sort_index())
 bcd = (pd.read_table('analysis/summary.tsv', **read_table_args)
-              .dropna(how='any', axis=1)
+              #.dropna(how='any', axis=1)
               .sort_index())
 zld = (pd.read_table('prereqs/Zld6.01.summary_merged.tsv', **read_table_args)
-              .dropna(how='any', axis=1)
+              #.dropna(how='any', axis=1)
               .sort_index())
 assert all(wt.index == bcd.index)
 assert all(wt.index == zld.index)
 assert all(zld.index == bcd.index)
 
+outdir='analysis/results/svgs-withzld'
+
 try:
-        os.makedirs('analysis/results/svgs-withzld')
+        os.makedirs(outdir)
 except OSError:
         pass
 
@@ -45,8 +47,10 @@ for gene in pbar(wt.index):
             zld.select(startswith('cyc14D'),      axis=1).ix[[gene]],
             zld.select(startswith('cyc13_rep3'),  axis=1).ix[[gene]],
            )
+    max_13s = max(float(dp.max(axis=1))*1.1 +10 for dp in data[0::2])
+    max_14s = max(float(dp.max(axis=1))*1.1 +10 for dp in data[1::2])
     PlotUtils.svg_heatmap(data,
-                          filename=join('analysis/results/svgs',
+                          filename=join(outdir,
                                         gene + '.svg'),
                           cmap=(None,None,
                                 Greens, Greens,
@@ -54,8 +58,7 @@ for gene in pbar(wt.index):
                                 Reds, Reds,
                                 Reds
                                ),
-                          norm_rows_by=(data[0].max(axis=1)*1.1+10,
-                                        data[1].max(axis=1)*1.1+10)*5[:-1],
+                          norm_rows_by=((max_13s, max_14s)*5)[:-1],
                           draw_box=True,
                           draw_name=True,
                           data_names=('WT13 WT14D Bcd-13 Bcd-14D Bcd-13'
