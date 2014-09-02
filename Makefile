@@ -38,7 +38,7 @@ MELVIRFASTA=$(REFDIR)/melvir.fa
 GENEMAPTABLE = gene_map_table_fb_$(MELDATE).tsv
 
 
-all : $(ANALYSIS_DIR)/summary.tsv
+all : $(ANALYSIS_DIR)/summary.tsv $(REFDIR)/$(MELMAJORVERSION) $(REFDIR)/$(MELVERSION)
 
 genomes: Reference/DmelDwil/Genome Reference/DmelDvir/Genome Reference/DmelDper/Genome Reference/DmelDmoj/Genome
 	echo "Genomes Made"
@@ -59,7 +59,7 @@ $(ANALYSIS_DIR)/summary.tsv : MakeSummaryTable.py $(FPKMS) $(RUNCONFIG) Makefile
 	@echo '============================='
 	python MakeSummaryTable.py \
        --params $(RUNCONFIG) \
-	   --strip-low-reads 1000000 \
+	   --strip-low-reads 100000 \
 	   --strip-on-unique \
 	   --strip-as-nan \
 	   --mapped-bamfile assigned_dmelR.bam \
@@ -108,21 +108,21 @@ $(VIRGTF): $(VIRGFF) $(ORTHOLOGS) | $(REFDIR)
 
 $(MELFASTA): $(REFDIR)/$(MELMAJORVERSION) | $(REFDIR)
 	wget -O $@.gz ftp://ftp.flybase.net/genomes/Drosophila_melanogaster/dmel_$(MELRELEASE)/fasta/dmel-all-chromosome-$(MELVERSION).fasta.gz
-	gunzip $@.gz
+	gunzip --force $@.gz
 
 $(MELGFF): $(REFDIR)/$(MELVERSION) | $(REFDIR) 
 	wget -O $@.gz ftp://ftp.flybase.net/genomes/Drosophila_melanogaster/dmel_$(MELRELEASE)/gff/dmel-all-$(MELVERSION).gff.gz
-	gunzip $@.gz
+	gunzip --force $@.gz
 
 $(VIRFASTA): | $(REFDIR)
 	wget -O $@.gz ftp://ftp.flybase.net/genomes/Drosophila_virilis/dvir_$(VIRRELEASE)/fasta/dvir-all-chromosome-$(VIRVERSION).fasta.gz
-	gunzip $@.gz
+	gunzip --force $@.gz
 
 $(VIRGFF): | $(REFDIR)
 	wget -O $@.gz ftp://ftp.flybase.net/genomes/Drosophila_virilis/dvir_$(VIRRELEASE)/gff/dvir-all-$(VIRVERSION).gff.gz
-	gunzip $@.gz
+	gunzip --force $@.gz
 
-$(MELFASTA2): $(MELFASTA)| $(REFDIR)
+$(MELFASTA2): $(MELFASTA) $(REFDIR)/$(MELMAJORVERSION) | $(REFDIR)
 	perl -pe 's/>/>dmel_/' $(MELFASTA) > $@
 
 $(VIRFASTA2): $(VIRFASTA)| $(REFDIR)
@@ -135,7 +135,7 @@ $(MELVIRFASTA): $(MELFASTA2) $(VIRFASTA2)| $(REFDIR)
 	cat $(MELFASTA2) $(VIRFASTA2) > $@
 
 
-$(REFDIR)/DmelScer/Genome : | $(MELFASTA2) $(CERFASTA2)  $(MELGTF) $(REFDIR)/DmelScer $(REFDIR)
+$(REFDIR)/DmelScer/Genome :  $(MELFASTA2) $(CERFASTA2) | $(MELGTF) $(REFDIR)/DmelScer $(REFDIR)
 	STAR --runMode genomeGenerate --genomeDir $(REFDIR)/DmelScer \
 		--genomeFastaFiles $(MELFASTA2) $(CERFASTA2) \
 		--sjdbGTFfile $(MELGTF)
@@ -163,7 +163,7 @@ $(REFDIR)/DmelDvir/Genome : $(MELVIRGTF) |  $(REFDIR)/DmelDvir $(MELFASTA2) $(VI
 
 $(ORTHOLOGS) :
 	wget -O $@.gz -i ftp.flybase.org/releases/FB$(MELDATE)/precomputed_files/genes/gene_orthologs_fb_$(MELDATE).tsv.gz
-	gunzip $@.gz
+	gunzip --force $@.gz
 
 $(REFDIR) :
 	mkdir $@
@@ -185,7 +185,7 @@ Reference/DmelDmoj:
 $(GENEMAPTABLE):
 	wget ftp://ftp.flybase.net/releases/$(MELDATE)/precomputed_files/genes/$(GENEMAPTABLE).gz \
 		-O $(GENEMAPTABLE).gz
-	gunzip $(GENEMAPTABLE).gz
+	gunzip --force $(GENEMAPTABLE).gz
 
 $(REFDIR)/$(MELVERSION):
 	touch $@
