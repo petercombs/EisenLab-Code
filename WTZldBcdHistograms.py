@@ -1,27 +1,41 @@
 from __future__ import print_function, division
 import pandas as pd
 import matplotlib.pyplot as mpl
-from numpy import arange, array, histogram
+from numpy import arange, array, histogram, isfinite, all
 import DistributionDifference as DD
 from bisect import bisect
 from scipy.stats import scoreatpercentile, chi2_contingency
 
 cyc_of_interest = 'cyc14D'
-eps = .1
+eps = 3
 
 read_table_args = dict(keep_default_na=False, na_values='---', index_col=0)
 
+dist_func = DD.earth_mover
+mp_dist_func = DD.mp_earth_mover
+
 bind_dist = 1000
 
-exp_cutoff = 5
+exp_cutoff = 5 + eps
 
 try:
     wt = locals()['wt']
-except KeyError:
+    assert min(wt.min()) == eps
+except (KeyError, AssertionError):
+    print("Importing data")
+    keep_old = False
     wt = pd.read_table('prereqs/WT6.01.summary.tsv', **read_table_args)
     zld = pd.read_table('prereqs/Zld6.01.summary_merged.tsv', **read_table_args)
     bcd = pd.read_table('analysis/summary.tsv', **read_table_args)
-    bcd = bcd.dropna(how='all', axis=1)
+    for dataset in (wt, zld, bcd):
+        dataset.ix[:,:] += eps
+        for i, column in enumerate(dataset.columns):
+            if not all(isfinite(dataset.ix[:, column])):
+                try:
+                    dataset.ix[:, column] = (dataset.ix[:, i-1] + dataset.ix[:, i+1])/2
+                except:
+                    print("Whoops! {}".format(column))
+
 
 try:
     tss_dict = locals()['tss_dict']
@@ -63,7 +77,6 @@ for coord in bcd_bind.NewPeak:
     has_bcd.update(find_near(tss_dict[chr], int(coord), bind_dist))
 
 
-
 startswith = lambda x: lambda y: y.startswith(x)
 
 try:
@@ -89,8 +102,8 @@ except (KeyError, AssertionError):
         print('Calculating distance for ', zld_rep)
         for gene in wt_zld.index:
             wt_zld.ix[gene] += (
-                DD.earth_mover(wt.ix[gene].select(startswith(cyc_of_interest))+eps,
-                               zld.ix[gene].select(startswith(zld_rep))+eps)
+                dist_func(wt.ix[gene].select(startswith(cyc_of_interest)),
+                          zld.ix[gene].select(startswith(zld_rep)))
             )
     wt_zld /= len(zld_reps)
 
@@ -102,8 +115,8 @@ except (KeyError, AssertionError):
         print('Calculating distance for ', bcd_rep)
         for gene in wt_bcd.index:
             wt_bcd.ix[gene] += (
-                DD.earth_mover(wt.ix[gene].select(startswith(cyc_of_interest))+eps,
-                               bcd.ix[gene].select(startswith(bcd_rep))+eps)
+                dist_func(wt.ix[gene].select(startswith(cyc_of_interest)),
+                          bcd.ix[gene].select(startswith(bcd_rep)))
             )
     wt_bcd /= len(bcd_reps)
 
@@ -112,8 +125,8 @@ except (KeyError, AssertionError):
             print('Calculating distance for ', bcd_rep, zld_rep)
             for gene in wt_bcd.index:
                 bcd_zld.ix[gene] += (
-                    DD.earth_mover(zld.ix[gene].select(startswith(zld_rep))+.01,
-                                   bcd.ix[gene].select(startswith(bcd_rep))+.01)
+                    dist_func(zld.ix[gene].select(startswith(zld_rep)),
+                              bcd.ix[gene].select(startswith(bcd_rep)))
                 )
     bcd_zld /= (len(bcd_reps)*len(zld_reps))
 
@@ -151,17 +164,20 @@ mpl.clf()
 import matplotlib.path as mpath
 import matplotlib.patches as mpatches
 
-bcd_only = mpath.Path([[0, yy], [xx/2, yy], [.5*(1+xx-yy), 1], [0, 1], [0, yy]])
-zld_only = mpath.Path([[xx, 0], [xx, yy/2], [1, .5*(yy - xx + 1)],
-                       [1, 0], [xx, 0]])
-both_change = mpath.Path([[xx/2, yy], [.5*(1+xx-yy), 1], [1,1],
-                          [1, .5*(yy - xx + 1)], [xx, yy/2], [xx, yy],
+bcd_only = mpath.Path([[0, yy], [xx/2, yy], [.5*(10+xx-yy), 10], [0, 10], [0, yy]])
+zld_only = mpath.Path([[xx, 0], [xx, yy/2], [10, .5*(yy - xx + 10)],
+                       [10, 0], [xx, 0]])
+both_change = mpath.Path([[xx/2, yy], [.5*(10+xx-yy), 10], [10,10],
+                          [10, .5*(yy - xx + 10)], [xx, yy/2], [xx, yy],
                           [xx/2, yy]])
 
 wt_zld_exp = wt_zld.ix[cmaps.index].ix[wt_hi]
 wt_bcd_exp = wt_bcd.ix[cmaps.index].ix[wt_hi]
 bcd_zld_exp = bcd_zld.ix[cmaps.index].ix[wt_hi]
 cmaps_exp =  cmaps .ix[cmaps.index].ix[wt_hi]
+dist2 = bcd_zld_exp - abs(wt_zld_exp - wt_bcd_exp)
+dist2_sorted = dist2.copy()
+dist2_sorted.sort()
 
 ax = mpl.gca()
 ax.add_patch(mpatches.PathPatch(bcd_only, facecolor='b', alpha=0.1))
@@ -182,8 +198,8 @@ for c in range(4):
                 alpha=0.999999999)
 mpl.xlabel('WT vs Zld')
 mpl.ylabel('WT vs Bcd')
-mpl.xlim(0, 1)
-mpl.ylim(0, 1)
+mpl.xlim(0, max(1, max(wt_zld_exp)*1.1))
+mpl.ylim(0, max(1, max(wt_bcd_exp)*1.1))
 mpl.title('{cyc} - {dist:3.1f}kb'
           .format(cyc=cyc_of_interest,
                   dist=bind_dist/1000.))
@@ -191,13 +207,13 @@ ax = mpl.gca()
 ax.set_aspect(1)
 mpl.savefig('analysis/results/WTBcdWTZldCorr-{}.png'.format(cyc_of_interest), dpi=600)
 mpl.clf()
-mpl.scatter(x=wt_zld_exp, y=wt_bcd_exp, c = bcd_zld_exp)
+mpl.scatter(x=wt_zld_exp, y=wt_bcd_exp, c = dist2)
 mpl.xlabel('WT vs Zld')
 mpl.ylabel('WT vs Bcd')
-mpl.xlim(0, 1)
-mpl.ylim(0, 1)
+mpl.xlim(0, max(1, max(wt_zld_exp)*1.1))
+mpl.ylim(0, max(1, max(wt_bcd_exp)*1.1))
 mpl.colorbar()
-mpl.savefig('analysis/results/WT_Zld_Bcd_3way.png')
+mpl.savefig('analysis/results/WT_Zld_Bcd_3way.png', dpi=300)
 
 
 in_bcd = bcd_only.contains_points(zip(wt_zld_exp, wt_bcd_exp))
