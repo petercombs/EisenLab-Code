@@ -86,6 +86,15 @@ def earth_mover(points1, points2):
                    points1/np.sum(points1),
                    points2/np.sum(points2))
 
+def earth_mover_abs(points1, points2):
+    return (emd.emd(np.linspace(0,1,len(points1), endpoint=True),
+                   np.linspace(0,1,len(points2), endpoint=True),
+                   points1,
+                   points2)
+            / ((np.mean(points1) * np.mean(points2))/2)
+           )
+
+
 startswith = lambda x: lambda y: y.startswith(x)
 
 def earth_mover_multi(points1, points2):
@@ -97,16 +106,36 @@ def earth_mover_multi(points1, points2):
                             points2.select(startswith(emb))+1e-5)**2
         sums[0].append(points1.select(startswith(emb)).mean())
         sums[1].append(points2.select(startswith(emb)).mean())
-    dist += earth_mover(sums[0], sums[1])
+    dist += earth_mover_abs(sums[0], sums[1])
+    return dist**.5
+
+def earth_mover_abs_multi(points1, points2):
+    dist = 0.0
+    embs = {col.split('sl')[0] for col in points1.index}
+    sums = [[],[]]
+    for emb in embs:
+        dist += earth_mover_abs(points1.select(startswith(emb))+1e-5,
+                                points2.select(startswith(emb))+1e-5)**2
+        sums[0].append(points1.select(startswith(emb)).mean())
+        sums[1].append(points2.select(startswith(emb)).mean())
+    dist += earth_mover_abs(sums[0], sums[1])
     return dist**.5
 
 def mp_earth_mover(args):
     i, j = args
     return earth_mover(i, j)
 
+def mp_earth_mover_abs(args):
+    i, j = args
+    return earth_mover_abs(i, j)
+
 def mp_earth_mover_multi(args):
     i, j = args
     return earth_mover_multi(i, j)
+
+def mp_earth_mover_abs_multi(args):
+    i, j = args
+    return earth_mover_abs_multi(i, j)
 
 import progressbar as pb
 def pdist(X, metric, p=2, w=None, V=None, VI=None):
