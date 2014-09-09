@@ -71,6 +71,8 @@ for tf, tf_file in zip(tfs, tf_files):
     has_tfs[tf] = has_tf
 
 
+bms = []
+
 for fname in ['analysis/results/change_bcd.txt',
               'analysis/results/change_both.txt',]:
     genes = [line.strip().split()[0]
@@ -80,7 +82,7 @@ for fname in ['analysis/results/change_bcd.txt',
         fcs.ix[gene] = all_fcs.ix[gene]
     fcs.sort()
     binding_matrix = pd.DataFrame(index=fcs.index,
-                                  columns=tfs)
+                                  columns=tfs, data=0.0, dtype=float)
     for tf in tfs:
         for gene in binding_matrix.index:
             binding_matrix.ix[gene, tf] = float(gene in has_tfs[tf])
@@ -90,5 +92,11 @@ for fname in ['analysis/results/change_bcd.txt',
     svg_heatmap(binding_matrix,
                 'analysis/results/{}_bindingmap.svg'.format(basename(fname)),
                 draw_row_labels=True, box_size=10, box_height=10)
+    bms.append(binding_matrix)
 
 
+    from statsmodels import api as sm
+    binding_matrix['const'] = 1.0
+
+    fit = sm.Logit(fcs>1, binding_matrix).fit()
+    print(fit.summary())
