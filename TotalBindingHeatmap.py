@@ -1,6 +1,7 @@
 from __future__ import print_function, division
 import pandas as pd
 from numpy import isfinite, all
+from numpy.linalg import LinAlgError
 from glob import glob
 from bisect import bisect
 from PlotUtils import svg_heatmap
@@ -61,7 +62,7 @@ def find_near(chrom, coord, dist):
 
 
 tf_files = glob('Reference/*_peaks')
-tfs = [i.split('/')[1].split('_')[0] for i in tf_files]
+tfs = ([i.split('/')[1].split('_')[0] for i in tf_files])
 has_tfs = {}
 for tf, tf_file in zip(tfs, tf_files):
     has_tf = set()
@@ -92,11 +93,15 @@ for fname in ['analysis/results/change_bcd.txt',
     svg_heatmap(binding_matrix,
                 'analysis/results/{}_bindingmap.svg'.format(basename(fname)),
                 draw_row_labels=True, box_size=10, box_height=10)
+    binding_matrix.sort_index(axis=1, inplace=True)
     bms.append(binding_matrix)
 
 
     from statsmodels import api as sm
     binding_matrix['const'] = 1.0
 
-    fit = sm.Logit(fcs>1, binding_matrix).fit()
-    print(fit.summary())
+    try:
+        fit = sm.Logit(fcs>1, binding_matrix).fit()
+        print(fit.summary())
+    except LinAlgError:
+        print("No luck on "+fname)
