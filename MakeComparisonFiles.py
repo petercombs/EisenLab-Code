@@ -13,8 +13,9 @@ def chunks(l, n):
     """
     return [l[i:i+n] for i in xrange(0, len(l), n)]
 
-def make_comparison_file(gene):
-    if max(wt.ix[gene]) < 3 and max(bcd.ix[gene] < 3):
+def make_comparison_file(gene, force=False):
+    if not force and (max(wt.ix[gene].dropna()) < 3 and
+                      max(bcd.ix[gene].dropna() < 3)):
         return
     if gene is nan:
         return
@@ -30,24 +31,40 @@ def make_comparison_file(gene):
            )
     max_13s = max(float(dp.max(axis=1))*1.1 +10 for dp in data[0::2])
     max_14s = max(float(dp.max(axis=1))*1.1 +10 for dp in data[1::2])
+    normer = ((max_13s, max_14s)*5)[:-1]
+    normer = (wt.ix[gene].select(startswith('cyc13'  )).max() * 1.1 + 10,
+              wt.ix[gene].select(startswith('cyc14D' )).max() * 1.1 + 10,
+              bcd.ix[gene].select(startswith('cyc13' )).max() * 1.1 + 10,
+              bcd.ix[gene].select(startswith('cyc14D')).max() * 1.1 + 10,
+              bcd.ix[gene].select(startswith('cyc13' )).max() * 1.1 + 10,
+              bcd.ix[gene].select(startswith('cyc14D')).max() * 1.1 + 10,
+              zld.ix[gene].select(startswith('cyc13' )).max() * 1.1 + 10,
+              zld.ix[gene].select(startswith('cyc14D')).max() * 1.1 + 10,
+              zld.ix[gene].select(startswith('cyc13' )).max() * 1.1 + 10,
+             )
+    names = [stage + '- Max Expr {:.1f}'.format(float(dp.max(axis=1)))
+             for stage, dp in zip(('WT13 WT14D Bcd-13 Bcd-14D Bcd-13 '
+                                   'Bcd-14D Zld-13 Zld-14D Zld-13').split(),
+                                  data)
+            ]
+    cmaps = (PlotUtils.ISH, PlotUtils.ISH,
+             Greens, Greens,
+             Greens, Greens,
+             Reds, Reds,
+             Reds)
     PlotUtils.svg_heatmap(data,
                           filename=join(outdir,
                                         gene + '.svg'),
-                          cmap=(None,None,
-                                Greens, Greens,
-                                Greens, Greens,
-                                Reds, Reds,
-                                Reds
-                               ),
-                          norm_rows_by=((max_13s, max_14s)*5)[:-1],
+                          cmap=cmaps,
+                          norm_rows_by=normer,
                           draw_box=True,
                           draw_name=True,
-                          data_names=('WT13 WT14D Bcd-13 Bcd-14D Bcd-13'
-                                     ' Bcd-14D Zld-13 Zld-14D Zld-13').split(),
-                          total_width=400,
+                          data_names=names,
+                          total_width=230,
                           box_height=130,
-                          max_width=840,
+                          max_width=475,
                          )
+    return join(outdir, gene+'.svg')
 
 read_table_args = dict(index_col=0,
                        keep_default_na=False,
@@ -65,7 +82,7 @@ assert all(wt.index == bcd.index)
 assert all(wt.index == zld.index)
 assert all(zld.index == bcd.index)
 
-outdir='analysis/results/svgs-withzld'
+outdir='analysis/results/svgs-withzld-normby-type'
 
 try:
         os.makedirs(outdir)
