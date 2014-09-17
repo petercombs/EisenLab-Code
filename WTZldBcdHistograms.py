@@ -7,7 +7,7 @@ from bisect import bisect
 from scipy.stats import scoreatpercentile, chi2_contingency
 
 cyc_of_interest = 'cyc14D'
-eps = 3
+eps = .1
 
 read_table_args = dict(keep_default_na=False, na_values='---', index_col=0)
 
@@ -237,9 +237,10 @@ dist2_sorted = dist2.copy()
 dist2_sorted.sort()
 
 ax = mpl.gca()
-ax.add_patch(mpatches.PathPatch(bcd_only, facecolor='b', alpha=0.1))
-ax.add_patch(mpatches.PathPatch(zld_only, facecolor='g', alpha=0.1))
-ax.add_patch(mpatches.PathPatch(both_change, facecolor='c', alpha=0.1))
+ax.add_patch(mpatches.PathPatch(bcd_only, facecolor='b', alpha=0.1)).set_zorder(5)
+ax.add_patch(mpatches.PathPatch(zld_only, facecolor='g', alpha=0.1)).set_zorder(5)
+ax.add_patch(mpatches.PathPatch(both_change, facecolor='c', alpha=0.1)).set_zorder(5)
+ax.add_patch(mpatches.PathPatch(no_change, facecolor='r', alpha=0.1)).set_zorder(5)
 
 mpl.plot([0,1], [0,1], 'r:', zorder=5)
 mpl.plot([0, xx, xx], [yy, yy, 0], 'k-', zorder=5, alpha=0.4)
