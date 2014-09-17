@@ -136,6 +136,8 @@ for fname in sorted(fnames):
             reads = 0
             for read in sf:
                 reads += not read.is_secondary
+                if reads > args.strip_low_reads:
+                    break
             skip = reads < args.strip_low_reads
         else:
             skip = sf.mapped < args.strip_low_reads

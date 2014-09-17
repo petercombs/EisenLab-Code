@@ -25,7 +25,7 @@ MELGTF   = $(REFDIR)/mel_good.gtf
 GENEMAPTABLE = gene_map_table_fb_$(MELDATE).tsv
 
 
-all : $(ANALYSIS_DIR)/summary.tsv
+all : $(ANALYSIS_DIR)/summary.tsv $(REFDIR)/$(MELMAJORVERSION) $(REFDIR)/$(MELVERSION)
 
 genomes: Reference/Dmel/Genome
 	echo "Genomes Made"
@@ -74,11 +74,14 @@ $(MELGTF): $(MELGFF) | $(REFDIR)
 
 $(MELFASTA): $(REFDIR)/$(MELMAJORVERSION) | $(REFDIR)
 	wget -O $@.gz ftp://ftp.flybase.net/genomes/Drosophila_melanogaster/dmel_$(MELRELEASE)/fasta/dmel-all-chromosome-$(MELVERSION).fasta.gz
-	gunzip $@.gz
+	gunzip --force $@.gz
 
 $(MELGFF): $(REFDIR)/$(MELVERSION) | $(REFDIR)
 	wget -O $@.gz ftp://ftp.flybase.net/genomes/Drosophila_melanogaster/dmel_$(MELRELEASE)/gff/dmel-all-$(MELVERSION).gff.gz
-	gunzip $@.gz
+	gunzip --force $@.gz
+
+$(MELFASTA2): $(MELFASTA) $(REFDIR)/$(MELMAJORVERSION) | $(REFDIR)
+	perl -pe 's/>/>dmel_/' $(MELFASTA) > $@
 
 $(REFDIR)/Dmel/transcriptome : | $(REFDIR)/Dmel
 	tophat --GTF $(MELGTF) \
@@ -94,7 +97,7 @@ $(REFDIR)/Dmel/Genome : $(MELGTF) |  $(REFDIR)/Dmel $(MELFASTA2) $(REFDIR)
 
 $(ORTHOLOGS) :
 	wget -O $@.gz -i ftp.flybase.org/releases/FB$(MELDATE)/precomputed_files/genes/gene_orthologs_fb_$(MELDATE).tsv.gz
-	gunzip $@.gz
+	gunzip --force $@.gz
 
 $(REFDIR) :
 	mkdir $@
@@ -103,13 +106,11 @@ $(REFDIR)/Dmel:
 	bowtie2-build --offrate 1 $(MELFASTA2) $@
 	mkdir $@
 
-$(MELFASTA2): $(MELFASTA) | $(REFDIR)
-	perl -pe 's/>/>dmel_/' $(MELFASTA) > $@
 
 $(GENEMAPTABLE):
 	wget ftp://ftp.flybase.net/releases/$(MELDATE)/precomputed_files/genes/$(GENEMAPTABLE).gz \
 		-O $(GENEMAPTABLE).gz
-	gunzip $(GENEMAPTABLE).gz
+	gunzip --force $(GENEMAPTABLE).gz
 
 $(REFDIR)/$(MELVERSION):
 	touch $@
