@@ -1,7 +1,7 @@
 from __future__ import print_function, division
 import pandas as pd
 import matplotlib.pyplot as mpl
-from numpy import arange, array, histogram, isfinite, all
+from numpy import arange, array, histogram, isfinite, all, abs, log10
 import DistributionDifference as DD
 from bisect import bisect
 from scipy.stats import scoreatpercentile, chi2_contingency
@@ -11,12 +11,36 @@ eps = 3
 
 read_table_args = dict(keep_default_na=False, na_values='---', index_col=0)
 
-dist_func = DD.earth_mover
-mp_dist_func = DD.mp_earth_mover
-
 bind_dist = 1000
 
 exp_cutoff = 5 + eps
+expr_diff_weight =.01
+
+def earth_mover_multi(points1, points2):
+    dist = 0.0
+    cyc1 = {col.split('_')[0] for col in points1.index}
+    cyc2 = {col.split('_')[0] for col in points2.index}
+    sums = [[],[]]
+    for cyc in cyc1.intersection(cyc2):
+        reps1 = {col.split('sl')[0] for col in
+                 points1.select(startswith(cyc)).index
+                }
+        reps2 = {col.split('sl')[0] for col in
+                 points2.select(startswith(cyc)).index
+                }
+        for rep1 in reps1:
+            for rep2 in reps2:
+
+                dist += (DD.earth_mover(points1.select(startswith(rep1)),
+                                       points2.select(startswith(rep2)))**2
+                         / (len(reps1)*len(reps2)))
+        sums[0].append(points1.select(startswith(cyc)).mean())
+        sums[1].append(points2.select(startswith(cyc)).mean())
+    dist += DD.earth_mover(sums[0], sums[1])
+    return dist**.5
+
+dist_func = earth_mover_multi
+
 
 try:
     wt = locals()['wt']
@@ -105,6 +129,10 @@ except (KeyError, AssertionError):
                 dist_func(wt.ix[gene].select(startswith(cyc_of_interest)),
                           zld.ix[gene].select(startswith(zld_rep)))
             )
+            wt_zld.ix[gene] += abs(log10(
+                wt.ix[gene].select(startswith(cyc_of_interest)).mean()/
+                zld.ix[gene].select(startswith(zld_rep)).mean()
+            )) * expr_diff_weight
     wt_zld /= len(zld_reps)
 
     bcd_reps = {col.split('sl')[0]
@@ -118,6 +146,10 @@ except (KeyError, AssertionError):
                 dist_func(wt.ix[gene].select(startswith(cyc_of_interest)),
                           bcd.ix[gene].select(startswith(bcd_rep)))
             )
+            wt_bcd.ix[gene] += abs(log10(
+                wt.ix[gene].select(startswith(cyc_of_interest)).mean()/
+                bcd.ix[gene].select(startswith(bcd_rep)).mean()
+            )) * expr_diff_weight
     wt_bcd /= len(bcd_reps)
 
     for bcd_rep in bcd_reps:
@@ -128,6 +160,10 @@ except (KeyError, AssertionError):
                     dist_func(zld.ix[gene].select(startswith(zld_rep)),
                               bcd.ix[gene].select(startswith(bcd_rep)))
                 )
+                bcd_zld.ix[gene] += abs(log10(
+                    zld.ix[gene].select(startswith(zld_rep)).mean()/
+                    bcd.ix[gene].select(startswith(bcd_rep)).mean()
+                )) * expr_diff_weight
     bcd_zld /= (len(bcd_reps)*len(zld_reps))
 
     keep_old = True
@@ -136,14 +172,17 @@ except (KeyError, AssertionError):
 
 both = wt_zld.dropna().index.intersection(wt_bcd.dropna().index)
 wt_hi = wt.select(startswith(cyc_of_interest), axis=1).max(axis=1) > exp_cutoff
+bcd_hi = bcd.select(startswith(cyc_of_interest), axis=1).max(axis=1) > exp_cutoff
+keep = (wt_hi + bcd_hi) > 0
 
 print("Plotting")
 
 mpl.clf()
-mpl.hist(wt_zld.dropna(), bins=arange(0, 1, .05), normed=True, label='WT vs Zld', histtype='step', color='r')
-mpl.hist(wt_bcd.dropna(), bins=arange(0, 1, .05), normed=True, label='WT vs Bcd', histtype='step', color='g')
+mpl.hist(wt_zld.dropna(), bins=arange(0, 1, .01), normed=True, label='WT vs Zld', histtype='step', color='r')
+mpl.hist(wt_bcd.dropna(), bins=arange(0, 1, .01), normed=True, label='WT vs Bcd', histtype='step', color='g')
 mpl.legend()
-mpl.savefig('analysis/results/WTZldBcdHist.png')
+mpl.savefig('analysis/results/WTZldBcdHist.png', dpi=600)
+mpl.savefig('analysis/results/WTZldBcdHist.eps')
 
 colors = pd.Series('y g b c'.split())
 cmaps = pd.Series(index=wt.index, data=0, dtype=int)
@@ -155,26 +194,44 @@ cmaps.sort(ascending=False)
 cmaps2 = colors[cmaps]
 cmaps2.index = cmaps.index
 
-wt_hi = wt_hi.ix[cmaps.index]
+keep = keep.ix[cmaps.index]
 
 yy = scoreatpercentile(wt_bcd, 80)
 xx = scoreatpercentile(wt_zld, 80)
+nochgx = scoreatpercentile(wt_zld, 50)
+nochgy = scoreatpercentile(wt_bcd, 50)
 mpl.clf()
 
 import matplotlib.path as mpath
 import matplotlib.patches as mpatches
 
-bcd_only = mpath.Path([[0, yy], [xx/2, yy], [.5*(10+xx-yy), 10], [0, 10], [0, yy]])
-zld_only = mpath.Path([[xx, 0], [xx, yy/2], [10, .5*(yy - xx + 10)],
-                       [10, 0], [xx, 0]])
-both_change = mpath.Path([[xx/2, yy], [.5*(10+xx-yy), 10], [10,10],
-                          [10, .5*(yy - xx + 10)], [xx, yy/2], [xx, yy],
-                          [xx/2, yy]])
+gene_specific_point = 1/2
+both_changed_point = 1/2
+gene_specific_slope = 1/3
+both_changed_slope = 1/2
 
-wt_zld_exp = wt_zld.ix[cmaps.index].ix[wt_hi]
-wt_bcd_exp = wt_bcd.ix[cmaps.index].ix[wt_hi]
-bcd_zld_exp = bcd_zld.ix[cmaps.index].ix[wt_hi]
-cmaps_exp =  cmaps .ix[cmaps.index].ix[wt_hi]
+# How far out to go in the distance distribution. 1 ought to be fine, but
+# different distance metrics can have higher than this.
+extent = 10
+bcd_only = mpath.Path([[0, yy], [xx * gene_specific_point, yy],
+                       [gene_specific_slope*(extent - yy) + gene_specific_point * xx, extent],
+                       [0, extent], [0, yy]])
+zld_only = mpath.Path([[xx, 0], [xx, yy * gene_specific_point],
+                       [extent, gene_specific_slope * (extent - xx) + gene_specific_point * yy],
+                       [extent, 0], [xx, 0]])
+both_change = mpath.Path([[xx * both_changed_point, yy],
+                          [both_changed_slope * (extent - yy) + both_changed_point * xx, extent],
+                          [extent,extent],
+                          [extent, both_changed_slope * (extent - xx) + both_changed_point * yy],
+                          [xx, both_changed_point * yy], [xx, yy],
+                          [xx * both_changed_point, yy]])
+no_change = mpath.Path([[0, 0], [0, nochgy], [nochgx, nochgy], [nochgx, 0],
+                        [0, 0]])
+
+wt_zld_exp = wt_zld.ix[cmaps.index].ix[keep]
+wt_bcd_exp = wt_bcd.ix[cmaps.index].ix[keep]
+bcd_zld_exp = bcd_zld.ix[cmaps.index].ix[keep]
+cmaps_exp =  cmaps .ix[cmaps.index].ix[keep]
 dist2 = bcd_zld_exp - abs(wt_zld_exp - wt_bcd_exp)
 dist2_sorted = dist2.copy()
 dist2_sorted.sort()
@@ -186,12 +243,10 @@ ax.add_patch(mpatches.PathPatch(both_change, facecolor='c', alpha=0.1))
 
 mpl.plot([0,1], [0,1], 'r:', zorder=5)
 mpl.plot([0, xx, xx], [yy, yy, 0], 'k-', zorder=5, alpha=0.4)
-mpl.plot([xx/2, .5*(1+xx-yy)], [yy, 1], 'k:', zorder=5, alpha=0.4)
-mpl.plot([xx, 1], [yy/2, .5*(yy-xx+1)], 'k:', zorder=5, alpha=0.4)
 for c in range(4):
-    mpl.scatter(x=wt_zld.ix[both].ix[wt_hi * (cmaps == c)],
-                y=wt_bcd.ix[both].ix[wt_hi * (cmaps == c)],
-                c=cmaps2.ix[both].ix[wt_hi * (cmaps == c)],
+    mpl.scatter(x=wt_zld.ix[both].ix[keep * (cmaps == c)],
+                y=wt_bcd.ix[both].ix[keep * (cmaps == c)],
+                c=cmaps2.ix[both].ix[keep * (cmaps == c)],
                 marker = '.',
                 edgecolors='none',
                 zorder=c,
@@ -203,22 +258,38 @@ mpl.ylim(0, max(1, max(wt_bcd_exp)*1.1))
 mpl.title('{cyc} - {dist:3.1f}kb'
           .format(cyc=cyc_of_interest,
                   dist=bind_dist/1000.))
-ax = mpl.gca()
 ax.set_aspect(1)
 mpl.savefig('analysis/results/WTBcdWTZldCorr-{}.png'.format(cyc_of_interest), dpi=600)
 mpl.clf()
-mpl.scatter(x=wt_zld_exp, y=wt_bcd_exp, c = dist2)
+ax = mpl.gca()
+mpl.scatter(x=wt_zld_exp.ix[dist2_sorted.index],
+            y=wt_bcd_exp.ix[dist2_sorted.index],
+            c=dist2.ix[dist2_sorted.index])
 mpl.xlabel('WT vs Zld')
 mpl.ylabel('WT vs Bcd')
+ax.add_patch(mpatches.PathPatch(bcd_only, facecolor=(0., 0., 1., 0.1),
+                                edgecolor=(.5, .5, .5, 1))).set_zorder(5)
+ax.add_patch(mpatches.PathPatch(zld_only, facecolor=(0., 1., 0., 0.1),edgecolor=(.5, .5, .5, 1) )).set_zorder(5)
+ax.add_patch(mpatches.PathPatch(both_change, facecolor=(0., 1., 1., 0.1), edgecolor=(.5, .5, .5, 1))).set_zorder(5)
+ax.add_patch(mpatches.PathPatch(no_change, facecolor=(1., 0., 0., 0.1), edgecolor=(.5, .5, .5, 1))).set_zorder(5)
 mpl.xlim(0, max(1, max(wt_zld_exp)*1.1))
 mpl.ylim(0, max(1, max(wt_bcd_exp)*1.1))
+ax.set_aspect(1)
 mpl.colorbar()
-mpl.savefig('analysis/results/WT_Zld_Bcd_3way.png', dpi=300)
+mpl.savefig('analysis/results/WT_Zld_Bcd_3way.png', dpi=600)
 
 
 in_bcd = bcd_only.contains_points(zip(wt_zld_exp, wt_bcd_exp))
 in_zld = zld_only.contains_points(zip(wt_zld_exp, wt_bcd_exp))
 in_both = both_change.contains_points(zip(wt_zld_exp, wt_bcd_exp))
+in_nochg =  no_change.contains_points(zip(wt_zld_exp, wt_bcd_exp))
+
+in_category = pd.Series(index=wt_zld_exp.index, data='')
+for cat, genes in zip(['Bcd Only', 'Zld Only', 'Both', 'No Change'],
+                      [in_bcd, in_zld, in_both, in_nochg]):
+    in_category.ix[genes] = cat
+
+in_category.to_csv('analysis/results/change_cats.txt', sep='\t')
 
 contingency = array(
     [histogram(cmaps_exp.ix[in_bcd],  bins=arange(5))[0],
@@ -228,15 +299,13 @@ contingency = array(
 print(contingency)
 print(chi2_contingency(contingency))
 
-with open('analysis/results/change_bcd.txt', 'w') as outfile:
-    for gene in wt_zld_exp.ix[in_bcd].index:
-        outfile.write('{}\n'.format(gene))
+all_dists = pd.DataFrame(data={'WT_Zld': wt_zld_exp, 'WT_Bcd':wt_bcd_exp,
+                               'Bcd_Zld': bcd_zld_exp, 'Dist2' : dist2},
+                        columns=['WT_Zld', 'WT_Bcd', 'Bcd_Zld', 'Dist2'])
 
-with open('analysis/results/change_zld.txt', 'w') as outfile:
-    for gene in wt_zld_exp.ix[in_zld].index:
-        outfile.write('{}\n'.format(gene))
+all_dists.ix[in_bcd].sort(columns='Dist2').to_csv('analysis/results/change_bcd.tsv', sep='\t')
 
-with open('analysis/results/change_both.txt', 'w') as outfile:
-    for gene in wt_zld_exp.ix[in_both].index:
-        outfile.write('{}\n'.format(gene))
+all_dists.ix[in_zld].sort(columns='Dist2').to_csv('analysis/results/change_zld.tsv', sep='\t')
+
+all_dists.ix[in_both].sort(columns='Dist2').to_csv('analysis/results/change_both.tsv', sep='\t')
 
