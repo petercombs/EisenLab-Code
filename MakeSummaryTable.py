@@ -139,7 +139,7 @@ for fname in sorted(fnames):
             skip = reads < args.strip_low_reads
         else:
             skip = sf.mapped < args.strip_low_reads
-    if args.strip_low_map_rate:
+    if args.strip_low_map_rate and not skip:
         rfs = sorted(glob(path.join('sequence',
                                     '*{}*'.format(params.ix[old_dirname]['Index']),
                                     '*_R1_*.fastq.gz'))
