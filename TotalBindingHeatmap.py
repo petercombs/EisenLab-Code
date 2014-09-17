@@ -8,8 +8,9 @@ from PlotUtils import svg_heatmap
 from matplotlib import pyplot as mpl
 from os.path import basename
 from collections import defaultdict
+from statsmodels import api as sm
 
-read_table_args = dict(keep_default_na=False, na_values='---', index_col=0)
+read_table_args = dict(keep_default_na=False, na_values=['---', ''], index_col=0)
 
 eps = .1
 cyc = 'cyc14D'
@@ -34,8 +35,8 @@ except (KeyError, AssertionError):
                                              + dataset.ix[:, i+1])/2
                 except:
                     print("Whoops! {}".format(column))
-    all_fcs = (wt.select(sw_cyc, axis=1).mean(axis=1)/
-               bcd.select(sw_cyc, axis=1).mean(axis=1))
+all_fcs = (wt.select(sw_cyc, axis=1).mean(axis=1)/
+           (bcd.select(sw_cyc, axis=1).mean(axis=1)+eps))
 try:
     tss_dict = locals()['tss_dict']
 except KeyError:
@@ -60,6 +61,24 @@ def find_near(chrom, coord, dist):
 
     return out
 
+def find_nearest_dist(chrom, coord):
+    center = bisect([i[0] for i in chrom, coord])
+    dist = abs(chrom[center][0] - coord)
+    distp1 = abs(coord - chrom[center+1][0])
+    distm1 = abs(coord - chrom[center-1][0])
+    # I should only need one of these, but I'm too lazy to read the
+    # documentation to see whether it's the +1 or -1
+    return min(dist, distp1, distm1)
+
+def get_binding_matrix(genes):
+    binding_matrix = pd.DataFrame(index=genes,
+                                  columns=tfs, data=0.0, dtype=float)
+    for tf in tfs:
+        for gene in binding_matrix.index:
+            binding_matrix.ix[gene, tf] = float(gene in has_tfs[tf])
+    binding_matrix.sort_index(axis=1, inplace=True)
+    return binding_matrix
+
 
 tf_files = glob('Reference/*_peaks')
 tfs = ([i.split('/')[1].split('_')[0] for i in tf_files])
@@ -73,35 +92,51 @@ for tf, tf_file in zip(tfs, tf_files):
 
 
 bms = []
+fits = []
 
-for fname in ['analysis/results/change_bcd.txt',
-              'analysis/results/change_both.txt',]:
-    genes = [line.strip().split()[0]
-             for line in open(fname)]
+for fname in ['analysis/results/change_bcd.tsv',
+              'analysis/results/change_both.tsv',]:
+    genes = pd.read_table(fname, **read_table_args).index
     fcs = pd.Series(index=genes, data=0)
     for gene in fcs.index:
         fcs.ix[gene] = all_fcs.ix[gene]
     fcs.sort()
-    binding_matrix = pd.DataFrame(index=fcs.index,
-                                  columns=tfs, data=0.0, dtype=float)
-    for tf in tfs:
-        for gene in binding_matrix.index:
-            binding_matrix.ix[gene, tf] = float(gene in has_tfs[tf])
     #mpl.pcolormesh(binding_matrix)
     #mpl.savefig('analysis/results/{}_bindingmap.png'.format(basename(fname)),
                 #dpi=300)
+    binding_matrix = get_binding_matrix(fcs.index)
     svg_heatmap(binding_matrix,
                 'analysis/results/{}_bindingmap.svg'.format(basename(fname)),
                 draw_row_labels=True, box_size=10, box_height=10)
-    binding_matrix.sort_index(axis=1, inplace=True)
     bms.append(binding_matrix)
 
 
-    from statsmodels import api as sm
     binding_matrix['const'] = 1.0
 
     try:
         fit = sm.Logit(fcs>1, binding_matrix).fit()
+        fits.append(fit)
         print(fit.summary())
     except LinAlgError:
         print("No luck on "+fname)
+
+all_dist = pd.read_table('analysis/results/change_both.tsv', **read_table_args)
+binding_matrix = get_binding_matrix(all_dist.index)
+svg_heatmap(binding_matrix,
+            'analysis/results/change_both_sorted.svg',
+            draw_row_labels=True, box_size=10, box_height=10)
+bms.append(binding_matrix)
+
+
+
+cats = pd.read_table('analysis/results/change_cats.txt', header=None,
+                     names=['genes', 'changes'],
+                     **read_table_args).changes.dropna()
+binding_matrix = get_binding_matrix(cats.index)
+
+binding_matrix['const'] = 1.0
+
+fitMN = sm.MNLogit(cats, binding_matrix).fit()
+fits.append(fitMN)
+print(fitMN.summary())
+
