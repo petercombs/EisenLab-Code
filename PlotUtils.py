@@ -245,6 +245,11 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
             norm_data = frame.divide(frame.dropna(axis=1).mean(axis=1), axis=0)
         elif normer is 'max':
             norm_data = frame.divide(frame.dropna(axis=1).max(axis=1), axis=0)
+        elif normer is 'center0':
+            norm_data = (0.5 +
+                         0.5 * frame.divide(frame.dropna(axis=1).abs().max(axis=1),
+                                      axis=0)
+                        )
         elif index is not None and hasattr(normer, "ix"):
             norm_data = frame.divide(normer.ix[index], axis=0)
         elif hasattr(normer, "__len__") and len(normer) == rows:
