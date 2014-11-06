@@ -5,8 +5,9 @@ from numpy import arange, array, histogram, isfinite, all, abs, log10
 import DistributionDifference as DD
 from bisect import bisect
 from scipy.stats import scoreatpercentile, chi2_contingency
+import setcolor
 
-cyc_of_interest = 'cyc14D'
+cyc_of_interest = 'cyc13'
 eps = .1
 
 read_table_args = dict(keep_default_na=False, na_values='---', index_col=0)
@@ -181,8 +182,10 @@ mpl.clf()
 mpl.hist(wt_zld.dropna(), bins=arange(0, 1, .01), normed=True, label='WT vs Zld', histtype='step', color='r')
 mpl.hist(wt_bcd.dropna(), bins=arange(0, 1, .01), normed=True, label='WT vs Bcd', histtype='step', color='g')
 mpl.legend()
-mpl.savefig('analysis/results/WTZldBcdHist.png', dpi=600)
-mpl.savefig('analysis/results/WTZldBcdHist.eps')
+setcolor.set_foregroundcolor(mpl.gca(), 'w')
+setcolor.set_backgroundcolor(mpl.gca(), 'b')
+mpl.savefig('analysis/results/WTZldBcdHist.png', dpi=600, transparent=True)
+mpl.savefig('analysis/results/WTZldBcdHist.eps', transparent=True)
 
 colors = pd.Series('y g b c'.split())
 cmaps = pd.Series(index=wt.index, data=0, dtype=int)
@@ -237,20 +240,16 @@ dist2_sorted = dist2.copy()
 dist2_sorted.sort()
 
 ax = mpl.gca()
-ax.add_patch(mpatches.PathPatch(bcd_only, facecolor='b', alpha=0.1)).set_zorder(5)
-ax.add_patch(mpatches.PathPatch(zld_only, facecolor='g', alpha=0.1)).set_zorder(5)
-ax.add_patch(mpatches.PathPatch(both_change, facecolor='c', alpha=0.1)).set_zorder(5)
-ax.add_patch(mpatches.PathPatch(no_change, facecolor='r', alpha=0.1)).set_zorder(5)
 
 mpl.plot([0,1], [0,1], 'r:', zorder=5)
 mpl.plot([0, xx, xx], [yy, yy, 0], 'k-', zorder=5, alpha=0.4)
 for c in range(4):
-    mpl.scatter(x=wt_zld.ix[both].ix[keep * (cmaps == c)],
-                y=wt_bcd.ix[both].ix[keep * (cmaps == c)],
-                c=cmaps2.ix[both].ix[keep * (cmaps == c)],
+    mpl.scatter(x=wt_zld_exp.ix[(cmaps_exp == c)],
+                y=wt_bcd_exp.ix[(cmaps_exp == c)],
+                c='w',
                 marker = '.',
                 edgecolors='none',
-                zorder=c,
+                zorder=c+1,
                 alpha=0.999999999)
 mpl.xlabel('WT vs Zld')
 mpl.ylabel('WT vs Bcd')
@@ -260,12 +259,24 @@ mpl.title('{cyc} - {dist:3.1f}kb'
           .format(cyc=cyc_of_interest,
                   dist=bind_dist/1000.))
 ax.set_aspect(1)
-mpl.savefig('analysis/results/WTBcdWTZldCorr-{}.png'.format(cyc_of_interest), dpi=600)
+setcolor.set_foregroundcolor(mpl.gca(), 'w')
+setcolor.set_backgroundcolor(mpl.gca(), 'b')
+mpl.gcf().tight_layout()
+mpl.savefig('analysis/results/WTBcdWTZldCorr-{}.png'.format(cyc_of_interest),
+            dpi=600, transparent=True)
+ax.add_patch(mpatches.PathPatch(bcd_only, facecolor='b', alpha=1)).set_zorder(0)
+ax.add_patch(mpatches.PathPatch(zld_only, facecolor='g', alpha=1)).set_zorder(0)
+ax.add_patch(mpatches.PathPatch(both_change, facecolor='c', alpha=1)).set_zorder(0)
+ax.add_patch(mpatches.PathPatch(no_change, facecolor='r', alpha=1)).set_zorder(0)
+mpl.savefig('analysis/results/WTBcdWTZldCorr-{}-withpatches.png'.format(cyc_of_interest),
+            dpi=600, transparent=True)
+
 mpl.clf()
 ax = mpl.gca()
 mpl.scatter(x=wt_zld_exp.ix[dist2_sorted.index],
             y=wt_bcd_exp.ix[dist2_sorted.index],
-            c=dist2.ix[dist2_sorted.index])
+            c=dist2.ix[dist2_sorted.index],
+            edgecolors=(0., 0., 0., 0.))
 mpl.xlabel('WT vs Zld')
 mpl.ylabel('WT vs Bcd')
 ax.add_patch(mpatches.PathPatch(bcd_only, facecolor=(0., 0., 1., 0.1),
@@ -277,7 +288,9 @@ mpl.xlim(0, max(1, max(wt_zld_exp)*1.1))
 mpl.ylim(0, max(1, max(wt_bcd_exp)*1.1))
 ax.set_aspect(1)
 mpl.colorbar()
-mpl.savefig('analysis/results/WT_Zld_Bcd_3way.png', dpi=600)
+setcolor.set_foregroundcolor(mpl.gca(), 'w')
+setcolor.set_backgroundcolor(mpl.gca(), 'b')
+mpl.savefig('analysis/results/WT_Zld_Bcd_3way.png', dpi=600, transparent=True)
 
 
 in_bcd = bcd_only.contains_points(zip(wt_zld_exp, wt_bcd_exp))
