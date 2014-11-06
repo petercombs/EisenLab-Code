@@ -18,4 +18,3 @@ for dirname in sorted([d for d in glob(path.join(dir, '*')) if path.isdir(d)]):
         print dirname, '\t{:15,}'.format(int(n)), ('*' if n % 1 else '')*10
     except:
         print dirname, "ERR!"
-
