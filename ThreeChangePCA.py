@@ -3,6 +3,7 @@ import PlotUtils
 import pandas as pd
 from matplotlib import cm
 from BindUtils import get_binding_matrix
+from numpy import sign
 
 read_table_args = {'index_col': 0, 'keep_default_na': False,
                    'na_values': ['---', '']}
@@ -39,20 +40,25 @@ bind_and_exp = (both_bm
                       how='inner')
                )
 bind_and_exp.dropna(how='all', axis=1, inplace=True)
-f = p.fit(bind_and_exp)
-comps = pd.DataFrame(data=f.components_, columns=bind_and_exp.columns)
+n = 2
+all_comps = []
+for i in range(n):
+    f = p.fit(bind_and_exp[i::n])
+    comps = pd.DataFrame(data=f.components_, columns=bind_and_exp.columns)
+    comps = comps.multiply(sign(comps.bind_sl_da), axis=0)
+    all_comps.append(comps)
 
-PlotUtils.svg_heatmap(comps, col_sep='_sl',
-                      filename='analysis/results/pca.svg',
-                      box_size=10, box_height=20,
-                      row_labels=p.explained_variance_ratio_,
-                      draw_row_labels=True,
-                      norm_rows_by='center0',
-                      cmap=cm.RdBu)
-comps.to_csv('analysis/results/pca.csv')
+    PlotUtils.svg_heatmap(comps, col_sep='_sl',
+                          filename='analysis/results/pca_%d.svg'%i,
+                          box_size=10, box_height=20,
+                          row_labels=p.explained_variance_ratio_,
+                          draw_row_labels=True,
+                          norm_rows_by='center0',
+                          cmap=cm.RdBu)
+    comps.to_csv('analysis/results/pca_%d.csv'%i)
 
-bind_pcas = (comps.select(startswith('bind_sl'), axis=1)
-             .rename(columns=lambda x: x.split('_')[-1])
-            )
-exp_pcas = comps.select(startswith(('wt', 'bcd', 'zld')), axis=1)
+    bind_pcas = (comps.select(startswith('bind_sl'), axis=1)
+                 .rename(columns=lambda x: x.split('_')[-1])
+                )
+    exp_pcas = comps.select(startswith(('wt', 'bcd', 'zld')), axis=1)
 
