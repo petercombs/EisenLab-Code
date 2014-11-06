@@ -1,20 +1,22 @@
 from os import path
 
+
 def get_bam_length(samfile):
     start = samfile.tell()
-    maxval = path.getsize(samfile.filename) * 2**16 
+    maxval = path.getsize(samfile.filename) * 2**16
     # I don't know why that 2**16 factor is there!
-    return maxval +  2**16, start
+    return maxval + 2**16, start
 
-def strip_to_number(dataval, chars = '\'" \t #'):
+
+def strip_to_number(dataval, chars='\'" \t #'):
     return to_number(dataval.strip(chars))
 
 
 def to_number(dataval):
     """ A forgiving number converter.
 
-    Will convert to int if possible, float otherwise, and if neither, will return
-    the input.
+    Will convert to int if possible, float otherwise, and if neither, will
+    return the input.
     """
     try:
         datavalf = float(dataval)
@@ -29,4 +31,3 @@ def to_number(dataval):
 
     except ValueError:
         return dataval
-

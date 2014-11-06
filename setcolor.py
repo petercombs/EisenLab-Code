@@ -5,6 +5,8 @@ white-on-black)
 From:
 https://gist.github.com/jasonmc/1160951
 """
+
+
 def set_foregroundcolor(ax, color):
     '''For the specified axes, sets the color of the frame, major ticks,
     tick labels, axis labels, title and legend
@@ -27,7 +29,7 @@ def set_foregroundcolor(ax, color):
     ax.axes.yaxis.get_offset_text().set_color(color)
     ax.axes.title.set_color(color)
     lh = ax.get_legend()
-    if lh != None:
+    if lh is not None:
         lh.get_title().set_color(color)
         lh.legendPatch.set_edgecolor('none')
         labels = lh.get_texts()
@@ -47,5 +49,5 @@ def set_backgroundcolor(ax, color):
     '''
     ax.patch.set_facecolor(color)
     lh = ax.get_legend()
-    if lh != None:
+    if lh is not None:
         lh.legendPatch.set_facecolor(color)
