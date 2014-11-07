@@ -21,6 +21,8 @@ ORTHOLOGS = prereqs/gene_orthologs_fb_$(MELDATE).tsv
 
 MELGFF   = prereqs/dmel-all-$(MELVERSION).gff
 MELGTF   = $(REFDIR)/mel_good.gtf
+MELALLGTF   = $(REFDIR)/mel_all.gtf
+MELBADGTF   = $(REFDIR)/mel_bad.gtf
 
 GENEMAPTABLE = gene_map_table_fb_$(MELDATE).tsv
 
@@ -53,24 +55,40 @@ $(ANALYSIS_DIR)/summary.tsv : MakeSummaryTable.py $(FPKMS) $(RUNCONFIG) Makefile
 	   --mapped-bamfile accepted_hits_sorted.bam \
 		$(ANALYSIS_DIR)
 
-%/genes.fpkm_tracking : %/accepted_hits_sorted.bam $(MELGTF) $(MELFASTA2)
+%/genes.fpkm_tracking : %/accepted_hits_sorted.bam $(MELGTF) $(MELFASTA2) $(MELBADGTF)
 	@echo '============================='
 	@echo 'Calculating Abundances'
 	@echo '============================='
 	touch $@
-	cufflinks --num-threads 8 --output-dir $(@D) -u \
-		--frag-bias-correct $(MELFASTA2) -G $(MELGTF) $<
+	cufflinks \
+		--num-threads 8 \
+		--output-dir $(@D) \
+		--multi-read-correct \
+		--frag-bias-correct $(MELFASTA2) \
+		--GTF $(MELGTF) \
+		--mask-file $(MELBADGTF) \
+		$<
 
 %/accepted_hits_sorted.bam: %/accepted_hits.bam
 	touch $@
 	samtools sort $< $(@D)/accepted_hits_sorted
 	samtools index $@
 
-$(MELGTF): $(MELGFF) | $(REFDIR)
+$(MELALLGTF): $(MELGFF) | $(REFDIR)
 	gffread $< -E -T -o- | \
-		awk '{print "dmel_"$$0}' | \
-		grep -vP '(snoRNA|CR[0-9]{4}|Rp[ILS]|mir-|tRNA|unsRNA|snRNA|snmRNA|scaRNA|rRNA|RNA:|mt:)' > \
+		awk '{print "dmel_"$$0}' > \
 		$@
+
+$(MELGTF): $(MELALLGTF) | $(REFDIR)
+	cat $< \
+		| grep -vP '(snoRNA|CR[0-9]{4}|Rp[ILS]|mir-|tRNA|unsRNA|snRNA|snmRNA|scaRNA|rRNA|RNA:|mt:)' \
+		> $@
+
+$(MELBADGTF): $(MELALLGTF) | $(REFDIR)
+	cat $< \
+		| grep -P '(snoRNA|CR[0-9]{4}|Rp[ILS]|mir-|tRNA|unsRNA|snRNA|snmRNA|scaRNA|rRNA|RNA:|mt:)' \
+		> $@ 
+
 
 $(MELFASTA): $(REFDIR)/$(MELMAJORVERSION) | $(REFDIR)
 	wget -O $@.gz ftp://ftp.flybase.net/genomes/Drosophila_melanogaster/dmel_$(MELRELEASE)/fasta/dmel-all-chromosome-$(MELVERSION).fasta.gz
