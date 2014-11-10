@@ -6,10 +6,13 @@ the data as a CSV file.  Arguments:
     2) -c -- also include confidence intervals
 
 """
+from __future__ import division
 import pandas
 from os import path
 from glob import glob
 from sys import argv
+from pysam import Samfile
+import gzip
 
 
 def parse_args():
@@ -38,6 +41,9 @@ def parse_args():
                         action='store_true',
                         help='When stripping a sample, replace all data with'
                         ' NaN')
+    parser.add_argument('--strip-low-map-rate', '-m', default=0, type=float,
+                        help='Remove samples with less than X% of reads '
+                        "mapping (off by default)")
     parser.add_argument('--mapped-bamfile', '-b', default='assigned_dmelR.bam',
                         help='The bam file to look in for mapped reads')
     parser.add_argument('--in-subdirectory', default=None,
@@ -69,10 +75,15 @@ def parse_args():
         args.key = int(args.key)
     except ValueError:
         pass
+    if args.strip_low_map_rate:
+        args.strip_on_unique = True
+        args.strip_low_reads = max(args.strip_low_reads, 1)
     return args
 
 
 def get_stagenum(name, series, dir):
+    if not [c for c in name if c.isdigit()]:
+        return 0
     # Slice until the first digit
     name_base = name[:[i for i, c in enumerate(name) if c.isdigit()][0]]
     dir = {'+': 1, '?': 1, '-': -1}[dir]
@@ -108,6 +119,7 @@ for fname in sorted(fnames):
                   .replace('//', '/')
                   .strip('/'))
     basedir, dirname = path.split(alldir)
+    old_dirname = dirname
     table = (table.drop_duplicates(args.key)
              .dropna(axis=1, how='all')
              .dropna(axis=0, how='any'))
@@ -123,26 +135,39 @@ for fname in sorted(fnames):
         print dirname, '=', new_dirname
         dirname = new_dirname
 
+    skip = False
     if args.strip_low_reads:
-        from pysam import Samfile
         sf = Samfile(path.join(alldir, args.mapped_bamfile))
         if args.strip_on_unique:
             reads = 0
             for read in sf:
                 reads += not read.is_secondary
-                if reads > args.strip_low_reads:
+                if reads > args.strip_low_reads and not args.strip_low_map_rate:
                     break
             skip = reads < args.strip_low_reads
         else:
             skip = sf.mapped < args.strip_low_reads
-        if skip:
-            if args.strip_as_nan:
-                from numpy import nan
-                print "NaNing", dirname
-                table.ix[:] = nan
-            else:
-                print "Skipping", dirname
-                continue
+    if args.strip_low_map_rate and args.has_params and not skip:
+        rfs = sorted(glob(path.join('sequence',
+                                    '*{}*'.format(params.ix[old_dirname]['Index']),
+                                    '*_R1_*.fastq.gz'))
+                    )
+        total_reads = 4e6 * (len(rfs) - 1)
+        for i, line in enumerate(gzip.open(rfs[-1])):
+            pass
+        total_reads += i//4
+        skip += (reads / total_reads) < (args.strip_low_map_rate / 100)
+        print(reads, total_reads, reads/total_reads,
+              args.strip_low_map_rate / 100)
+
+    if skip:
+        if args.strip_as_nan:
+            from numpy import nan
+            print "NaNing", dirname
+            table.ix[:] = nan
+        else:
+            print "Skipping", dirname
+            continue
     if df is None:
         df = pandas.DataFrame({dirname+"_FPKM": table.ix[:, args.column]})
     else:
