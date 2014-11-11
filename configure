@@ -86,12 +86,14 @@ targets_all = ' '.join(path.join('$(ANALYSIS_DIR)',
 out.write("FPKMS = {}  \n".format(targets))
 
 reads = defaultdict(lambda : ([], []))
-sample_species = {}
+carriers = defaultdict(list)
+carrier_species = {}
 for i, row in config_file.iterrows():
     label = row['Label']
     index = row['Index']
     mbepc = int(row['MBEPC'])
-    species = row['SampleSpecies']
+    carrier = row['CarrierID']
+    species = row['CarrierSpecies']
     for glob_spec in glob_specs:
         glob_spec = (glob_spec
                      .format(seqdir=args.seqdir, label=label, index=index, id=mbepc))
