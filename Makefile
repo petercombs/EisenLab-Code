@@ -108,7 +108,7 @@ $(REFDIR)/Dmel/transcriptome : | $(REFDIR)/Dmel
 	touch $@
 
 
-$(REFDIR)/Dmel/Genome : $(MELGTF) |  $(REFDIR)/Dmel $(MELFASTA2) $(REFDIR)
+$(REFDIR)/Dmel/Genome : $(REFDIR)/$(MELMAJORVERSION) | $(MELGTF)  $(REFDIR)/Dmel $(MELFASTA2) $(REFDIR)
 	STAR --runMode genomeGenerate --genomeDir $(REFDIR)/Dmel \
 		--genomeFastaFiles $(MELFASTA2) \
 		--sjdbGTFfile $(MELGTF)
