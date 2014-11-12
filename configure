@@ -38,9 +38,12 @@ star_str = ('$(ANALYSIS_DIR)/{label}/accepted_hits.bam: '
 
 mappers = {'star': star_str, 'tophat' : tophat_str}
 
-glob_specs = ['{seqdir}/*/*{label}*/*_{{read}}_*.fastq*',
-              '{seqdir}/*index{index}/*_{{read}}*.fastq*',
-             ]
+glob_specs = [
+    '{seqdir}/*{label}{index}/*_{{read}}_*.fastq*',
+    # '{seqdir}/*{index}/*_{{read}}_*.fastq*',
+    '{seqdir}/*/*{label}*/*_{{read}}_*.fastq*',
+    '{seqdir}/*index{index}/*_{{read}}*.fastq*',
+]
 
 
 def parse_arguments():
