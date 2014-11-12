@@ -38,6 +38,14 @@ star_str = ('$(ANALYSIS_DIR)/{label}/accepted_hits.bam: '
 
 mappers = {'star': star_str, 'tophat' : tophat_str}
 
+glob_specs = [
+    '{seqdir}/*{label}{index}/*_{{read}}_*.fastq*',
+    # '{seqdir}/*{index}/*_{{read}}_*.fastq*',
+    '{seqdir}/*/*{label}*/*_{{read}}_*.fastq*',
+    '{seqdir}/*index{index}/*_{{read}}*.fastq*',
+]
+
+
 def parse_arguments():
     from argparse import ArgumentParser
     p = ArgumentParser(description='Configuration script for SliceSeq data processing')
@@ -87,15 +95,14 @@ for i, row in config_file.iterrows():
     index = row['Index']
     mbepc = int(row['MBEPC'])
     species = row['SampleSpecies']
-    glob_spec = ('{seqdir}/*/*{label}*/*_{{read}}_*.fastq*'
-               .format(seqdir=args.seqdir, label=label, index=index, id=mbepc))
-    rf1 = glob(glob_spec.format(read='R1'))
-    if rf1 == []:
-        glob_spec = ('{seqdir}/*{id}*{index}*/*_{{read}}*.fastq*'
-                    .format(seqdir=args.seqdir, label=label, index=index,
-                            id=mbepc))
+    for glob_spec in glob_specs:
+        glob_spec = (glob_spec
+                     .format(seqdir=args.seqdir, label=label, index=index, id=mbepc))
         rf1 = glob(glob_spec.format(read='R1'))
-        if rf1 == []:
+        if rf1 != []:
+            out.write("GLOBSPEC = {}\n".format(glob_spec))
+            break
+    else:
             print "Warning: no sequence for ", label, index
             print glob_spec.format(read='R1')
     rf2 = glob(glob_spec.format(read='R2'))
