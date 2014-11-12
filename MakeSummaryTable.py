@@ -82,6 +82,8 @@ def parse_args():
 
 
 def get_stagenum(name, series, dir):
+    if not [c for c in name if c.isdigit()]:
+        return 0
     # Slice until the first digit
     name_base = name[:[i for i, c in enumerate(name) if c.isdigit()][0]]
     dir = {'+': 1, '?': 1, '-': -1}[dir]
@@ -135,7 +137,7 @@ for fname in sorted(fnames):
 
     skip = False
     if args.strip_low_reads:
-        sf = Samfile(path.join(alldir,args.mapped_bamfile))
+        sf = Samfile(path.join(alldir, args.mapped_bamfile))
         if args.strip_on_unique:
             reads = 0
             for read in sf:
@@ -146,7 +148,7 @@ for fname in sorted(fnames):
             skip = reads < args.strip_low_reads
         else:
             skip = sf.mapped < args.strip_low_reads
-    if args.strip_low_map_rate and not skip:
+    if args.strip_low_map_rate and args.has_params and not skip:
         rfs = sorted(glob(path.join('sequence',
                                     '*{}*'.format(params.ix[old_dirname]['Index']),
                                     '*_R1_*.fastq.gz'))
