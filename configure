@@ -39,12 +39,47 @@ star_str = ('$(ANALYSIS_DIR)/{label}/accepted_hits.bam: '
 mappers = {'star': star_str, 'tophat' : tophat_str}
 
 glob_specs = [
+    '{seqdir}/*/*{index_seq}*_{{read}}_*.fastq*',
     '{seqdir}/*{label}{index}/*_{{read}}_*.fastq*',
     # '{seqdir}/*{index}/*_{{read}}_*.fastq*',
     '{seqdir}/*/*{label}*/*_{{read}}_*.fastq*',
     '{seqdir}/*index{index}/*_{{read}}*.fastq*',
 ]
 
+index_converter = {
+    'S501':'TAGATCGC',
+    'S502':'CTCTCTAT',
+    'S503':'TATCCTCT',
+    'S504':'AGAGTAGA',
+    'S505':'GTAAGGAG',
+    'S506':'ACTGCATA',
+    'S507':'AAGGAGTA',
+    'S508':'CTAAGCCT',
+    #'N701':'TCGCCTTA',
+    #'N702':'CTAGTACG',
+    #'N703':'TTCTGCCT',
+    #'N704':'GCTCAGGA',
+    #'N705':'AGGAGTCC',
+    #'N706':'CATGCCTA',
+    #'N707':'GTAGAGAG',
+    #'N708':'CCTCTCTG',
+    #'N709':'AGCGTAGC',
+    #'N710':'CAGCCTCG',
+    #'N711':'TGCCTCTT',
+    #'N712':'TCCTCTAC',
+    'N701':'TAAGGCGA',
+    'N702':'CGTACTAG',
+    'N703':'AGGCAGAA',
+    'N704':'TCCTGAGC',
+    'N705':'GGACTCCT',
+    'N706':'TAGGCATG',
+    'N707':'CTCTCTAC',
+    'N708':'CAGAGAGG',
+    'N709':'GCTACGCT',
+    'N710':'CGAGGCTG',
+    'N711':'AAGAGGCA',
+    'N712':'GTAGAGGA',
+}
 
 def parse_arguments():
     from argparse import ArgumentParser
@@ -70,6 +105,10 @@ def parse_arguments():
     return args
 
 
+def convert_indices(index_spec):
+    for index in index_converter:
+        index_spec = index_spec.replace(index, index_converter[index])
+    return index_spec
 
 args = parse_arguments()
 config_file = pd.read_table(args.parameters,
@@ -97,7 +136,12 @@ for i, row in config_file.iterrows():
     species = row['SampleSpecies']
     for glob_spec in glob_specs:
         glob_spec = (glob_spec
-                     .format(seqdir=args.seqdir, label=label, index=index, id=mbepc))
+                     .format(seqdir=args.seqdir,
+                             label=label,
+                             index=index,
+                             index_seq=convert_indices(index),
+                             id=mbepc,
+                            ))
         rf1 = glob(glob_spec.format(read='R1'))
         if rf1 != []:
             out.write("GLOBSPEC = {}\n".format(glob_spec))
