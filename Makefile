@@ -11,15 +11,16 @@ MELMAJORVERSION = $(word 1, $(subst ., , $(MELRELEASE)))
 MELVERSION = $(word 1, $(subst _FB, ,$(MELRELEASE)))
 MELDATE = $(word 2, $(subst _FB, ,$(MELRELEASE)))
 
-MELFASTA = prereqs/dmel-all-chromosome-$(MELVERSION).fasta
+PREREQDIR = prereqs
+MELFASTA = $(PREREQDIR)/dmel-all-chromosome-$(MELVERSION).fasta
 
 REFDIR = Reference
 
 MELFASTA2= $(REFDIR)/dmel_prepend.fasta
 
-ORTHOLOGS = prereqs/gene_orthologs_fb_$(MELDATE).tsv
+ORTHOLOGS = $(PREREQDIR)/gene_orthologs_fb_$(MELDATE).tsv
 
-MELGFF   = prereqs/dmel-all-$(MELVERSION).gff
+MELGFF   = $(PREREQDIR)/dmel-all-$(MELVERSION).gff
 MELGTF   = $(REFDIR)/mel_good.gtf
 MELALLGTF   = $(REFDIR)/mel_all.gtf
 MELBADGTF   = $(REFDIR)/mel_bad.gtf
@@ -90,11 +91,11 @@ $(MELBADGTF): $(MELALLGTF) | $(REFDIR)
 		> $@ 
 
 
-$(MELFASTA): $(REFDIR)/$(MELMAJORVERSION) | $(REFDIR)
+$(MELFASTA): $(REFDIR)/$(MELMAJORVERSION) | $(REFDIR) $(PREREQDIR)
 	wget -O $@.gz ftp://ftp.flybase.net/genomes/Drosophila_melanogaster/dmel_$(MELRELEASE)/fasta/dmel-all-chromosome-$(MELVERSION).fasta.gz
 	gunzip --force $@.gz
 
-$(MELGFF): $(REFDIR)/$(MELVERSION) | $(REFDIR)
+$(MELGFF): $(REFDIR)/$(MELVERSION) | $(REFDIR) $(PREREQDIR)
 	wget -O $@.gz ftp://ftp.flybase.net/genomes/Drosophila_melanogaster/dmel_$(MELRELEASE)/gff/dmel-all-$(MELVERSION).gff.gz
 	gunzip --force $@.gz
 
@@ -113,14 +114,17 @@ $(REFDIR)/Dmel/Genome : $(REFDIR)/$(MELMAJORVERSION) | $(MELGTF)  $(REFDIR)/Dmel
 		--genomeFastaFiles $(MELFASTA2) \
 		--sjdbGTFfile $(MELGTF)
 
-$(ORTHOLOGS) :
+$(ORTHOLOGS) : | $(PREREQDIR)
 	wget -O $@.gz -i ftp.flybase.org/releases/FB$(MELDATE)/precomputed_files/genes/gene_orthologs_fb_$(MELDATE).tsv.gz
 	gunzip --force $@.gz
 
 $(REFDIR) :
 	mkdir $@
 
-$(REFDIR)/Dmel:
+$(PREREQDIR):
+	mkdir $@
+
+$(REFDIR)/Dmel: | $(MELFASTA2)
 	bowtie2-build --offrate 1 $(MELFASTA2) $@
 	mkdir $@
 
