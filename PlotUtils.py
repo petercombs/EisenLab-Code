@@ -200,8 +200,9 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
     pat = dwg.pattern(id='hatch', insert=(0, 0), size=(25, 25),
                       patternUnits='userSpaceOnUse')
     g = pat.add(dwg.g(style="fill:none; stroke:#B0B0B0; stroke-width:1"))
-    g.add(dwg.path(('M0,0', 'l25,25')))
-    g.add(dwg.path(('M25,0 l-25,25'.split())))
+    g.add(dwg.path(('M0,0', 'l20,20')))
+    g.add(dwg.path(('M10,0 l10,10'.split())))
+    g.add(dwg.path(('M0,10 l10,10'.split())))
 
     dwg.add(pat)
 
@@ -246,6 +247,11 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
             norm_data = frame.divide(frame.dropna(axis=1).mean(axis=1), axis=0)
         elif normer is 'max':
             norm_data = frame.divide(frame.dropna(axis=1).max(axis=1), axis=0)
+        elif normer is 'center0':
+            norm_data = (0.5 +
+                         0.5 * frame.divide(frame.dropna(axis=1).abs().max(axis=1),
+                                      axis=0)
+                        )
         elif index is not None and hasattr(normer, "ix"):
             norm_data = frame.divide(normer.ix[index], axis=0)
         elif hasattr(normer, "__len__") and len(normer) == rows:
@@ -345,5 +351,5 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
     if draw_row_labels:
         for i in range(rows):
             dwg.add(dwg.text(row_labels[i],
-                             (x_start, y_start + i*box_size+box_height),))
+                             (x_start, y_start + i*box_height+box_height),))
     dwg.saveas(filename)

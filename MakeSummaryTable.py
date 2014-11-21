@@ -142,16 +142,17 @@ for fname in sorted(fnames):
             reads = 0
             for read in sf:
                 reads += not read.is_secondary
-                if reads > args.strip_low_reads and not args.strip_low_map_rate:
+                if ((reads > args.strip_low_reads)
+                    and not args.strip_low_map_rate):
                     break
             skip = reads < args.strip_low_reads
         else:
             skip = sf.mapped < args.strip_low_reads
     if args.strip_low_map_rate and args.has_params and not skip:
-        rfs = sorted(glob(path.join('sequence',
-                                    '*{}*'.format(params.ix[old_dirname]['Index']),
-                                    '*_R1_*.fastq.gz'))
-                    )
+        rfs = [entry for entry in
+               sf.header['PG'][0]['CL'].split()
+              if entry.endswith('.gz') or entry.endswith('.fastq')][0]
+        rfs = sorted(rfs.split(','))
         total_reads = 4e6 * (len(rfs) - 1)
         for i, line in enumerate(gzip.open(rfs[-1])):
             pass
