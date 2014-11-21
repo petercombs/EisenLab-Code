@@ -6,7 +6,7 @@ STARCONFIG = Parameters/STAR_params.in
 ANALYSIS_DIR = analysis
 
 # Reference FASTA and GFF files from FlyBase and SGD
-MELRELEASE = r6.01_FB2014_04
+MELRELEASE = r6.02_FB2014_05
 MELMAJORVERSION = $(word 1, $(subst ., , $(MELRELEASE)))
 MELVERSION = $(word 1, $(subst _FB, ,$(MELRELEASE)))
 MELDATE = $(word 2, $(subst _FB, ,$(MELRELEASE)))
