@@ -6,7 +6,7 @@ STARCONFIG = Parameters/STAR_params.in
 ANALYSIS_DIR = analysis
 
 # Reference FASTA and GFF files from FlyBase and SGD
-MELRELEASE = r6.01_FB2014_04
+MELRELEASE = r6.02_FB2014_05
 MELMAJORVERSION = $(word 1, $(subst ., , $(MELRELEASE)))
 MELVERSION = $(word 1, $(subst _FB, ,$(MELRELEASE)))
 MELDATE = $(word 2, $(subst _FB, ,$(MELRELEASE)))
@@ -87,7 +87,7 @@ $(MELGTF): $(MELALLGTF) | $(REFDIR)
 $(MELBADGTF): $(MELALLGTF) | $(REFDIR)
 	cat $< \
 		| grep -P '(snoRNA|CR[0-9]{4}|Rp[ILS]|mir-|tRNA|unsRNA|snRNA|snmRNA|scaRNA|rRNA|RNA:|mt:)' \
-		> $@ 
+		> $@
 
 
 $(MELFASTA): $(REFDIR)/$(MELMAJORVERSION) | $(REFDIR)
