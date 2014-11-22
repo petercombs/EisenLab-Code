@@ -4,7 +4,6 @@ import pandas as pd
 from os import path
 from glob import glob
 from collections import defaultdict
-from sys import argv
 
 tophat_str = ('$(ANALYSIS_DIR)/{label}/accepted_hits.bam: '
               ' {rfs} '
@@ -17,6 +16,9 @@ tophat_str = ('$(ANALYSIS_DIR)/{label}/accepted_hits.bam: '
               '--output-dir $(ANALYSIS_DIR)/{label}/ '
               '--transcriptome-index Reference/{genome}/transcriptome '
               '--transcriptome-only '
+              # No need to sort automatically, for compatibility with
+              # the STAR-based pipeline
+              '--no-sort-bam '
               '--b2-sensitive '
               '--num-threads 12 '
               'Reference/{genome} '
@@ -35,6 +37,14 @@ star_str = ('$(ANALYSIS_DIR)/{label}/accepted_hits.bam: '
             '\trm $(ANALYSIS_DIR)/{label}/Aligned.out.sam\n')
 
 mappers = {'star': star_str, 'tophat' : tophat_str}
+
+glob_specs = [
+    '{seqdir}/*{label}{index}/*_{{read}}_*.fastq*',
+    # '{seqdir}/*{index}/*_{{read}}_*.fastq*',
+    '{seqdir}/*/*{label}*/*_{{read}}_*.fastq*',
+    '{seqdir}/*index{index}/*_{{read}}*.fastq*',
+]
+
 
 def parse_arguments():
     from argparse import ArgumentParser
@@ -83,19 +93,18 @@ carriers = defaultdict(list)
 carrier_species = {}
 for i, row in config_file.iterrows():
     label = row['Label']
-    index = int(row['Index'])
+    index = row['Index']
     mbepc = int(row['MBEPC'])
     carrier = row['CarrierID']
     species = row['CarrierSpecies']
-    glob_spec = ('{seqdir}/*/*{label}*/*_{{read}}_*.fastq*'
-               .format(seqdir=args.seqdir, label=label, index=index, id=mbepc))
-    rf1 = glob(glob_spec.format(read='R1'))
-    if rf1 == []:
-        glob_spec = ('{seqdir}/*{id}*{index}*/*_{{read}}*.fastq*'
-                    .format(seqdir=args.seqdir, label=label, index=index,
-                            id=mbepc))
+    for glob_spec in glob_specs:
+        glob_spec = (glob_spec
+                     .format(seqdir=args.seqdir, label=label, index=index, id=mbepc))
         rf1 = glob(glob_spec.format(read='R1'))
-        if rf1 == []:
+        if rf1 != []:
+            out.write("GLOBSPEC = {}\n".format(glob_spec))
+            break
+    else:
             print "Warning: no sequence for ", label, index
             print glob_spec.format(read='R1')
     rf2 = glob(glob_spec.format(read='R2'))

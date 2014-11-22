@@ -7,19 +7,21 @@ from numpy import log, array, Inf, median, exp, argsort, linspace, isfinite
 from itertools import repeat
 import numpy as np
 
-import urllib, time
+import urllib
+import time
 from os import path
 
 ISH = LinearSegmentedColormap('ish',
                               dict(red=((0, 1, 1),
                                         (.7, 120/255, 120/255),
-                                        (1, 46/255,46/255)),
+                                        (1, 46/255, 46/255)),
                                    green=((0, 1, 1),
                                           (.7, 129/255, 129/255),
                                           (1, 46/255, 46/255)),
                                    blue=((0, 1, 1),
                                          (.7, 1, 1),
                                          (1, 98/255, 98/255))))
+
 
 def imget(imname):
     """ Use cached, or fetch an image from FlyExpress
@@ -32,11 +34,13 @@ report pages and see what the format is.
     im_basename = path.splitext(path.basename(imname))[0]
     filename = path.join('figures', 'BDGP', im_basename+'.bmp')
     if not path.exists(filename):
-        base_web = "http://www.flyexpress.net/ZOOX4_DBImages/BDGP/thumbnails/%s_s.bmp"
+        base_web = ("http://www.flyexpress.net/"
+                    "ZOOX4_DBImages/BDGP/thumbnails/%s_s.bmp")
         print("1 second delay to avoid spamming server")
         time.sleep(1)
         urllib.urlretrieve(base_web % im_basename, filename)
     return mpl.imread(filename)
+
 
 def scatter_heat(x, y, **kwargs):
     if 's' not in kwargs:
@@ -61,7 +65,8 @@ def scatter_heat(x, y, **kwargs):
     ax.set_ylim(ylim)
     return retval, density
 
-def loglog_heat(x,y, **kwargs):
+
+def loglog_heat(x, y, **kwargs):
     if 's' not in kwargs:
         kwargs['s'] = 10
     if 'edgecolors' not in kwargs:
@@ -98,7 +103,7 @@ def hist_sorted(*args, **kwargs):
 
     bins = kwargs.pop('bins', linspace(min(min(a) for a in args),
                                        max(max(a) for a in args),
-                                       num = 11))
+                                       num=11))
 
     for data, label in zip(args, labels):
         ns, bins, patches = mpl.hist(data, bins=bins, label=label, **kwargs)
@@ -114,29 +119,27 @@ def hist_sorted(*args, **kwargs):
     return all_ns, bins, all_patches
 
 
-
-
 def plot_likelihoods(likelihoods, starts, column_headers):
     n_samples = len(column_headers)
-    max_val = np.argmax(starts>150)
+    max_val = np.argmax(starts > 150)
     print(max_val)
     plots = []
     for i in range(n_samples):
         hsv = np.array([0.7*i/n_samples, 1, 1])
-        color = tuple(hsv_to_rgb(np.reshape(hsv, (1,1,3))))[0].flatten()
+        color = tuple(hsv_to_rgb(np.reshape(hsv, (1, 1, 3))))[0].flatten()
         print(color)
-        plots.append(mpl.plot(starts[:max_val], likelihoods[i,:max_val],
+        plots.append(mpl.plot(starts[:max_val], likelihoods[i, :max_val],
                               label=column_headers[i], color=color))
-        best = np.argmax(likelihoods[i,:])
+        best = np.argmax(likelihoods[i, :])
         print(best)
-        plots.append(mpl.plot(starts[best], likelihoods[i,best], '*',
-                          color=color))
+        plots.append(mpl.plot(starts[best], likelihoods[i, best], '*',
+                              color=color))
     return plots
 
 
 def svg_heatmap(data, filename, row_labels=None, box_size=4,
                 index=None,
-                cmap=ISH, norm_rows_by = None, draw_row_labels=False,
+                cmap=ISH, norm_rows_by=None, draw_row_labels=False,
                 col_sep='', box_height=None, total_width=None,
                 draw_box=False, draw_name=False, data_names=None,
                 max_width=np.inf,
@@ -149,28 +152,28 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
     pandas DataFrame, etc), or a tuple of 2D array-likes, in which case a
     separator will be added between each one in the output
 
-    *cmap* is a matplotlib-like colormap (i.e. a callable that expects floats in
-    the range 0.0-1.0.), or an iterable of the same length as the tuple *data*
-    containing colormaps
+    *cmap* is a matplotlib-like colormap (i.e. a callable that expects floats
+    in the range 0.0-1.0.), or an iterable of the same length as the tuple
+    *data* containing colormaps
 
     *row_labels* can be supplied, otherwise they will detected from the first
     item in *data*, if available, and if not they will be blank.
 
-    If *total_width* is supplied, width of each dataset in *data* will be scaled
-    to that constant. If *box_height* is supplied, the height of each row will be
-    *box_height*, otherwise it will be equal to the width of each element. If
-    neither are supplied, elements will be squares equal to *box_size*. IT IS
-    STRONGLY RECOMMENDED that if if supplying *total_width*, *box_height* also be
-    specified, but this is not enforced.
+    If *total_width* is supplied, width of each dataset in *data* will be
+    scaled to that constant. If *box_height* is supplied, the height of each
+    row will be *box_height*, otherwise it will be equal to the width of each
+    element. If neither are supplied, elements will be squares equal to
+    *box_size*. IT IS STRONGLY RECOMMENDED that if if supplying *total_width*,
+    *box_height* also be specified, but this is not enforced.
 
     *draw_row_labels*, if True, will label the rows on the right hand side. As
-    of 2013/09/03, this won't scale the SVG properly, so including the resulting
-    file in an html element won't display properly.
+    of 2013/09/03, this won't scale the SVG properly, so including the
+    resulting file in an html element won't display properly.
 
     *spacers* is the distance between adjacent datasets.  Can either be a
     number, in which case it will apply to all datasets, or an interable for
-    different distances. If the iterable is shorter than the number of datasets,
-    the last value will be repeated.
+    different distances. If the iterable is shorter than the number of
+    datasets, the last value will be repeated.
 
     """
     import svgwrite as svg
@@ -194,14 +197,14 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
         dwg = svg.Drawing(filename)
     dwg.add(svg.base.Title(path.basename(filename)))
 
-    pat = dwg.pattern(id='hatch', insert=(0,0), size=(25,25),
-                                        patternUnits='userSpaceOnUse')
+    pat = dwg.pattern(id='hatch', insert=(0, 0), size=(25, 25),
+                      patternUnits='userSpaceOnUse')
     g = pat.add(dwg.g(style="fill:none; stroke:#B0B0B0; stroke-width:1"))
-    g.add(dwg.path(('M0,0', 'l25,25')))
-    g.add(dwg.path(('M25,0 l-25,25'.split())))
+    g.add(dwg.path(('M0,0', 'l20,20')))
+    g.add(dwg.path(('M10,0 l10,10'.split())))
+    g.add(dwg.path(('M0,10 l10,10'.split())))
 
     dwg.add(pat)
-
 
     if row_labels is None:
         if index is not None:
@@ -244,6 +247,11 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
             norm_data = frame.divide(frame.dropna(axis=1).mean(axis=1), axis=0)
         elif normer is 'max':
             norm_data = frame.divide(frame.dropna(axis=1).max(axis=1), axis=0)
+        elif normer is 'center0':
+            norm_data = (0.5 +
+                         0.5 * frame.divide(frame.dropna(axis=1).abs().max(axis=1),
+                                      axis=0)
+                        )
         elif index is not None and hasattr(normer, "ix"):
             norm_data = frame.divide(normer.ix[index], axis=0)
         elif hasattr(normer, "__len__") and len(normer) == rows:
@@ -256,7 +264,7 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
             norm_data = frame.divide(normer, axis=0)
 
         if not c_cmap or str(c_cmap).lower() == 'default':
-            c_cmap=ISH
+            c_cmap = ISH
 
         new_rows, new_cols = np.shape(frame)
         if hasattr(frame, 'index'):
@@ -276,7 +284,7 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
                 g = dwg.g()
                 g.add(svg.base.Title("{}, {}: {:.2f}".format(row_labels[i],
                                                              col_labels[j],
-                                                             frame.ix[i,j])))
+                                                             frame.ix[i, j])))
                 hatch = not isfinite(norm_data.ix[i, j])
                 if hatch:
                     n = 0
@@ -291,33 +299,38 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
                 g.add(dwg.rect((x_start + box_size*j, y_start + i*box_height),
                                (box_size, box_height),
                                style="fill:#{:02x}{:02x}{:02x}"
-                                .format(*[int(255*x) for x in
-                                          c_cmap(norm_data.ix[i,j])])))
+                               .format(*[int(255*x) for x in
+                                         c_cmap(norm_data.ix[i, j])])))
                 dwg.add(g)
                 if hatch:
-                    g.add(dwg.rect((x_start + box_size*j, y_start + i*box_height),
+                    g.add(dwg.rect((x_start + box_size*j,
+                                    y_start + i*box_height),
                                    (box_size, box_height),
                                    style="fill:url(#hatch)"
-                                  ))
+                                  )
+                         )
                 col_base = col_labels[j][:col_labels[j].find(col_sep)]
                 if col_base != prefix:
                     prefix = col_base
-                    g.add(dwg.line((x_start+box_size*j, y_start + i*box_height),
-                                   (x_start+box_size*j, y_start + (i+1)*box_height),
+                    g.add(dwg.line((x_start + box_size * j,
+                                    y_start + i * box_height),
+                                   (x_start + box_size * j,
+                                    y_start + (i + 1) * box_height),
                                    style="stroke-width:{}; stroke:#000000"
                                    .format(.1 * box_size)))
         dwg.add(dwg.text(first_col, (x_start,
-                                     y_start + (i+1)*box_height)))
+                                     y_start + (i + 1) * box_height)))
         dwg.add(dwg.text(last_col, (x_start + (new_cols - 1) * box_size,
-                                     y_start + (i+1)*box_height)))
+                                    y_start + (i + 1) * box_height)))
         if draw_box:
             dwg.add(dwg.rect((x_start, y_start + 0),
                              (new_cols*box_size, rows*box_height),
-                             style="stroke-width:1; stroke:#000000; fill:none"))
+                             style="stroke-width:1; "
+                             "stroke:#000000; fill:none"))
         if draw_name:
             dwg.add(dwg.text(name,
-                             (x_start + box_size*new_cols/2.0,
-                              y_start + box_height*(rows)+ 13),
+                             (x_start + box_size * new_cols / 2.0,
+                              y_start + box_height * (rows) + 13),
                              style="text-anchor: middle;"))
 
         if total_width is not None:
@@ -335,10 +348,8 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
             x_start = 0
             y_start += new_rows*box_height + 30
 
-
-
-
     if draw_row_labels:
         for i in range(rows):
-            dwg.add(dwg.text(row_labels[i], (x_start, y_start + i*box_size+box_height),))
+            dwg.add(dwg.text(row_labels[i],
+                             (x_start, y_start + i*box_height+box_height),))
     dwg.saveas(filename)

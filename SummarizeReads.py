@@ -6,6 +6,7 @@ import gzip
 
 import pandas as pd
 
+
 def get_protocol(dname):
     return path.basename(dname).split('_')[0]
 
@@ -13,28 +14,29 @@ def get_protocol(dname):
 print(r'''
 \begin{table}[htdp]
 
-\caption{Summary statistics for samples.
-     Mapped reads is the number of reads that map at least once.
-     Percent unique reads indicates, of the reads that mapped at least once, the
-     fraction that mapped exactly once.}
+\caption{Summary statistics for samples.  Mapped reads is the number of reads
+      that map at least once.  Percent unique reads indicates, of the reads
+      that mapped at least once, the fraction that mapped exactly once.}
+
 \begin{center}
 \begin{tabular}{|c|c|c|c|c|} \hline
       Protocol & Total Reads & Mapped Reads (N$\ge$1)
       & \% mapped ($N\ge 1$) & \%  unique\\\hline ''')
 
 config_file = pd.read_table('Parameters/RunConfig.cfg',
-                           comment='#').dropna(how='all')
+                            comment='#').dropna(how='all')
 for i, row in config_file.iterrows():
     label = row['Label']
     index = row['Index']
     mbepc = int(row['MBEPC'])
     glob_spec = ('{seqdir}/*/*{label}*/*_{{read}}_*.fastq*'
-               .format(seqdir='sequence', label=label, index=index, id=mbepc))
+                 .format(seqdir='sequence', label=label, index=index,
+                         id=mbepc))
     rf1 = glob(glob_spec.format(read='R1'))
     if rf1 == []:
         glob_spec = ('{seqdir}/*{index}*/*_{{read}}*.fastq*'
-                    .format(seqdir='sequence', label=label, index=index,
-                            id=mbepc))
+                     .format(seqdir='sequence', label=label, index=index,
+                             id=mbepc))
         rf1 = glob(glob_spec.format(read='R1'))
         if rf1 == []:
             print("Warning: no sequence for ", label, index)
@@ -58,14 +60,13 @@ for i, row in config_file.iterrows():
         n_primary += not read.is_secondary
         n_unique += dict(read.tags)['NH'] == 1
 
-    print(r" {prot} & {total:,} &{mapped:,} &{frac:0.1f}\%  & {umapped:0.1f}\%\\"
-          .format(prot = protocol,
-                  total = total,
-                  mapped = n_primary,
-                  frac = n_primary/total*100,
-                  umapped=n_unique/n_primary*100,
-                 )
-         )
+    print(r" {prot} & {total:,} &{mapped:,} "
+          r"&{frac:0.1f}\%  &{umapped:0.1f}\%\\"
+          .format(prot=protocol,
+                  total=total,
+                  mapped=n_primary,
+                  frac=n_primary/total*100,
+                  umapped=n_unique/n_primary*100,))
 
 print(r'''\hline
 
