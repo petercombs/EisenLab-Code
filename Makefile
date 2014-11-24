@@ -25,7 +25,7 @@ MELGTF   = $(REFDIR)/mel_good.gtf
 MELALLGTF   = $(REFDIR)/mel_all.gtf
 MELBADGTF   = $(REFDIR)/mel_bad.gtf
 
-GENEMAPTABLE = gene_map_table_fb_$(MELDATE).tsv
+GENEMAPTABLE = $(PREREQDIR)/gene_map_table_fb_$(MELDATE).tsv
 
 
 all : $(ANALYSIS_DIR)/summary.tsv $(REFDIR)/$(MELMAJORVERSION) $(REFDIR)/$(MELVERSION)
@@ -130,7 +130,7 @@ $(REFDIR)/Dmel: | $(MELFASTA2)
 
 
 $(GENEMAPTABLE):
-	wget ftp://ftp.flybase.net/releases/$(MELDATE)/precomputed_files/genes/$(GENEMAPTABLE).gz \
+	wget ftp://ftp.flybase.net/releases/FB$(MELDATE)/precomputed_files/genes/$(notdir $(GENEMAPTABLE)).gz \
 		-O $(GENEMAPTABLE).gz
 	gunzip --force $(GENEMAPTABLE).gz
 
