@@ -123,12 +123,12 @@ for protocol in protocols:
         figure(figsize=(16,16))
         subplot(3,1,1)
         slopes = slopes.dropna()
-        slopes_by_expr = [slopes.ix[(10**(i) < samples.ix[:,-1]) *
-                                    (samples.ix[:,-1] < 10**(i+bin_step))]
-                          .dropna()
-                          for i in np.arange(np.floor(np.log10(expr_min)),
-                                             np.ceil(np.log10(expr_max)),
-                                             bin_step)]
+        #slopes_by_expr = [slopes.ix[(10**(i) < samples.ix[:,-1]) *
+                                    #(samples.ix[:,-1] < 10**(i+bin_step))]
+                          #.dropna()
+                          #for i in np.arange(np.floor(np.log10(expr_min)),
+                                             #np.ceil(np.log10(expr_max)),
+                                             #bin_step)]
         #hist(slopes_by_expr,bins=np.linspace(0, 2, 100), range=(-0,2),
              #stacked=True, histtype='bar',normed=True,
              #label=['{} < FPKM < {}'.format(10**i, 10**(i+bin_step))
