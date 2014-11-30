@@ -6,7 +6,7 @@ the data as a CSV file.  Arguments:
     2) -c -- also include confidence intervals
 
 """
-from __future__ import division
+from __future__ import division, print_function
 import pandas
 from os import path
 from glob import glob
@@ -132,8 +132,10 @@ for fname in sorted(fnames):
             stage=params.ix[dirname]['Stage'],
             num=get_stagenum(dirname, params.index,
                              params.ix[dirname, 'Direction']))
-        print dirname, '=', new_dirname
+        print(dirname, '=', new_dirname)
         dirname = new_dirname
+    else:
+        print(dirname)
 
     skip = False
     if args.strip_low_reads:
@@ -158,16 +160,17 @@ for fname in sorted(fnames):
             pass
         total_reads += i//4
         skip += (reads / total_reads) < (args.strip_low_map_rate / 100)
-        print(reads, total_reads, reads/total_reads,
-              args.strip_low_map_rate / 100)
+        if skip:
+            print(reads, total_reads, reads/total_reads,
+                  args.strip_low_map_rate / 100)
 
     if skip:
         if args.strip_as_nan:
             from numpy import nan
-            print "NaNing", dirname
+            print("NaNing", dirname, "\t{:,} reads".format(reads))
             table.ix[:] = nan
         else:
-            print "Skipping", dirname
+            print("Skipping", dirname)
             continue
     if df is None:
         df = pandas.DataFrame({dirname+"_FPKM": table.ix[:, args.column]})

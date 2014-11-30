@@ -144,6 +144,7 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
                 draw_box=False, draw_name=False, data_names=None,
                 max_width=np.inf,
                 spacers=None,
+                hatch_nan=True, hatch_size=20,
                 first_col='', last_col=''):
     """
     Draw heatmap as an SVG file stored in filename
@@ -200,9 +201,9 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
     pat = dwg.pattern(id='hatch', insert=(0, 0), size=(25, 25),
                       patternUnits='userSpaceOnUse')
     g = pat.add(dwg.g(style="fill:none; stroke:#B0B0B0; stroke-width:1"))
-    g.add(dwg.path(('M0,0', 'l20,20')))
-    g.add(dwg.path(('M10,0 l10,10'.split())))
-    g.add(dwg.path(('M0,10 l10,10'.split())))
+    g.add(dwg.path(('M0,0', 'l{hatch},{hatch}'.format(hatch=hatch_size))))
+    g.add(dwg.path(('M{hatch2},0 l{hatch2},{hatch2}'.format(hatch2=hatch_size/2).split())))
+    g.add(dwg.path(('M0,{hatch2} l{hatch2},{hatch2}'.format(hatch2=hatch_size/2).split())))
 
     dwg.add(pat)
 
@@ -302,7 +303,7 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
                                .format(*[int(255*x) for x in
                                          c_cmap(norm_data.ix[i, j])])))
                 dwg.add(g)
-                if hatch:
+                if hatch_nan and hatch:
                     g.add(dwg.rect((x_start + box_size*j,
                                     y_start + i*box_height),
                                    (box_size, box_height),

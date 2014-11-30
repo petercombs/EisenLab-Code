@@ -31,3 +31,21 @@ def to_number(dataval):
 
     except ValueError:
         return dataval
+
+
+def contains(string_or_iterable):
+    if isinstance(string_or_iterable, str):
+        return lambda x: string_or_iterable in x
+    else:
+        return lambda x: any(i in x for i in string_or_iterable)
+
+def startswith(string_or_iterable):
+    if not isinstance(string_or_iterable, str):
+        string_or_iterable = tuple(string_or_iterable)
+    return lambda x: x.startswith(string_or_iterable)
+
+def sel_contains(string_or_iterable):
+    return dict(crit=contains(string_or_iterable), axis=1)
+
+def sel_startswith(string_or_iterable):
+    return dict(crit=startswith(string_or_iterable), axis=1)
