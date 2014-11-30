@@ -13,31 +13,32 @@ MELVERSION = $(word 1, $(subst _FB, ,$(MELRELEASE)))
 VIRVERSION = $(word 1, $(subst _FB, ,$(VIRRELEASE)))
 MELDATE = $(word 2, $(subst _FB, ,$(MELRELEASE)))
 
-MELFASTA = prereqs/dmel-all-chromosome-$(MELVERSION).fasta
-VIRFASTA = prereqs/dvir-all-chromosome-$(VIRVERSION).fasta
+PREREQDIR = prereqs
+MELFASTA = $(PREREQDIR)/dmel-all-chromosome-$(MELVERSION).fasta
+VIRFASTA = $(PREREQDIR)/dvir-all-chromosome-$(VIRVERSION).fasta
 
 REFDIR = Reference
 
 MELFASTA2= $(REFDIR)/dmel_prepend.fasta
 VIRFASTA2= $(REFDIR)/dvir_prepend.fasta
 
-ORTHOLOGS = prereqs/gene_orthologs_fb_$(MELDATE).tsv
+ORTHOLOGS = $(PREREQDIR)/gene_orthologs_fb_$(MELDATE).tsv
 
-CERFASTA = prereqs/S288C_reference_sequence_R64-1-1_20110203.fsa
+CERFASTA = $(PREREQDIR)/S288C_reference_sequence_R64-1-1_20110203.fsa
 CERFASTA2= $(REFDIR)/scer_prepend.fasta
 
-MELGFF   = prereqs/dmel-all-$(MELVERSION).gff
+MELGFF   = $(PREREQDIR)/dmel-all-$(MELVERSION).gff
 MELGTF   = $(REFDIR)/mel_good.gtf
-VIRGFF   = prereqs/dvir-all-$(VIRVERSION).gff
+VIRGFF   = $(PREREQDIR)/dvir-all-$(VIRVERSION).gff
 VIRGTF   = $(REFDIR)/vir_good.gtf
-CERGFF   = prereqs/saccharomyces_cerevisiae_R64-1-1_20110208.gff
+CERGFF   = $(PREREQDIR)/saccharomyces_cerevisiae_R64-1-1_20110208.gff
 MELVIRGTF= $(REFDIR)/melvir.gtf
 MELVIRGTF_FILT= $(REFDIR)/melvir_withgenename.gtf
 MELVIRFASTA=$(REFDIR)/melvir.fa
 MELALLGTF   = $(REFDIR)/mel_all.gtf
 MELBADGTF   = $(REFDIR)/mel_bad.gtf
 
-GENEMAPTABLE = gene_map_table_fb_$(MELDATE).tsv
+GENEMAPTABLE = $(PREREQDIR)/gene_map_table_fb_$(MELDATE).tsv
 
 
 all : $(ANALYSIS_DIR)/summary.tsv $(REFDIR)/$(MELMAJORVERSION) $(REFDIR)/$(MELVERSION)
@@ -124,11 +125,11 @@ $(MELBADGTF): $(MELALLGTF) | $(REFDIR)
 		> $@
 
 
-$(MELFASTA): $(REFDIR)/$(MELMAJORVERSION) | $(REFDIR)
+$(MELFASTA): $(REFDIR)/$(MELMAJORVERSION) | $(REFDIR) $(PREREQDIR)
 	wget -O $@.gz ftp://ftp.flybase.net/genomes/Drosophila_melanogaster/dmel_$(MELRELEASE)/fasta/dmel-all-chromosome-$(MELVERSION).fasta.gz
 	gunzip --force $@.gz
 
-$(MELGFF): $(REFDIR)/$(MELVERSION) | $(REFDIR)
+$(MELGFF): $(REFDIR)/$(MELVERSION) | $(REFDIR) $(PREREQDIR)
 	wget -O $@.gz ftp://ftp.flybase.net/genomes/Drosophila_melanogaster/dmel_$(MELRELEASE)/gff/dmel-all-$(MELVERSION).gff.gz
 	gunzip --force $@.gz
 
@@ -179,7 +180,7 @@ $(REFDIR)/DmelDvir/Genome : $(MELVIRGTF) |  $(REFDIR)/DmelDvir $(MELFASTA2) $(VI
 		--genomeFastaFiles $(MELFASTA2) $(VIRFASTA2) \
 		--sjdbGTFfile $(MELVIRGTF)
 
-$(ORTHOLOGS) :
+$(ORTHOLOGS) : | $(PREREQDIR)
 	wget -O $@.gz -i ftp.flybase.org/releases/FB$(MELDATE)/precomputed_files/genes/gene_orthologs_fb_$(MELDATE).tsv.gz
 	gunzip --force $@.gz
 
@@ -189,6 +190,8 @@ $(REFDIR)/DmelDvir:
 	bowtie2-build --offrate 1 $(MELVIRFASTA) $@
 
 $(REFDIR)/DmelScer:
+	mkdir $@
+$(PREREQDIR):
 	mkdir $@
 
 Reference/DmelDper:
@@ -200,8 +203,9 @@ Reference/DmelDvir:
 Reference/DmelDmoj:
 	mkdir $@
 
+
 $(GENEMAPTABLE):
-	wget ftp://ftp.flybase.net/releases/$(MELDATE)/precomputed_files/genes/$(GENEMAPTABLE).gz \
+	wget ftp://ftp.flybase.net/releases/FB$(MELDATE)/precomputed_files/genes/$(notdir $(GENEMAPTABLE)).gz \
 		-O $(GENEMAPTABLE).gz
 	gunzip --force $(GENEMAPTABLE).gz
 
