@@ -133,7 +133,7 @@ def XKCDify(ax, mag=1.0,
         The locations to draw the x and y axes.  If not specified, they
         will be drawn from the bottom left of the plot
     xaxis_arrow, yaxis_arrow : str
-        where to draw arrows on the x/y axes.  Options are '+', '-', '+-', or ''
+        where to draw arrows on the x/y axes. Options are '+', '-', '+-', or ''
     ax_extend : float
         How far (fractionally) to extend the drawn axes beyond the original
         axes limits

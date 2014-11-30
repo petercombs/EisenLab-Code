@@ -7,7 +7,7 @@ import gzip
 import pandas as pd
 
 def get_protocol(dname):
-    return path.basename(dname).split('_')[0] 
+    return path.basename(dname).split('_')[0]
 
 dnames = glob('analysis/*_V*')
 protocols = set(get_protocol(dname) for dname in dnames)

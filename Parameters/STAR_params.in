@@ -1,6 +1,6 @@
 runMode                 alignReads
-runThreadN              58
-genomeLoad              NoSharedMemory
+runThreadN              10
+genomeLoad              LoadAndRemove
 readFilesCommand        zcat
 readMatesLengthsIn      Equal
 outReadsUnmapped        Fastx
