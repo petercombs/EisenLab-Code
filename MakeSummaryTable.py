@@ -12,6 +12,7 @@ from os import path
 from glob import glob
 from sys import argv
 from pysam import Samfile
+from Utils import get_rfs_from_bam
 import gzip
 
 
@@ -151,10 +152,7 @@ for fname in sorted(fnames):
         else:
             skip = sf.mapped < args.strip_low_reads
     if args.strip_low_map_rate and args.has_params and not skip:
-        rfs = [entry for entry in
-               sf.header['PG'][0]['CL'].split()
-              if entry.endswith('.gz') or entry.endswith('.fastq')][0]
-        rfs = sorted(rfs.split(','))
+        rfs = get_rfs_from_bam(sf)
         total_reads = 4e6 * (len(rfs) - 1)
         for i, line in enumerate(gzip.open(rfs[-1])):
             pass

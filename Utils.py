@@ -7,6 +7,13 @@ def get_bam_length(samfile):
     # I don't know why that 2**16 factor is there!
     return maxval + 2**16, start
 
+def get_rfs_from_bam(bamfile):
+    rfs = [entry for entry in
+           bamfile.header['PG'][0]['CL'].split()
+           if entry.endswith('.gz') or entry.endswith('.fastq')][0]
+    return rfs.split(',')
+
+
 
 def strip_to_number(dataval, chars='\'" \t #'):
     return to_number(dataval.strip(chars))
