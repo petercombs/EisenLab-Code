@@ -38,6 +38,9 @@ n_sim = 1000
 
 all_slope_vars = np.empty(n_sim)
 all_intercept_vars = np.empty(n_sim)
+all_corrs_means = np.empty(n_sim)
+all_corr_vars = np.empty(n_sim)
+
 
 pbar = pb.ProgressBar()
 for sim_num in pbar(range(n_sim)):
@@ -68,6 +71,8 @@ for sim_num in pbar(range(n_sim)):
                                - scoreatpercentile(slopes, 25))
     all_intercept_vars[sim_num] = (scoreatpercentile(intercepts, 75)
                                    - scoreatpercentile(intercepts, 25))
+    all_corrs_means[sim_num] = np.mean(r_values)
+    all_corr_vars[sim_num] = np.std(r_values)
 
 
 print('-'*30, '\n', 'Simulation')
