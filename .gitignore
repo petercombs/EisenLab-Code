@@ -21,6 +21,9 @@ __pycache__
 *.cfg
 *.make
 *.mk
+*.tar
+*.tar.gz
+*.tgz
 
 prereqs*
 analysis*

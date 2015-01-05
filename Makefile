@@ -6,7 +6,7 @@ STARCONFIG = Parameters/STAR_params.in
 ANALYSIS_DIR = analysis
 
 # Reference FASTA and GFF files from FlyBase and SGD
-MELRELEASE = r6.02_FB2014_05
+MELRELEASE = r5.54_FB2013_06
 VIRRELEASE = r1.2_FB2012_01
 MELMAJORVERSION = $(word 1, $(subst ., , $(MELRELEASE)))
 MELVERSION = $(word 1, $(subst _FB, ,$(MELRELEASE)))
@@ -60,9 +60,11 @@ $(ANALYSIS_DIR)/summary.tsv : MakeSummaryTable.py $(FPKMS) $(RUNCONFIG) Makefile
 	@echo '============================='
 	@echo 'Making summary table'
 	@echo '============================='
-	python MakeSummaryTable.py \
-       --params $(RUNCONFIG) \
-		$(ANALYSIS_DIR) 
+	#python MakeSummaryTable.py \
+       #--params $(RUNCONFIG) \
+		#$(ANALYSIS_DIR)
+	python MakeSummaryTable.py --filename htseq.tab --no-header --prefix '' analysis
+	python MakeSummaryTable.py --in-subdirectory subset_min --filename htseq.tab --no-header --prefix '' analysis
 
 %/genes.fpkm_tracking : %/assigned_dmelR.bam $(MELGTF) $(MELFASTA2)
 	@echo '============================='
@@ -82,6 +84,16 @@ $(ANALYSIS_DIR)/summary.tsv : MakeSummaryTable.py $(FPKMS) $(RUNCONFIG) Makefile
 	touch $@
 	samtools sort $< $(@D)/accepted_hits_sorted
 	samtools index $@
+
+%/htseq.tab: %/accepted_hits_sorted.bam $(MELVIRGTF_FILT)
+	samtools view $< \
+		| htseq-count --idattr='gene_name' \
+			--stranded=no \
+			--order=pos \
+			- \
+			$(MELVIRGTF_FILT) \
+		> $@
+
 
 %/assigned_dmelR.bam : %/accepted_hits.bam AssignReads2.py
 	samtools view -H $< \

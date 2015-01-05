@@ -53,6 +53,8 @@ def parse_args():
     parser.add_argument('--filename', default='genes.fpkm_tracking',
                         help=('Filename of the per-sample gene '
                               'expression table'))
+    parser.add_argument('--prefix', default='cyc',
+                        help=('Prefix for each column name'))
     parser.add_argument('--column', '-C', default='FPKM',
                         help='Column to read out (either name or number)')
     parser.add_argument('--no-header', dest='header', action='store_false',
@@ -99,7 +101,7 @@ if args.in_subdirectory:
 else:
     fnames = glob(path.join(args.basedir, '*', args.filename))
 if args.has_params:
-    has_params = argv[2]
+    has_params = args.has_params
     params = (pandas.read_table(has_params,
                                 comment='#',
                                 converters={'Label': str},
@@ -113,6 +115,7 @@ df = None
 for fname in sorted(fnames):
     table = pandas.read_table(fname, na_values='-', converters={args.key: str},
                               keep_default_na=False,
+                              names=[args.key, args.column] if not args.header else None,
                               header=None if not args.header else 0)
     alldir, fname = path.split(fname)
     if args.in_subdirectory:
@@ -129,7 +132,8 @@ for fname in sorted(fnames):
         continue
 
     if args.has_params:
-        new_dirname = "cyc{stage}_sl{num:02}".format(
+        new_dirname = "{prefix}{stage}_sl{num:02}".format(
+            prefix=args.prefix,
             stage=params.ix[dirname]['Stage'],
             num=get_stagenum(dirname, params.index,
                              params.ix[dirname, 'Direction']))
