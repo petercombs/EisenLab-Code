@@ -235,7 +235,7 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
         dwg = svg.Drawing(filename)
     dwg.add(svg.base.Title(path.basename(filename)))
 
-    pat = dwg.pattern(id='hatch', insert=(0, 0), size=(25, 25),
+    pat = dwg.pattern(id='hatch', insert=(0, 0), size=(hatch_size, hatch_size),
                       patternUnits='userSpaceOnUse')
     g = pat.add(dwg.g(style="fill:none; stroke:#B0B0B0; stroke-width:1"))
     g.add(dwg.path(('M0,0', 'l{hatch},{hatch}'.format(hatch=hatch_size))))
