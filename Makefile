@@ -51,7 +51,6 @@ $(ANALYSIS_DIR)/summary.tsv : MakeSummaryTable.py $(FPKMS) $(RUNCONFIG) Makefile
 	   --strip-low-reads 1000000 \
 	   --strip-on-unique \
 	   --strip-as-nan \
-	   --strip-low-map-rate 85 \
 	   --mapped-bamfile accepted_hits_sorted.bam \
 		$(ANALYSIS_DIR)
 
