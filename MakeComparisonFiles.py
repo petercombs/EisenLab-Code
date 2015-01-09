@@ -25,6 +25,10 @@ def make_comparison_file(gene, force=False):
             bcd.select(startswith('cyc14D_rep1'), axis=1).ix[[gene]],
             bcd.select(startswith('cyc13_rep2'),  axis=1).ix[[gene]],
             bcd.select(startswith('cyc14D_rep2'), axis=1).ix[[gene]],
+            g20.select(startswith('cyc13_rep1'),  axis=1).ix[[gene]],
+            g20.select(startswith('cyc14D_rep1'), axis=1).ix[[gene]],
+            g20.select(startswith('cyc13_rep2'),  axis=1).ix[[gene]],
+            g20.select(startswith('cyc14D_rep2'), axis=1).ix[[gene]],
             zld.select(startswith('cyc13_rep1'),  axis=1).ix[[gene]],
             zld.select(startswith('cyc14D'),      axis=1).ix[[gene]],
             zld.select(startswith('cyc13_rep3'),  axis=1).ix[[gene]],
@@ -38,13 +42,19 @@ def make_comparison_file(gene, force=False):
               bcd.ix[gene].select(startswith('cyc14D')).max() * 1.1 + 10,
               bcd.ix[gene].select(startswith('cyc13' )).max() * 1.1 + 10,
               bcd.ix[gene].select(startswith('cyc14D')).max() * 1.1 + 10,
+              g20.ix[gene].select(startswith('cyc13' )).max() * 1.1 + 10,
+              g20.ix[gene].select(startswith('cyc14D')).max() * 1.1 + 10,
+              g20.ix[gene].select(startswith('cyc13' )).max() * 1.1 + 10,
+              g20.ix[gene].select(startswith('cyc14D')).max() * 1.1 + 10,
               zld.ix[gene].select(startswith('cyc13' )).max() * 1.1 + 10,
               zld.ix[gene].select(startswith('cyc14D')).max() * 1.1 + 10,
               zld.ix[gene].select(startswith('cyc13' )).max() * 1.1 + 10,
              )
     names = [stage + '- Max Expr {:.1f}'.format(float(dp.max(axis=1)))
-             for stage, dp in zip(('WT13 WT14D Bcd-13 Bcd-14D Bcd-13 '
-                                   'Bcd-14D Zld-13 Zld-14D Zld-13').split(),
+             for stage, dp in zip(('WT13 WT14D '
+                                   'Bcd-13 Bcd-14D Bcd-13 Bcd-14D '
+                                   'G20-13 G20-14D G20-13 G20-14D '
+                                   'Zld-13 Zld-14D Zld-13').split(),
                                   data)
             ]
     cmaps = (PlotUtils.ISH, PlotUtils.ISH,
@@ -52,6 +62,12 @@ def make_comparison_file(gene, force=False):
              Greens, Greens,
              Reds, Reds,
              Reds)
+    # Use tuple multiplication for the correct number of each sample
+    cmaps = ((PlotUtils.ISH_CMS[0], ) * 2
+             + (PlotUtils.ISH_CMS[1], ) * 4
+             + (PlotUtils.ISH_CMS[2], ) * 4
+             + (PlotUtils.ISH_CMS[3], ) * 3
+            )
     PlotUtils.svg_heatmap(data,
                           filename=join(outdir,
                                         gene + '.svg'),
@@ -69,20 +85,23 @@ def make_comparison_file(gene, force=False):
 read_table_args = dict(index_col=0,
                        keep_default_na=False,
                        na_values=['---', ''])
-wt  = (pd.read_table('prereqs/WT6.01.summary.tsv', **read_table_args)
-              #.dropna(how='any')
-              .sort_index())
+wt  = (pd.read_table('prereqs/WT6.02.summary.tsv', **read_table_args)
+       #.dropna(how='any')
+       .sort_index())
 bcd = (pd.read_table('analysis/summary.tsv', **read_table_args)
-              #.dropna(how='any', axis=1)
-              .sort_index())
-zld = (pd.read_table('prereqs/Zld6.01.summary_merged.tsv', **read_table_args)
-              #.dropna(how='any', axis=1)
-              .sort_index())
+       #.dropna(how='any', axis=1)
+       .sort_index())
+zld = (pd.read_table('prereqs/Zld6.02.summary_merged.tsv', **read_table_args)
+       #.dropna(how='any', axis=1)
+       .sort_index())
+g20 = (pd.read_table('prereqs/G20-6.02.summary.tsv', **read_table_args)
+       .sort_index())
 assert all(wt.index == bcd.index)
 assert all(wt.index == zld.index)
 assert all(zld.index == bcd.index)
+assert all(g20.index == wt.index)
 
-outdir='analysis/results/svgs-withzld-normby-type'
+outdir='analysis/results/svgs-withg20'
 
 try:
         os.makedirs(outdir)
