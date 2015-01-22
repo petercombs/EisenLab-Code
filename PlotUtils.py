@@ -11,6 +11,43 @@ import urllib
 import time
 from os import path
 
+ISH_ROT = hsv_to_rgb(array(
+    [[[0.65, 0.00, 1.00],
+      [0.65, 0.53, 1.00],
+      [0.65, 0.53, 0.38],],
+     [[0.81, 0.00, 1.00],
+      [0.81, 0.53, 1.00],
+      [0.81, 0.53, 0.38],],
+     [[0.98, 0.00, 1.00],
+      [0.98, 0.53, 1.00],
+      [0.98, 0.53, 0.38],],
+     [[0.48, 0.00, 1.00],
+      [0.48, 0.53, 1.00],
+      [0.48, 0.53, 0.38],],
+     [[0.32, 0.00, 1.00],
+      [0.32, 0.53, 1.00],
+      [0.32, 0.53, 0.38],],
+     [[0.15, 0.00, 1.00],
+      [0.15, 0.53, 1.00],
+      [0.15, 0.53, 0.38],],
+    ]))
+
+ISH_CMS = []
+for I, ARR in enumerate(ISH_ROT):
+    ISH_CMS.append(
+        LinearSegmentedColormap('ish{}'.format(I),
+                                dict(red=((0.0, ARR[0, 0], ARR[0, 0]),
+                                          (0.7, ARR[1, 0], ARR[1, 0]),
+                                          (1.0, ARR[2, 0], ARR[2, 0])),
+                                     green=((0.0, ARR[0, 1], ARR[0, 1]),
+                                            (0.7, ARR[1, 1], ARR[1, 1]),
+                                            (1.0, ARR[2, 1], ARR[2, 1])),
+                                     blue=((0.0, ARR[0, 2], ARR[0, 2]),
+                                           (0.7, ARR[1, 2], ARR[1, 2]),
+                                           (1.0, ARR[2, 2], ARR[2, 2])),
+                                    )))
+
+
 ISH = LinearSegmentedColormap('ish',
                               dict(red=((0, 1, 1),
                                         (.7, 120/255, 120/255),
@@ -144,6 +181,7 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
                 draw_box=False, draw_name=False, data_names=None,
                 max_width=np.inf,
                 spacers=None,
+                hatch_nan=True, hatch_size=20,
                 first_col='', last_col=''):
     """
     Draw heatmap as an SVG file stored in filename
@@ -197,12 +235,12 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
         dwg = svg.Drawing(filename)
     dwg.add(svg.base.Title(path.basename(filename)))
 
-    pat = dwg.pattern(id='hatch', insert=(0, 0), size=(25, 25),
+    pat = dwg.pattern(id='hatch', insert=(0, 0), size=(hatch_size, hatch_size),
                       patternUnits='userSpaceOnUse')
     g = pat.add(dwg.g(style="fill:none; stroke:#B0B0B0; stroke-width:1"))
-    g.add(dwg.path(('M0,0', 'l20,20')))
-    g.add(dwg.path(('M10,0 l10,10'.split())))
-    g.add(dwg.path(('M0,10 l10,10'.split())))
+    g.add(dwg.path(('M0,0', 'l{hatch},{hatch}'.format(hatch=hatch_size))))
+    g.add(dwg.path(('M{hatch2},0 l{hatch2},{hatch2}'.format(hatch2=hatch_size/2).split())))
+    g.add(dwg.path(('M0,{hatch2} l{hatch2},{hatch2}'.format(hatch2=hatch_size/2).split())))
 
     dwg.add(pat)
 
@@ -302,7 +340,7 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
                                .format(*[int(255*x) for x in
                                          c_cmap(norm_data.ix[i, j])])))
                 dwg.add(g)
-                if hatch:
+                if hatch_nan and hatch:
                     g.add(dwg.rect((x_start + box_size*j,
                                     y_start + i*box_height),
                                    (box_size, box_height),
