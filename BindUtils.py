@@ -16,16 +16,20 @@ except KeyError:
         tss_per_gene[row['gene_name']].append((row['chr'].replace('dmel_', ''),
                                               row['TSS_start']))
 
-def find_near(chrom, coord, dist):
+def find_near(chrom, coord, dist, nearest_only=False):
     out = set()
     center = bisect([i[0] for i in chrom], coord)
     for (coord2, gene) in reversed(chrom[:center]):
         if coord - coord2 > dist: break
         out.add(gene)
+        if nearest_only:
+            break
 
     for (coord2, gene) in chrom[center:]:
         if coord2 - coord > dist: break
         out.add(gene)
+        if nearest_only:
+            break
 
     return out
 

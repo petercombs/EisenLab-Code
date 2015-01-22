@@ -103,14 +103,15 @@ assert all(g20.index == wt.index)
 
 outdir='analysis/results/svgs-withg20'
 
-try:
-        os.makedirs(outdir)
-except OSError:
-        pass
+if __name__ == "__main__":
+    try:
+            os.makedirs(outdir)
+    except OSError:
+            pass
 
-from multiprocessing import Pool
-pbar = ProgressBar()
-pool = Pool()
-for genes_list in pbar(chunks(wt.index, 100)):
-    pool.map(make_comparison_file, genes_list)
+    from multiprocessing import Pool
+    pbar = ProgressBar()
+    pool = Pool()
+    for genes_list in pbar(chunks(wt.index, 100)):
+        pool.map(make_comparison_file, genes_list)
 
