@@ -1,8 +1,16 @@
-from matplotlib.pyplot import figure, plot, xlabel, ylabel, savefig, \
-        xlim, ylim,gca, clf, legend, semilogx, hist
+from matplotlib.pyplot import (figure, plot, xlabel, ylabel, savefig, xlim,
+                               ylim,gca, clf, legend, semilogx, hist, xticks)
 import setcolor
 from numpy import arange, std
 from scipy.stats import scoreatpercentile, bartlett
+
+try:
+    outdir = locals()['outdir']
+    all_samples = locals()['all_samples']
+
+except KeyError:
+    print("Need to run AnalyzeFoldChange.py first")
+    assert False
 
 print(outdir)
 
