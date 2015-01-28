@@ -17,51 +17,60 @@ print(outdir)
 x_truseq = [0, 5, 10, 20]
 x_values_few = [0, 50, 100, 200]
 x_values_many = [0, 10, 50, 100, 200]
-x_values_many = [0,  50, 100, 200]
 
 print("Done with setup")
 
 figure()
-p = plot(x_truseq, all_samples['Truseq'].T, 'k', alpha=0.01)
-xlabel('ng D. virilis')
-ylabel('normalized expression')
+p = plot(x_truseq, all_samples['Truseq'].T, 'k.-', alpha=0.01)
+xticks(x_truseq)
+xlabel('Concentration of D. virilis (pg)')
+ylabel('Predicted amount of D. virilis (pg)')
 #setcolor.set_foregroundcolor(gca(), 'w')
 #setcolor.set_backgroundcolor(gca(), 'k')
-ylim(0, 40)
-savefig('{outdir}/TruSeqLines.png'.format(outdir=outdir), transparent=True, dpi=300)
+ylim(0, scoreatpercentile(all_samples['Truseq'], 99))
+gca().set_aspect(1)
+savefig('{outdir}/TruSeqLines.png'.format(outdir=outdir),
+        transparent=True,
+        dpi=300)
 
 print("Done with TruSeq Lines")
 
 
 figure()
 p = plot(x_values_few, all_samples['SMART2'].T, 'r', alpha=0.01)
-xlabel('pg D. virilis')
-ylabel('normalized expression')
-ylim(0, 400)
+xticks(x_values_few)
+xlabel('Concentration of D. virilis (pg)')
+ylabel('Predicted amount of D. virilis (pg)')
+ylim(0, scoreatpercentile(all_samples['SMART2'], 99))
 #setcolor.set_foregroundcolor(gca(), 'w')
 #setcolor.set_backgroundcolor(gca(), 'k')
-savefig('{outdir}/SMART2Lines.png'.format(outdir=outdir), transparent=True, dpi=300)
+gca().set_aspect(1)
+savefig('{outdir}/SMART2_Lines.png'.format(outdir=outdir), transparent=True, dpi=300)
 print("Done with SMART2 Lines")
 
 
 clf()
 p = plot(x_values_many, all_samples['SMART2dil2'].T, 'g', alpha=0.01)
-ylim(0, 400)
-xlabel('pg D. virilis')
-ylabel('normalized expression')
+xticks(x_values_many)
+ylim(0, scoreatpercentile(all_samples['SMART2dil2'], 99))
+xlabel('Concentration of D. virilis (pg)')
+ylabel('Predicted amount of D. virilis (pg)')
 #setcolor.set_foregroundcolor(gca(), 'w')
 #setcolor.set_backgroundcolor(gca(), 'k')
+gca().set_aspect(1)
 savefig('{outdir}/SMART2-dil2Lines.png'.format(outdir=outdir), transparent=True, dpi=300)
 print("Done with 2.5x dilution Lines")
 
 
 clf()
 p = plot(x_values_many, all_samples['SMART2dil5'].T, 'c', alpha=0.01)
-ylim(0, 400)
-xlabel('pg D. virilis')
-ylabel('normalized expression')
+xticks(x_values_many)
+ylim(0, scoreatpercentile(all_samples['SMART2dil5'], 99))
+xlabel('Concentration of D. virilis (pg)')
+ylabel('Predicted amount of D. virilis (pg)')
 #setcolor.set_backgroundcolor(gca(), 'k')
 #setcolor.set_foregroundcolor(gca(), 'w')
+gca().set_aspect(1)
 savefig('{outdir}/SMART2-dil5Lines.png'.format(outdir=outdir), transparent=True, dpi=300)
 print("Done with 5x dilution Lines")
 
