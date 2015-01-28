@@ -33,6 +33,21 @@ savefig('{outdir}/TruSeqLines.png'.format(outdir=outdir),
         transparent=True,
         dpi=300)
 
+clf()
+for i,x in enumerate(x_truseq):
+    hist(all_samples['Truseq'].ix[:,i],
+         bins=arange(0, scoreatpercentile(all_samples['Truseq'], 99), .25),
+         histtype='step',
+         label='{} ng'.format(x),
+        )
+legend(loc='upper right')
+xlabel('Normalized expression')
+ylabel('Number of genes')
+savefig('{outdir}/TruSeqHists.png'.format(outdir=outdir),
+        transparent=True,
+        dpi=300)
+
+
 print("Done with TruSeq Lines")
 
 
@@ -48,6 +63,19 @@ gca().set_aspect(1)
 savefig('{outdir}/SMART2_Lines.png'.format(outdir=outdir), transparent=True, dpi=300)
 print("Done with SMART2 Lines")
 
+clf()
+for i,x in enumerate(x_values_few):
+    hist(all_samples['SMART2'].ix[:,i],
+         bins=arange(0, scoreatpercentile(all_samples['SMART2'], 99), 2.5),
+         histtype='step',
+         label='{} ng'.format(x),
+        )
+legend(loc='upper right')
+xlabel('Normalized expression')
+ylabel('Number of genes')
+savefig('{outdir}/SMART2_Hists.png'.format(outdir=outdir),
+        transparent=True,
+        dpi=300)
 
 clf()
 p = plot(x_values_many, all_samples['SMART2dil2'].T, 'g', alpha=0.01)
@@ -61,6 +89,19 @@ gca().set_aspect(1)
 savefig('{outdir}/SMART2-dil2Lines.png'.format(outdir=outdir), transparent=True, dpi=300)
 print("Done with 2.5x dilution Lines")
 
+clf()
+for i,x in enumerate(x_values_many):
+    hist(all_samples['SMART2dil2'].ix[:,i],
+         bins=arange(0, scoreatpercentile(all_samples['SMART2dil2'], 99), 2.5),
+         histtype='step',
+         label='{} ng'.format(x),
+        )
+legend(loc='upper right')
+xlabel('Normalized expression')
+ylabel('Number of genes')
+savefig('{outdir}/SMART2-dil2Hists.png'.format(outdir=outdir),
+        transparent=True,
+        dpi=300)
 
 clf()
 p = plot(x_values_many, all_samples['SMART2dil5'].T, 'c', alpha=0.01)
@@ -73,6 +114,20 @@ ylabel('Predicted amount of D. virilis (pg)')
 gca().set_aspect(1)
 savefig('{outdir}/SMART2-dil5Lines.png'.format(outdir=outdir), transparent=True, dpi=300)
 print("Done with 5x dilution Lines")
+
+clf()
+for i,x in enumerate(x_values_many):
+    hist(all_samples['SMART2dil5'].ix[:,i],
+         bins=arange(0, scoreatpercentile(all_samples['SMART2dil5'], 99), 2.5),
+         histtype='step',
+         label='{} ng'.format(x),
+        )
+legend(loc='upper right')
+xlabel('Normalized expression')
+ylabel('Number of genes')
+savefig('{outdir}/SMART2-dil5Hists.png'.format(outdir=outdir),
+        transparent=True,
+        dpi=300)
 
 clf()
 semilogx([1], [0]);
