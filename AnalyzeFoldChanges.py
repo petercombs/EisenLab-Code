@@ -14,8 +14,9 @@ import pandas as pd
 import numpy as np
 import sys
 from scipy.stats import linregress, scoreatpercentile
-from matplotlib.pyplot import figure, subplot, hist, title, \
-        savefig, tight_layout, close, xlim, legend, gca
+from matplotlib.pyplot import (figure, subplot, hist, title, savefig,
+                               tight_layout, close, xlim, legend, gca, xlabel,
+                               ylabel)
 import setcolor
 from os import path, makedirs
 # Python 2/3 compatibility code
@@ -120,8 +121,10 @@ for protocol in protocols:
 
         print('-'*30, '\n', protocol)
         print("analyzed {} genes".format(i))
-        figure(figsize=(16,16))
+        figure(figsize=(6,6))
         subplot(3,1,1)
+        gca().locator_params(tight=True, nbins=4)
+        ylabel('$\\mathbf{Slopes}$\nNum. genes')
         slopes = slopes.dropna()
         #slopes_by_expr = [slopes.ix[(10**(i) < samples.ix[:,-1]) *
                                     #(samples.ix[:,-1] < 10**(i+bin_step))]
@@ -136,7 +139,10 @@ for protocol in protocols:
                                        #np.ceil(np.log10(expr_max)),
                                        #bin_step)])
         hist(slopes, bins=np.linspace(0, 2, 100), range=(0,2))
-        title('Slopes')
+        #title('Slopes')
+        #ax2 = gca().twinx()
+        #ax2.set_ylabel('Slopes')
+        #ax2.set_yticks([])
         #legend()
         xlim(-0,2)
         print("Slopes")
@@ -146,10 +152,12 @@ for protocol in protocols:
         #setcolor.set_foregroundcolor(gca(), 'w')
         #setcolor.set_backgroundcolor(gca(), 'k')
         subplot(3,1,2)
+        gca().locator_params(tight=True, nbins=4)
+        ylabel('$\\mathbf{Intercepts}$\n$\\mathbf{(\\% D. vir)}$\nNum. genes')
         intercepts = intercepts.dropna()/(5*max(x_values)/100)
         hist(intercepts,bins=100, range=(-10,10))
         xlim(-10,10)
-        title('Intercepts (% D. vir)')
+        #title('Intercepts (% D. vir)')
         print("Intercepts")
         print(np.median(intercepts.dropna()), "+/-",)
         print(scoreatpercentile(intercepts, 75)
@@ -158,9 +166,11 @@ for protocol in protocols:
         #setcolor.set_backgroundcolor(gca(), 'k')
 
         subplot(3,1,3)
-        hist(r_values.dropna(),bins=np.arange(.5,1,.01))
-        xlim(.5,1)
-        title('R Values')
+        gca().locator_params(tight=True, nbins=4)
+        ylabel('$\\mathbf{Correlation}$\n$\\mathbf{Coefficients}$\nNum. genes')
+        hist(r_values.dropna(),bins=np.arange(.5,1.01,.01))
+        xlim(.5,1.)
+        #title('Correlations')
         print("R Values")
         print(np.mean(r_values.dropna()), "+/-",)
         print(np.std(r_values.dropna()))
@@ -180,7 +190,8 @@ for protocol in protocols:
         tight_layout()
         #setcolor.set_foregroundcolor(gca(), 'w')
         #setcolor.set_backgroundcolor(gca(), 'k')
-        savefig('{outdir}/{}_virslopes.png'.format(protocol, outdir=outdir), dpi=150,
+        savefig('{outdir}/{}_virslopes.png'.format(protocol, outdir=outdir),
+                dpi=300,
                 transparent=True)
         all_slopes[protocol] = slopes
         all_intercepts[protocol] = intercepts

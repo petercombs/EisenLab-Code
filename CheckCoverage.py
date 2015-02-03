@@ -7,7 +7,7 @@ import sys
 from glob import glob
 from os import path
 from scipy import stats
-from numpy import array, log, exp
+from numpy import array, log10, exp
 import progressbar as pbar
 
 if len(sys.argv) < 3:
@@ -22,10 +22,10 @@ curr_len = -1
 coverage = 0
 
 cutoff = 0
+fbtr_finder = re.compile('FBtr[0-9]*')
 
 
 def analyze_bamfile(bam_fname):
-    print bam_fname,
     bam_file = pysam.Samfile(bam_fname, 'rb')
 
     coverages = defaultdict(lambda: [0, 0, set()])
@@ -51,7 +51,6 @@ def analyze_bamfile(bam_fname):
         kind = data[2]
         start = int(data[3]) - 1
         stop = int(data[4])
-        fbtr_finder = re.compile('FBtr[0-9]*')
         # parent = fbtr_finder.findall(line)[0]
 
         if kind == 'exon':
@@ -70,10 +69,10 @@ def analyze_bamfile(bam_fname):
             coverages[fbtr][2].update(starts)
 
     pb.finish()
-    curr_lens, rpks, uniques = zip(*coverages.itervalues())
+    rpks, curr_lens, uniques = zip(*coverages.itervalues())
     dir, fname = path.split(bam_fname)
 
-    return dir, rpks, uniques, curr_lens
+    return fname, rpks, uniques, curr_lens
 
 if __name__ == "__main__":
     import multiprocessing as mp
@@ -91,13 +90,14 @@ if __name__ == "__main__":
     for fname, rpks, uniques, curr_lens in res:
         print fname
         try:
-            xs = array(rpks)
+            xs = array([rpk/(curr_len+1)
+                       for rpk, curr_len in zip(rpks, curr_lens)])
             ys = array([len(u)/(curr_len + 1)
                        for u, curr_len in zip(uniques, curr_lens)])
             cutoff = max(xs[ys < .1])
-            reg = stats.linregress(log(xs[(xs < cutoff)*(xs > 0)*(ys > 0)]),
-                                   log(ys[(xs < cutoff)*(xs > 0)*(ys > 0)]))
+            reg = stats.linregress(log10(xs[(xs < cutoff)*(xs > 0)*(ys > 0)]),
+                                   log10(ys[(xs < cutoff)*(xs > 0)*(ys > 0)]))
             print "exp(%f) * x ** %f" % (reg[1], reg[0])
-            print "Duplicate badness score: ", exp(-reg[1]-.38)
+            print "Duplicate badness score: ", 10**(-reg[1]-.031)
         except Exception as exc:
             print exc

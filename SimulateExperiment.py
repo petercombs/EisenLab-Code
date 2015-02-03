@@ -2,6 +2,7 @@ from __future__ import print_function, division
 import pandas as pd
 import numpy as np
 from matplotlib.pyplot import (savefig, tight_layout, subplot, figure, title,
+                               ylabel, xlabel,
                                xlim, legend, gca, hist)
 from numpy.random import multinomial
 from scipy.stats import linregress, scoreatpercentile
@@ -77,8 +78,9 @@ for sim_num in pbar(range(n_sim)):
 
 print('-'*30, '\n', 'Simulation')
 print("analyzed {} genes".format(i))
-figure(figsize=(16,16))
+figure(figsize=(6,6))
 subplot(3,1,1)
+gca().locator_params(tight=True, nbins=4)
 slopes = slopes.dropna()
 #slopes_by_expr = [slopes.ix[(10**(i) < sims.ix[:,200]) *
                             #(sims.ix[:,200] < 10**(i+bin_step))]
@@ -93,7 +95,8 @@ slopes = slopes.dropna()
 #np.ceil(np.log10(expr_max)),
 #bin_step)])
 hist(slopes, bins=np.linspace(0, 2, 100), range=(0,2))
-title('Slopes')
+ylabel('$\\mathbf{Slopes}$\nNum. genes')
+#title('Slopes')
 #legend()
 xlim(-0,2)
 print("Slopes")
@@ -103,10 +106,12 @@ print(scoreatpercentile(slopes, 75) - scoreatpercentile(slopes, 25))
         #setcolor.set_foregroundcolor(gca(), 'w')
         #setcolor.set_backgroundcolor(gca(), 'k')
 subplot(3,1,2)
+gca().locator_params(tight=True, nbins=4)
 intercepts = intercepts.dropna()/(5*max(amts)/100)
 hist(intercepts,bins=100, range=(-10,10))
 xlim(-10,10)
-title('Intercepts (% D. vir)')
+ylabel('$\\mathbf{Intercepts}$\n$\\mathbf{(\\% D. vir)}$\nNum. genes')
+#title('Intercepts (% D. vir)')
 print("Intercepts")
 print(np.median(intercepts.dropna()), "+/-",)
 print(scoreatpercentile(intercepts, 75)
@@ -115,9 +120,11 @@ print(scoreatpercentile(intercepts, 75)
 #setcolor.set_backgroundcolor(gca(), 'k')
 
 subplot(3,1,3)
-hist(r_values.dropna(),bins=np.arange(.5,1,.01))
+gca().locator_params(tight=True, nbins=4)
+hist(r_values.dropna(),bins=np.arange(.5,1.01,.01))
 xlim(.5,1)
-title('R Values')
+ylabel('$\\mathbf{Correlation}$\n$\\mathbf{Coefficients}$\nNum. genes')
+#title('R Values')
 print("R Values")
 print(np.mean(r_values.dropna()), "+/-",)
 print(np.std(r_values.dropna()))
