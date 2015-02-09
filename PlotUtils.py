@@ -11,6 +11,43 @@ import urllib
 import time
 from os import path
 
+ISH_ROT = hsv_to_rgb(array(
+    [[[0.65, 0.00, 1.00],
+      [0.65, 0.53, 1.00],
+      [0.65, 0.53, 0.38],],
+     [[0.81, 0.00, 1.00],
+      [0.81, 0.53, 1.00],
+      [0.81, 0.53, 0.38],],
+     [[0.98, 0.00, 1.00],
+      [0.98, 0.53, 1.00],
+      [0.98, 0.53, 0.38],],
+     [[0.48, 0.00, 1.00],
+      [0.48, 0.53, 1.00],
+      [0.48, 0.53, 0.38],],
+     [[0.32, 0.00, 1.00],
+      [0.32, 0.53, 1.00],
+      [0.32, 0.53, 0.38],],
+     [[0.15, 0.00, 1.00],
+      [0.15, 0.53, 1.00],
+      [0.15, 0.53, 0.38],],
+    ]))
+
+ISH_CMS = []
+for I, ARR in enumerate(ISH_ROT):
+    ISH_CMS.append(
+        LinearSegmentedColormap('ish{}'.format(I),
+                                dict(red=((0.0, ARR[0, 0], ARR[0, 0]),
+                                          (0.7, ARR[1, 0], ARR[1, 0]),
+                                          (1.0, ARR[2, 0], ARR[2, 0])),
+                                     green=((0.0, ARR[0, 1], ARR[0, 1]),
+                                            (0.7, ARR[1, 1], ARR[1, 1]),
+                                            (1.0, ARR[2, 1], ARR[2, 1])),
+                                     blue=((0.0, ARR[0, 2], ARR[0, 2]),
+                                           (0.7, ARR[1, 2], ARR[1, 2]),
+                                           (1.0, ARR[2, 2], ARR[2, 2])),
+                                    )))
+
+
 ISH = LinearSegmentedColormap('ish',
                               dict(red=((0, 1, 1),
                                         (.7, 120/255, 120/255),
@@ -198,7 +235,7 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
         dwg = svg.Drawing(filename)
     dwg.add(svg.base.Title(path.basename(filename)))
 
-    pat = dwg.pattern(id='hatch', insert=(0, 0), size=(25, 25),
+    pat = dwg.pattern(id='hatch', insert=(0, 0), size=(hatch_size, hatch_size),
                       patternUnits='userSpaceOnUse')
     g = pat.add(dwg.g(style="fill:none; stroke:#B0B0B0; stroke-width:1"))
     g.add(dwg.path(('M0,0', 'l{hatch},{hatch}'.format(hatch=hatch_size))))
