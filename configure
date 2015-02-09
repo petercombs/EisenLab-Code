@@ -167,7 +167,7 @@ for i, row in config_file.iterrows():
                             ))
         rf1 = glob(glob_spec.format(read='R1'))
         if rf1 != []:
-            out.write("GLOBSPEC = {}\n".format(glob_spec))
+            assert len(rf1) < 20
             break
     else:
             print "Warning: no sequence for ", label, index
