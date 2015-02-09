@@ -152,7 +152,16 @@ for fname in sorted(fnames):
             skip = reads < args.strip_low_reads
         else:
             skip = sf.mapped < args.strip_low_reads
-    if args.strip_low_map_rate and args.has_params and not skip:
+    if (args.strip_low_map_rate
+        and not skip
+        and not (args.has_params
+                 and 'CarrierSpecies' in params.columns
+                 and params.ix[old_dirname, 'CarrierSpecies'] != '---')
+       ):
+
+        print("Estimating map rate for {} ({})".format(old_dirname,
+                                                       params.ix[old_dirname,
+                                                                 'CarrierSpecies']))
         rfs = [entry for entry in
                sf.header['PG'][0]['CL'].split()
               if entry.endswith('.gz') or entry.endswith('.fastq')][0]
