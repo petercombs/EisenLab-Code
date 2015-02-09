@@ -120,6 +120,7 @@ def parse_arguments():
 def convert_indices(index_spec):
     for index in index_converter:
         index_spec = index_spec.replace(index, index_converter[index])
+    index_spec = index_spec.replace('_', '-')
     return index_spec
 
 args = parse_arguments()
