@@ -39,11 +39,23 @@ star_str = ('$(ANALYSIS_DIR)/{label}/accepted_hits.bam: '
 mappers = {'star': star_str, 'tophat' : tophat_str}
 
 glob_specs = [
-    '{seqdir}/*/*{index_seq}*_{{read}}_*.fastq*',
+    '{seqdir}{genotype}*/Sample_MBE??_{id}?_index{index}/*_{{read}}_*.fastq*',
+    '{seqdir}{genotype}*/Sample_MBE_??_{id}?_index{index}/*_{{read}}_*.fastq*',
+    '{seqdir}{genotype}*/Sample_MBE??{id}?_index{index}/*_{{read}}_*.fastq*',
+    '{seqdir}{genotype}*/Sample_MBE??{id}_index{index}/*_{{read}}_*.fastq*',
+    '{seqdir}{genotype}*/Sample_MBE??{id}_*_index{index}/*_{{read}}_*.fastq*',
+    '{seqdir}{genotype}*/*{label}{index}/*_{{read}}_*.fastq*',
+    '{seqdir}{genotype}*/Sample_{index}/{index}_{index_seq}_L{id:03}_{{read}}_*.fastq*',
+    '{seqdir}{genotype}*/*/*{index_seq}*_{{read}}_*.fastq*',
+    '{seqdir}{genotype}*/*/*{label}*/*_{{read}}_*.fastq*',
+    '{seqdir}{genotype}*/*index{index}/*_{{read}}*.fastq*',
+
+    '{seqdir}/Sample_MBE???{id}?_index{index}/*_{{read}}_*.fastq*',
     '{seqdir}/*{label}{index}/*_{{read}}_*.fastq*',
-    # '{seqdir}/*{index}/*_{{read}}_*.fastq*',
+    '{seqdir}/*/*{index_seq}*_{{read}}_*.fastq*',
     '{seqdir}/*/*{label}*/*_{{read}}_*.fastq*',
     '{seqdir}/*index{index}/*_{{read}}*.fastq*',
+    '{seqdir}/Sample_{index}/{index}_{index_seq}_L{id:03}_{{read}}_*.fastq*',
 ]
 
 index_converter = {
@@ -130,17 +142,25 @@ out.write("FPKMS = {}  \n".format(targets))
 reads = defaultdict(lambda : ([], []))
 carriers = defaultdict(list)
 carrier_species = {}
+sample_species = {}
+genotypes = {}
 for i, row in config_file.iterrows():
     label = row['Label']
     index = row['Index']
     mbepc = int(row['MBEPC'])
-    carrier = row['CarrierID']
-    species = row['CarrierSpecies']
+    the_carrier_species = '---'
+    the_genotype = ''
+    if 'SampleGenotype' in row:
+        the_genotype = row['SampleGenotype']
+    if 'CarrierSpecies' in row:
+        carrier = row['CarrierID']
+        the_carrier_species = row['CarrierSpecies']
     for glob_spec in glob_specs:
         glob_spec = (glob_spec
                      .format(seqdir=args.seqdir,
                              label=label,
                              index=index,
+                             genotype=the_genotype,
                              index_seq=convert_indices(index),
                              id=mbepc,
                             ))
@@ -157,8 +177,13 @@ for i, row in config_file.iterrows():
 
     reads[label][0].extend(sorted(rf1))
     reads[label][1].extend(sorted(rf2))
-    carriers[label].append(carrier)
-    carrier_species[label] = species
+    genotypes[label] = the_genotype
+    if the_carrier_species != '---':
+        carriers[label].append(carrier)
+        carrier_species[label] = the_carrier_species
+    if 'SampleSpecies' in row:
+        sample_species[label] = row['SampleSpecies']
+
 
 for label in reads:
     reads1, reads2 = reads[label]
@@ -169,7 +194,8 @@ for label in reads:
                      rf2=','.join(reads2),
                      rfs=' '.join(reads1 + reads2),
                      label=label,
-                     genome='Dmel' + carrier_species[label],
+                     genome=(sample_species.get(label, 'Dmel')
+                             + carrier_species.get(label, ''))
                     ))
     out.write('$(ANALYSIS_DIR)/{label}/{yeast}.bam:  '
               '$(ANALYSIS_DIR)/{label}/assigned_scer.bam\n'
