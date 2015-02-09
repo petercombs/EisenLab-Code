@@ -102,7 +102,8 @@ if args.has_params:
     params = (pandas.read_table(has_params,
                                 comment='#',
                                 converters={'Label': str},
-                                keep_default_na=False, na_values='---')
+                                #keep_default_na=False, na_values='---',
+                               )
               .drop_duplicates(cols=['Label']))
     params.set_index('Label', inplace=True)
     params = params.dropna(how='any')
@@ -128,7 +129,8 @@ for fname in sorted(fnames):
         continue
 
     if args.has_params:
-        new_dirname = "cyc{stage}_sl{num:02}".format(
+        new_dirname = "{genotype}_cyc{stage}_sl{num:02}".format(
+            genotype=params.ix[dirname, 'SampleGenotype'],
             stage=params.ix[dirname]['Stage'],
             num=get_stagenum(dirname, params.index,
                              params.ix[dirname, 'Direction']))
