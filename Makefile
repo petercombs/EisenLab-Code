@@ -65,11 +65,11 @@ $(ANALYSIS_DIR)/summary.tsv : MakeSummaryTable.py $(FPKMS) $(RUNCONFIG) Makefile
 	@echo '============================='
 	python MakeSummaryTable.py \
        --params $(RUNCONFIG) \
-	   --strip-low-reads 1000000 \
+	   --strip-low-reads 500000 \
 	   --strip-on-unique \
 	   --strip-as-nan \
 	   --mapped-bamfile assigned_dmelR.bam \
-	   --strip-low-map-rate 85 \
+	   --strip-low-map-rate 70 \
 		$(ANALYSIS_DIR)
 
 %/genes.fpkm_tracking : %/assigned_dmelR.bam $(MELGTF) $(MELFASTA2) $(MELBADGTF)
@@ -95,13 +95,23 @@ $(ANALYSIS_DIR)/summary.tsv : MakeSummaryTable.py $(FPKMS) $(RUNCONFIG) Makefile
 	samtools view -H $< \
 		| grep -Pv 'SN:(?!dmel)' \
 		> $(@D)/mel_only.header.sam
-	python AssignReads2.py $(@D)/accepted_hits.bam
-	samtools sort $(@D)/assigned_dmel.bam \
-		$(@D)/assigned_dmel_sorted
-	samtools view $(@D)/assigned_dmel_sorted.bam \
-		| cat $(@D)/mel_only.header.sam - \
-		| samtools view -bS -o $@ -
-	rm $(@D)/assigned_dmel_sorted.bam
+	samtools view -H $< \
+		| grep -oP 'SN:....' \
+		| cut -c 4- \
+		| sort -u \
+		> $(@D)/species_present
+	ns=`wc -l $(@D)/species_present | cut -f 1`
+	if [ `wc -l $(@D)/species_present | cut -d ' ' -f 1` -eq "1" ]; then \
+		samtools sort $< $(basename $@); \
+	else \
+		python AssignReads2.py $(@D)/accepted_hits.bam; \
+		samtools sort $(@D)/assigned_dmel.bam \
+			$(@D)/assigned_dmel_sorted; \
+		samtools view $(@D)/assigned_dmel_sorted.bam \
+			| cat $(@D)/mel_only.header.sam - \
+			| samtools view -bS -o $@ -; \
+		rm $(@D)/assigned_dmel_sorted.bam; \
+	fi
 	samtools index $@
 
 $(MELALLGTF): $(MELGFF) | $(REFDIR)
