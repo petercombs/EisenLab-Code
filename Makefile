@@ -27,6 +27,9 @@ ORTHOLOGS = $(PREREQDIR)/gene_orthologs_fb_$(MELDATE).tsv
 CERFASTA = $(PREREQDIR)/S288C_reference_sequence_R64-1-1_20110203.fsa
 CERFASTA2= $(REFDIR)/scer_prepend.fasta
 
+DELFASTA = prereqs/Tdelbrueckii_sequence.fsa
+DELFASTA2= $(REFDIR)/tdel_prepend.fasta
+
 MELGFF   = $(PREREQDIR)/dmel-all-$(MELVERSION).gff
 MELGTF   = $(REFDIR)/mel_good.gtf
 VIRGFF   = $(PREREQDIR)/dvir-all-$(VIRVERSION).gff
@@ -69,7 +72,7 @@ $(ANALYSIS_DIR)/summary.tsv : MakeSummaryTable.py $(FPKMS) $(RUNCONFIG) Makefile
 	   --strip-low-map-rate 85 \
 		$(ANALYSIS_DIR)
 
-%/genes.fpkm_tracking : %/assigned_dmelR.bam $(MELGTF) $(MELFASTA2)
+%/genes.fpkm_tracking : %/assigned_dmelR.bam $(MELGTF) $(MELFASTA2) $(MELBADGTF)
 	@echo '============================='
 	@echo 'Calculating Abundances'
 	@echo '============================='
@@ -147,6 +150,17 @@ $(MELFASTA2): $(MELFASTA) $(REFDIR)/$(MELMAJORVERSION) | $(REFDIR)
 $(VIRFASTA2): $(VIRFASTA)| $(REFDIR)
 	perl -pe 's/>/>dvir_/' $(VIRFASTA) > $@
 
+$(DELFASTA): | $(REFDIR)
+	wget -O $@ http://ygob.ucd.ie/ygob/data/v7-Aug2012/Tdelbrueckii_sequence.fsa
+
+$(DELFASTA2): $(DELFASTA)| $(REFDIR)
+	perl -pe 's/>/>tdel_/' $(DELFASTA) > $@
+
+$(CERFASTA): | $(REFDIR) $(PREREQDIR)
+	wget -O $@.tgz http://downloads.yeastgenome.org/sequence/S288C_reference/genome_releases/S288C_reference_genome_R64-1-1_20110203.tgz
+	tar -xvzf $(CERFASTA).tgz --directory $(PREREQDIR)
+	mv $(PREREQDIR)/S288C_reference_genome_R64-1-1_20110203/S288C_reference_sequence_R64-1-1_20110203.fsa $(CERFASTA)
+
 $(CERFASTA2): $(CERFASTA)| $(REFDIR)
 	perl -pe 's/>/>scer_/' $(CERFASTA) > $@
 
@@ -159,6 +173,11 @@ $(REFDIR)/DmelScer/Genome :  $(MELFASTA2) $(CERFASTA2) | $(MELGTF) $(REFDIR)/Dme
 		--genomeFastaFiles $(MELFASTA2) $(CERFASTA2) \
 		--sjdbGTFfile $(MELGTF)
 
+$(REFDIR)/DmelTdel/Genome :  $(MELFASTA2) $(DELFASTA2) | $(MELGTF) $(REFDIR)/DmelTdel $(REFDIR)
+	STAR --runMode genomeGenerate --genomeDir $(REFDIR)/DmelTdel \
+		--genomeFastaFiles $(MELFASTA2) $(DELFASTA2) \
+		--sjdbGTFfile $(MELGTF)
+
 $(MELVIRGTF): $(MELGTF) $(VIRGTF) | $(REFDIR)
 	cat $^ > $@
 
@@ -166,6 +185,9 @@ $(MELVIRGTF_FILT): $(MELVIRGTF) | $(REFDIR)
 	grep 'gene_name' $< > $@
 
 $(REFDIR)/DmelScer: | $(REFDIR)
+	mkdir $@
+
+$(REFDIR)/DmelTdel: | $(REFDIR)
 	mkdir $@
 
 $(REFDIR)/DmelDvir/transcriptome : |  $(REFDIR)/DmelDvir
@@ -186,11 +208,15 @@ $(ORTHOLOGS) : | $(PREREQDIR)
 
 $(REFDIR) :
 	mkdir $@
+
 $(REFDIR)/DmelDvir:
+	mkdir $@
 	bowtie2-build --offrate 1 $(MELVIRFASTA) $@
 
-$(REFDIR)/DmelScer:
+$(REFDIR)/Dmel: $(MELFASTA2)
 	mkdir $@
+	bowtie2-build --offrate 1 $(MELFASTA2) $@
+
 $(PREREQDIR):
 	mkdir $@
 
@@ -198,19 +224,21 @@ Reference/DmelDper:
 	mkdir $@
 Reference/DmelDwil:
 	mkdir $@
-Reference/DmelDvir:
-	mkdir $@
 Reference/DmelDmoj:
 	mkdir $@
 
+$(REFDIR)/Dmel/Genome : $(REFDIR)/$(MELMAJORVERSION) | $(MELGTF)  $(REFDIR)/Dmel $(MELFASTA2) $(REFDIR)
+	STAR --runMode genomeGenerate --genomeDir $(REFDIR)/Dmel \
+		--genomeFastaFiles $(MELFASTA2) \
+		--sjdbGTFfile $(MELGTF)
 
 $(GENEMAPTABLE):
 	wget ftp://ftp.flybase.net/releases/FB$(MELDATE)/precomputed_files/genes/$(notdir $(GENEMAPTABLE)).gz \
 		-O $(GENEMAPTABLE).gz
 	gunzip --force $(GENEMAPTABLE).gz
 
-$(REFDIR)/$(MELVERSION):
+$(REFDIR)/$(MELVERSION): | $(REFDIR)
 	touch $@
 
-$(REFDIR)/$(MELMAJORVERSION):
+$(REFDIR)/$(MELMAJORVERSION): | $(REFDIR)
 	touch $@
