@@ -70,7 +70,8 @@ $(ANALYSIS_DIR)/summary.tsv : MakeSummaryTable.py $(FPKMS) $(RUNCONFIG) Makefile
 	   --strip-as-nan \
 	   --mapped-bamfile assigned_dmelR.bam \
 	   --strip-low-map-rate 70 \
-		$(ANALYSIS_DIR)
+		$(ANALYSIS_DIR) \
+		| tee analysis/mst.log
 
 %/genes.fpkm_tracking : %/assigned_dmelR.bam $(MELGTF) $(MELFASTA2) $(MELBADGTF)
 	@echo '============================='
