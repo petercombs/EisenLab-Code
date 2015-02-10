@@ -91,26 +91,8 @@ def get_stagenum(name, series, dir):
             .index(name)) + 1
 
 
-args = parse_args()
-if args.in_subdirectory:
-    fnames = glob(path.join(args.basedir, '*', args.in_subdirectory,
-                            args.filename))
-else:
-    fnames = glob(path.join(args.basedir, '*', args.filename))
-if args.has_params:
-    has_params = argv[2]
-    params = (pandas.read_table(has_params,
-                                comment='#',
-                                converters={'Label': str},
-                                #keep_default_na=False, na_values='---',
-                               )
-              .drop_duplicates(cols=['Label']))
-    params.set_index('Label', inplace=True)
-    params = params.dropna(how='any')
 
-
-df = None
-for fname in sorted(fnames):
+def get_expr_values(fname):
     table = pandas.read_table(fname, na_values='-', converters={args.key: str},
                               keep_default_na=False,
                               header=None if not args.header else 0)
@@ -126,7 +108,7 @@ for fname in sorted(fnames):
              .dropna(axis=0, how='any'))
     table.set_index(args.key, inplace=True, verify_integrity=True)
     if args.has_params and dirname not in params.index:
-        continue
+        return (None, None)
 
     if args.has_params:
         new_dirname = "{genotype}_cyc{stage}_sl{num:02}".format(
@@ -159,9 +141,6 @@ for fname in sorted(fnames):
                  and params.ix[old_dirname, 'CarrierSpecies'] != '---')
        ):
 
-        print("Estimating map rate for {} ({})".format(old_dirname,
-                                                       params.ix[old_dirname,
-                                                                 'CarrierSpecies']))
         rfs = [entry for entry in
                sf.header['PG'][0]['CL'].split()
               if entry.endswith('.gz') or entry.endswith('.fastq')][0]
@@ -182,19 +161,49 @@ for fname in sorted(fnames):
             table.ix[:] = nan
         else:
             print("Skipping", dirname)
-            continue
-    if df is None:
-        df = pandas.DataFrame({dirname+"_FPKM": table.ix[:, args.column]})
-    else:
-        df.insert(len(df.columns), dirname+"_FPKM", table.ix[:, args.column])
-
+            return None, None
     if args.conf:
-        df.insert(len(df.columns),
-                  dirname+"_conf_lo",
-                  table.FPKM_conf_lo)
-        df.insert(len(df.columns),
-                  dirname+"_conf_hi",
-                  table.FPKM_conf_hi)
+        return (
+            dirname+"_"+args.column,
+            table.ix[:, args.column],
+            dirname+"_"+args.column+"_conf_lo",
+            table.ix[:, args.column+"_conf_lo"],
+            dirname+"_"+args.column+"_conf_hi",
+            table.ix[:, args.column+"_conf_hi"],
+               )
+    else:
+        return (dirname+"_FPKM", table.ix[:, args.column])
+
+if __name__ == "__main__":
+    args = parse_args()
+    if args.in_subdirectory:
+        fnames = glob(path.join(args.basedir, '*', args.in_subdirectory,
+                                args.filename))
+    else:
+        fnames = glob(path.join(args.basedir, '*', args.filename))
+    if args.has_params:
+        has_params = argv[2]
+        params = (pandas.read_table(has_params,
+                                    comment='#',
+                                    converters={'Label': str},
+                                    #keep_default_na=False, na_values='---',
+                                   )
+                  .drop_duplicates(cols=['Label']))
+        params.set_index('Label', inplace=True)
+        params = params.dropna(how='any')
+
+
+    import multiprocessing as mp
+    pool = mp.Pool()
+    res = pool.map(get_expr_values, fnames)
+    if args.conf:
+        names, cols, names_lo, cols_lo, names_hi, cols_hi = zip(*res)
+        df = pandas.DataFrame(dict(*zip(names, cols))
+                              +dict(*zip(names_lo, cols_lo))
+                              +dict(*zip(names_hi, cols_hi)))
+    else:
+        names, cols = zip(*res)
+        df = pandas.DataFrame(dict(*zip(names, cols)))
 
 
 df.sort_index(axis=1).to_csv(path.join(args.basedir,
