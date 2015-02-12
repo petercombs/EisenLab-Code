@@ -5,7 +5,7 @@ import pandas as pd
 from os.path import join
 from collections import defaultdict
 from matplotlib import cm
-from PlotUtils import svg_heatmap
+from PlotUtils import svg_heatmap, ISH
 from PeakFinder import has_anterior_peak, has_posterior_peak, has_central_peak
 from glob import glob
 
@@ -201,6 +201,7 @@ for TF in list_of_TFs:
 
 norm_col = wt_exp.select(lambda x: not x.startswith('cyc11'), axis=1).max(axis=1)
 norm_col[norm_col<10] = 10
+print("Anterior Shifted")
 svg_heatmap((wt_exp.select(antshift.__contains__),
              zld_exp.select(antshift.__contains__)),
             'analysis/results/antshift.svg',
@@ -208,10 +209,11 @@ svg_heatmap((wt_exp.select(antshift.__contains__),
             total_width=300,
             box_height=5,
             draw_row_labels=True,
-            cmap=(cm.Blues, cm.Reds),
+            cmap=(ISH, cm.Reds),
             col_sep='_sl',
            )
 
+print("Anterior Lost")
 svg_heatmap((wt_exp.select(antlost.__contains__),
              zld_exp.select(antlost.__contains__)),
             'analysis/results/antlost.svg',
@@ -219,10 +221,11 @@ svg_heatmap((wt_exp.select(antlost.__contains__),
             total_width=300,
             box_height=5,
             draw_row_labels=True,
-            cmap=(cm.Blues, cm.Reds),
+            cmap=(ISH, cm.Reds),
             col_sep='_sl',
            )
 
+print("Anterior Maintained")
 svg_heatmap((wt_exp.select(antant.__contains__),
              zld_exp.select(antant.__contains__)),
             'analysis/results/antant.svg',
@@ -230,11 +233,12 @@ svg_heatmap((wt_exp.select(antant.__contains__),
             total_width=300,
             box_height=5,
             draw_row_labels=True,
-            cmap=(cm.Blues, cm.Reds),
+            cmap=(ISH, cm.Reds),
             col_sep='_sl',
            )
 
 
+print("Posterior Shifted")
 svg_heatmap((wt_exp.select(postshift.__contains__),
              zld_exp.select(postshift.__contains__)),
             'analysis/results/postshift.svg',
@@ -242,10 +246,11 @@ svg_heatmap((wt_exp.select(postshift.__contains__),
             total_width=300,
             box_height=5,
             draw_row_labels=True,
-            cmap=(cm.Blues, cm.Reds),
+            cmap=(ISH, cm.Reds),
             col_sep='_sl',
            )
 
+print("Posterior Lost")
 svg_heatmap((wt_exp.select(postlost.__contains__),
              zld_exp.select(postlost.__contains__)),
             'analysis/results/postlost.svg',
@@ -253,10 +258,11 @@ svg_heatmap((wt_exp.select(postlost.__contains__),
             total_width=300,
             box_height=5,
             draw_row_labels=True,
-            cmap=(cm.Blues, cm.Reds),
+            cmap=(ISH, cm.Reds),
             col_sep='_sl',
            )
 
+print("Posterior Maintained")
 svg_heatmap((wt_exp.select(postpost.__contains__),
              zld_exp.select(postpost.__contains__)),
             'analysis/results/postpost.svg',
@@ -264,11 +270,12 @@ svg_heatmap((wt_exp.select(postpost.__contains__),
             total_width=300,
             box_height=5,
             draw_row_labels=True,
-            cmap=(cm.Blues, cm.Reds),
+            cmap=(ISH, cm.Reds),
             col_sep='_sl',
            )
 
 
+print("Central Shifted")
 svg_heatmap((wt_exp.select(centshift.__contains__),
              zld_exp.select(centshift.__contains__)),
             'analysis/results/centshift.svg',
@@ -276,10 +283,11 @@ svg_heatmap((wt_exp.select(centshift.__contains__),
             total_width=300,
             box_height=5,
             draw_row_labels=True,
-            cmap=(cm.Blues, cm.Reds),
+            cmap=(ISH, cm.Reds),
             col_sep='_sl',
            )
 
+print("Central Lost")
 svg_heatmap((wt_exp.select(centlost.__contains__),
              zld_exp.select(centlost.__contains__)),
             'analysis/results/centlost.svg',
@@ -287,10 +295,11 @@ svg_heatmap((wt_exp.select(centlost.__contains__),
             total_width=300,
             box_height=5,
             draw_row_labels=True,
-            cmap=(cm.Blues, cm.Reds),
+            cmap=(ISH, cm.Reds),
             col_sep='_sl',
            )
 
+print("Central Maintained")
 svg_heatmap((wt_exp.select(centcent.__contains__),
              zld_exp.select(centcent.__contains__)),
             'analysis/results/centcent.svg',
@@ -298,7 +307,7 @@ svg_heatmap((wt_exp.select(centcent.__contains__),
             total_width=300,
             box_height=5,
             draw_row_labels=True,
-            cmap=(cm.Blues, cm.Reds),
+            cmap=(ISH, cm.Reds),
             col_sep='_sl',
            )
 
