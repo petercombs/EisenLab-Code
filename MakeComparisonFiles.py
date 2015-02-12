@@ -5,6 +5,7 @@ from matplotlib.cm import Greens, Reds
 import os
 from os.path import join
 from numpy import nan
+from Utils import sel_startswith, contains
 
 startswith = lambda x: lambda y: y.startswith(x)
 
@@ -19,36 +20,38 @@ def make_comparison_file(gene, force=False):
         return
     if gene is nan:
         return
-    data = (wt .select(startswith('cyc13'),       axis=1).ix[[gene]],
-            wt .select(startswith('cyc14D'),      axis=1).ix[[gene]],
-            bcd.select(startswith('cyc13_rep1'),  axis=1).ix[[gene]],
-            bcd.select(startswith('cyc14D_rep1'), axis=1).ix[[gene]],
-            bcd.select(startswith('cyc13_rep2'),  axis=1).ix[[gene]],
-            bcd.select(startswith('cyc14D_rep2'), axis=1).ix[[gene]],
-            g20.select(startswith('cyc13_rep1'),  axis=1).ix[[gene]],
-            g20.select(startswith('cyc14D_rep1'), axis=1).ix[[gene]],
-            g20.select(startswith('cyc13_rep2'),  axis=1).ix[[gene]],
-            g20.select(startswith('cyc14D_rep2'), axis=1).ix[[gene]],
-            zld.select(startswith('cyc13_rep1'),  axis=1).ix[[gene]],
-            zld.select(startswith('cyc14D'),      axis=1).ix[[gene]],
-            zld.select(startswith('cyc13_rep3'),  axis=1).ix[[gene]],
+    data = (wt .select(contains('cyc13'),       axis=1).ix[[gene]],
+            wt .select(contains('cyc14D'),      axis=1).ix[[gene]],
+            bcd.select(contains('cyc13_rep1'),  axis=1).ix[[gene]],
+            bcd.select(contains('cyc14D_rep1'), axis=1).ix[[gene]],
+            bcd.select(contains('cyc13_rep2'),  axis=1).ix[[gene]],
+            bcd.select(contains('cyc14D_rep2'), axis=1).ix[[gene]],
+            g20.select(contains('cyc13_rep1'),  axis=1).ix[[gene]],
+            g20.select(contains('cyc14D_rep1'), axis=1).ix[[gene]],
+            g20.select(contains('cyc13_rep2'),  axis=1).ix[[gene]],
+            g20.select(contains('cyc14D_rep2'), axis=1).ix[[gene]],
+            zld.select(contains('cyc13_rep1'),  axis=1).ix[[gene]],
+            zld.select(contains('cyc14D'),      axis=1).ix[[gene]],
+            zld.select(contains('cyc13_rep3'),  axis=1).ix[[gene]],
            )
-    max_13s = max(float(dp.max(axis=1))*1.1 +10 for dp in data[0::2])
-    max_14s = max(float(dp.max(axis=1))*1.1 +10 for dp in data[1::2])
+    max_13s = max(float(dp.max(axis=1))*1.1 +10 for dp in data[0::2] if dp is
+                  not None)
+    max_14s = max(float(dp.max(axis=1))*1.1 +10 for dp in data[1::2] if dp is
+                  not None)
     normer = ((max_13s, max_14s)*5)[:-1]
-    normer = (wt.ix[gene].select(startswith('cyc13'  )).max() * 1.1 + 10,
-              wt.ix[gene].select(startswith('cyc14D' )).max() * 1.1 + 10,
-              bcd.ix[gene].select(startswith('cyc13' )).max() * 1.1 + 10,
-              bcd.ix[gene].select(startswith('cyc14D')).max() * 1.1 + 10,
-              bcd.ix[gene].select(startswith('cyc13' )).max() * 1.1 + 10,
-              bcd.ix[gene].select(startswith('cyc14D')).max() * 1.1 + 10,
-              g20.ix[gene].select(startswith('cyc13' )).max() * 1.1 + 10,
-              g20.ix[gene].select(startswith('cyc14D')).max() * 1.1 + 10,
-              g20.ix[gene].select(startswith('cyc13' )).max() * 1.1 + 10,
-              g20.ix[gene].select(startswith('cyc14D')).max() * 1.1 + 10,
-              zld.ix[gene].select(startswith('cyc13' )).max() * 1.1 + 10,
-              zld.ix[gene].select(startswith('cyc14D')).max() * 1.1 + 10,
-              zld.ix[gene].select(startswith('cyc13' )).max() * 1.1 + 10,
+    normer = (wt.ix[gene].select(contains('cyc13'  )).max() * 1.1 + 10,
+              wt.ix[gene].select(contains('cyc14D' )).max() * 1.1 + 10,
+              bcd.ix[gene].select(contains('cyc13' )).max() * 1.1 + 10,
+              bcd.ix[gene].select(contains('cyc14D')).max() * 1.1 + 10,
+              bcd.ix[gene].select(contains('cyc13' )).max() * 1.1 + 10,
+              bcd.ix[gene].select(contains('cyc14D')).max() * 1.1 + 10,
+              g20.ix[gene].select(contains('cyc13' )).max() * 1.1 + 10,
+              g20.ix[gene].select(contains('cyc14D')).max() * 1.1 + 10,
+              g20.ix[gene].select(contains('cyc13' )).max() * 1.1 + 10,
+              g20.ix[gene].select(contains('cyc14D')).max() * 1.1 + 10,
+              zld.ix[gene].select(contains('cyc13' )).max() * 1.1 + 10,
+              zld.ix[gene].select(contains('cyc14D')).max() * 1.1 + 10,
+              zld.ix[gene].select(contains('cyc13' )).max() * 1.1 + 10,
              )
     names = [stage + '- Max Expr {:.1f}'.format(float(dp.max(axis=1)))
              for stage, dp in zip(('WT13 WT14D '
@@ -85,17 +88,14 @@ def make_comparison_file(gene, force=False):
 read_table_args = dict(index_col=0,
                        keep_default_na=False,
                        na_values=['---', ''])
-wt  = (pd.read_table('prereqs/WT6.02.summary.tsv', **read_table_args)
-       #.dropna(how='any')
-       .sort_index())
-bcd = (pd.read_table('analysis/summary.tsv', **read_table_args)
-       #.dropna(how='any', axis=1)
-       .sort_index())
-zld = (pd.read_table('prereqs/Zld6.02.summary_merged.tsv', **read_table_args)
-       #.dropna(how='any', axis=1)
-       .sort_index())
-g20 = (pd.read_table('prereqs/G20-6.02.summary.tsv', **read_table_args)
-       .sort_index())
+all_expr = (pd.read_table('analysis/summary.tsv', **read_table_args)
+            .sort_index())
+wt  = all_expr.select(**sel_startswith('WT'))
+bcd = all_expr.select(**sel_startswith('bcd'))
+zld = all_expr.select(**sel_startswith('zld'))
+g20 = all_expr.select(**sel_startswith('G20'))
+hb  = all_expr.select(**sel_startswith('hb'))
+
 assert all(wt.index == bcd.index)
 assert all(wt.index == zld.index)
 assert all(zld.index == bcd.index)
