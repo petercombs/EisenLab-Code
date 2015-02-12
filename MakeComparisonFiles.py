@@ -29,7 +29,7 @@ def make_comparison_file(gene, force=False):
             g20.select(contains('cyc13_rep1'),  axis=1).ix[[gene]],
             g20.select(contains('cyc14D_rep1'), axis=1).ix[[gene]],
             g20.select(contains('cyc13_rep2'),  axis=1).ix[[gene]],
-            g20.select(contains('cyc14D_rep2'), axis=1).ix[[gene]],
+            None,
             zld.select(contains('cyc13_rep1'),  axis=1).ix[[gene]],
             zld.select(contains('cyc14D'),      axis=1).ix[[gene]],
             zld.select(contains('cyc13_rep3'),  axis=1).ix[[gene]],
@@ -53,7 +53,8 @@ def make_comparison_file(gene, force=False):
               zld.ix[gene].select(contains('cyc14D')).max() * 1.1 + 10,
               zld.ix[gene].select(contains('cyc13' )).max() * 1.1 + 10,
              )
-    names = [stage + '- Max Expr {:.1f}'.format(float(dp.max(axis=1)))
+    names = [(stage + '- Max Expr {:.1f}'.format(float(dp.max(axis=1)))
+              if dp is not None else '')
              for stage, dp in zip(('WT13 WT14D '
                                    'Bcd-13 Bcd-14D Bcd-13 Bcd-14D '
                                    'G20-13 G20-14D G20-13 G20-14D '

@@ -276,8 +276,24 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
 
     x_start = 0
     y_start = 0
+    y_diff = 0
     for frame, c_cmap, name, normer, spacer in zip(data, cmap, data_names,
                                                    norm_rows_by, spacers):
+        if frame is None:
+            if total_width is not None:
+                if spacer is None:
+                    x_start += total_width * 1.1
+                else:
+                    x_start += total_width + spacer
+            else:
+                if spacer is None:
+                    x_start += box_size
+                else:
+                    x_start += spacer
+            if x_start > max_width:
+                x_start = 0
+                y_start += y_diff
+                continue
         frame = pd.DataFrame(frame)
         if normer is None:
             norm_data = frame.copy()
@@ -382,9 +398,10 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
             else:
                 x_start += new_cols * box_size + spacer
 
+        y_diff = new_rows * box_height + 30
         if x_start > max_width:
             x_start = 0
-            y_start += new_rows*box_height + 30
+            y_start += y_diff
 
     if draw_row_labels:
         for i in range(rows):
