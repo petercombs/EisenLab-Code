@@ -1,4 +1,5 @@
 from os import path
+from numpy import shape, linspace, sum, isfinite, copy
 
 
 def get_bam_length(samfile):
@@ -49,3 +50,12 @@ def sel_contains(string_or_iterable):
 
 def sel_startswith(string_or_iterable):
     return dict(crit=startswith(string_or_iterable), axis=1)
+
+def center_of_mass(data):
+    dims = shape(data)
+    cols = dims[-1]
+    xs = linspace(0, 1, cols, endpoint=True)
+    data_clean = data.copy()
+    data_clean[~isfinite(data_clean)] = 0
+    data_clean += 0.01
+    return sum(data_clean * xs, axis=len(dims)-1)/sum(data_clean, axis=len(dims)-1)

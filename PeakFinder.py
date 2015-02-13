@@ -1,4 +1,4 @@
-from numpy import mean, shape, ceil, log2
+from numpy import mean, shape, ceil, log2, sign
 import pandas as pd
 
 def has_anterior_peak(data, fold=3, thresh=3):
@@ -9,7 +9,7 @@ def has_anterior_peak(data, fold=3, thresh=3):
     else:
         first_third = mean(data[:n//3])
         middle_third = mean(data[n//3:-(n//3)])
-    return ((first_third > fold * middle_third) *
+    return ((sign(fold) * first_third > fold * middle_third) *
             first_third > thresh)
 
 def has_posterior_peak(data, fold=3, thresh=3):
