@@ -41,7 +41,7 @@ Reference/unmapped:
 BDTNPVER=2.1
 prereqs/current_bdtnp:
 	wget -O prereqs/current_bdtnp.tgz http://bdtnp.lbl.gov/Fly-Net/archives/chipper/BDTNP_in_vivo_binding_Release.$(BDTNPVER).tar.gz
-	tar -xzf prereqs/current_bdtnp.tgz
+	tar -xzf prereqs/current_bdtnp.tgz --directory=prereqs
 	cp -r prereqs/BDTNP_in_vivo_binding_Release.$(BDTNPVER)/Supplemental_Tables/ $@
 
 
@@ -90,3 +90,5 @@ Reference/tss: $(MELGTF)
 		| rev \
 		> $@
 
+prereqs/journal.pgen.1002266.s005.xls:
+	wget -O $@ http://journals.plos.org/plosgenetics/article/asset\?unique\&id\=info\:doi/10.1371/journal.pgen.1002266.s005
