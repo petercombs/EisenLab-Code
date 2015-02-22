@@ -30,9 +30,9 @@ if __name__ == "__main__":
             cyc_embs[cyc] = sub_df.select(**sel_contains(cyc))
         locals()[sub_df_name+'s'] = cyc_embs
 
-    wt_ants = has_anterior_peak(wts['cyc14D'])
-    wt_cents = has_central_peak(wts['cyc14D'])
-    wt_posts = has_posterior_peak(wts['cyc14D'])
+    wt_ants = has_anterior_peak(wts['cyc14D'], fold=2)
+    wt_cents = has_central_peak(wts['cyc14D'], fold=2)
+    wt_posts = has_posterior_peak(wts['cyc14D'], fold=2)
     xs = array([0, 0, 1, 2.4])
     flops = []
     for pos, genes in [('ants', wt_ants), ('cents', wt_cents)]:
@@ -60,8 +60,8 @@ if __name__ == "__main__":
             clf()
 
             if (has_anterior_peak(wts['cyc14D'].ix[gene], fold=2)
-                and (has_anterior_peak(bcds['cyc14D_rep1'].ix[gene], fold=-0.5)
-                    and has_anterior_peak(bcds['cyc14D_rep2'].ix[gene], fold=-0.5))):
+                and (has_anterior_peak(bcds['cyc14D_rep1'].ix[gene], fold=-2)
+                    and has_anterior_peak(bcds['cyc14D_rep2'].ix[gene], fold=-2))):
 
                 print gene
                 flops.append(gene)
