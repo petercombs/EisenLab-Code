@@ -11,41 +11,45 @@ import urllib
 import time
 from os import path
 
-ISH_ROT = hsv_to_rgb(array(
-    [[[0.65, 0.00, 1.00],
-      [0.65, 0.53, 1.00],
-      [0.65, 0.53, 0.38],],
-     [[0.81, 0.00, 1.00],
-      [0.81, 0.53, 1.00],
-      [0.81, 0.53, 0.38],],
-     [[0.98, 0.00, 1.00],
-      [0.98, 0.53, 1.00],
-      [0.98, 0.53, 0.38],],
-     [[0.48, 0.00, 1.00],
-      [0.48, 0.53, 1.00],
-      [0.48, 0.53, 0.38],],
-     [[0.32, 0.00, 1.00],
-      [0.32, 0.53, 1.00],
-      [0.32, 0.53, 0.38],],
-     [[0.15, 0.00, 1.00],
-      [0.15, 0.53, 1.00],
-      [0.15, 0.53, 0.38],],
+ISH_ROT_4 = hsv_to_rgb(array(
+    [[[(0.65+offset)%1, 0.00, 1.00],
+      [(0.65+offset)%1, 0.53, 1.00],
+      [(0.65+offset)%1, 0.53, 0.38],]
+     for offset in linspace(0, 1, 4, endpoint=False)
+    ]))
+ISH_ROT_5 = hsv_to_rgb(array(
+    [[[(0.65+offset)%1, 0.00, 1.00],
+      [(0.65+offset)%1, 0.53, 1.00],
+      [(0.65+offset)%1, 0.53, 0.38],]
+     for offset in linspace(0, 1, 5, endpoint=False)
+    ]))
+ISH_ROT_6 = hsv_to_rgb(array(
+    [[[(0.65+offset)%1, 0.00, 1.00],
+      [(0.65+offset)%1, 0.53, 1.00],
+      [(0.65+offset)%1, 0.53, 0.38],]
+     for offset in linspace(0, 1, 6, endpoint=False)
     ]))
 
-ISH_CMS = []
-for I, ARR in enumerate(ISH_ROT):
-    ISH_CMS.append(
-        LinearSegmentedColormap('ish{}'.format(I),
-                                dict(red=((0.0, ARR[0, 0], ARR[0, 0]),
-                                          (0.7, ARR[1, 0], ARR[1, 0]),
-                                          (1.0, ARR[2, 0], ARR[2, 0])),
-                                     green=((0.0, ARR[0, 1], ARR[0, 1]),
-                                            (0.7, ARR[1, 1], ARR[1, 1]),
-                                            (1.0, ARR[2, 1], ARR[2, 1])),
-                                     blue=((0.0, ARR[0, 2], ARR[0, 2]),
-                                           (0.7, ARR[1, 2], ARR[1, 2]),
-                                           (1.0, ARR[2, 2], ARR[2, 2])),
-                                    )))
+ISH_CMS_4 = []
+ISH_CMS_5 = []
+ISH_CMS_6 = []
+
+for CMS, ROT in [(ISH_CMS_4, ISH_ROT_4),
+                 (ISH_CMS_5, ISH_ROT_5),
+                 (ISH_CMS_6, ISH_ROT_6)]:
+    for I, ARR in enumerate(ROT):
+        CMS.append(
+            LinearSegmentedColormap('ish{}'.format(I),
+                                    dict(red=((0.0, ARR[0, 0], ARR[0, 0]),
+                                              (0.7, ARR[1, 0], ARR[1, 0]),
+                                              (1.0, ARR[2, 0], ARR[2, 0])),
+                                         green=((0.0, ARR[0, 1], ARR[0, 1]),
+                                                (0.7, ARR[1, 1], ARR[1, 1]),
+                                                (1.0, ARR[2, 1], ARR[2, 1])),
+                                         blue=((0.0, ARR[0, 2], ARR[0, 2]),
+                                               (0.7, ARR[1, 2], ARR[1, 2]),
+                                               (1.0, ARR[2, 2], ARR[2, 2])),
+                                        )))
 
 
 ISH = LinearSegmentedColormap('ish',
@@ -183,6 +187,7 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
                 max_width=np.inf,
                 spacers=None,
                 cmap_by_prefix=None,
+                vspacer=30,
                 hatch_nan=True, hatch_size=20,
                 first_col='', last_col=''):
     """
@@ -230,9 +235,9 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
 
     if total_width is not None and max_width is not np.inf:
         dwg = svg.Drawing(filename,
-                          size=(max_width + 10,
+                          size=(max_width,
                                 np.ceil((len(data) * total_width)/max_width)
-                                * (box_height+30)))
+                                * (box_height+vspacer)))
     else:
         dwg = svg.Drawing(filename)
     dwg.add(svg.base.Title(path.basename(filename)))
@@ -409,9 +414,9 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
                 x_start += new_cols * box_size + spacer
 
         y_diff = new_rows * box_height + 30
-        if x_start > max_width:
+        if x_start + total_width >= max_width:
             x_start = 0
-            y_start += y_diff
+            y_start += new_rows*box_height + vspacer
 
     if draw_row_labels:
         for i in range(rows):

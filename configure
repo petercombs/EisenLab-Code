@@ -56,6 +56,7 @@ glob_specs = [
     '{seqdir}/*/*{label}*/*_{{read}}_*.fastq*',
     '{seqdir}/*index{index}/*_{{read}}*.fastq*',
     '{seqdir}/Sample_{index}/{index}_{index_seq}_L{id:03}_{{read}}_*.fastq*',
+    '{seqdir}/Sample_{index}/*L{id:03}_{{read}}*.fastq*',
 ]
 
 index_converter = {
