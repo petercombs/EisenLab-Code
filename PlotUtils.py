@@ -11,6 +11,12 @@ import urllib
 import time
 from os import path
 
+ISH_ROT_4 = hsv_to_rgb(array(
+    [[[(0.65+offset)%1, 0.00, 1.00],
+      [(0.65+offset)%1, 0.53, 1.00],
+      [(0.65+offset)%1, 0.53, 0.38],]
+     for offset in linspace(0, 1, 4, endpoint=False)
+    ]))
 ISH_ROT_5 = hsv_to_rgb(array(
     [[[(0.65+offset)%1, 0.00, 1.00],
       [(0.65+offset)%1, 0.53, 1.00],
@@ -24,10 +30,13 @@ ISH_ROT_6 = hsv_to_rgb(array(
      for offset in linspace(0, 1, 6, endpoint=False)
     ]))
 
+ISH_CMS_4 = []
 ISH_CMS_5 = []
 ISH_CMS_6 = []
 
-for CMS, ROT in [(ISH_CMS_5, ISH_ROT_5), (ISH_CMS_6, ISH_ROT_6)]:
+for CMS, ROT in [(ISH_CMS_4, ISH_ROT_4),
+                 (ISH_CMS_5, ISH_ROT_5),
+                 (ISH_CMS_6, ISH_ROT_6)]:
     for I, ARR in enumerate(ROT):
         CMS.append(
             LinearSegmentedColormap('ish{}'.format(I),
@@ -176,6 +185,7 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
                 draw_box=False, draw_name=False, data_names=None,
                 max_width=np.inf,
                 spacers=None,
+                vspacer=30,
                 hatch_nan=True, hatch_size=20,
                 first_col='', last_col=''):
     """
@@ -223,9 +233,9 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
 
     if total_width is not None and max_width is not np.inf:
         dwg = svg.Drawing(filename,
-                          size=(max_width + 10,
+                          size=(max_width,
                                 np.ceil((len(data) * total_width)/max_width)
-                                * (box_height+30)))
+                                * (box_height+vspacer)))
     else:
         dwg = svg.Drawing(filename)
     dwg.add(svg.base.Title(path.basename(filename)))
@@ -377,9 +387,9 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
             else:
                 x_start += new_cols * box_size + spacer
 
-        if x_start > max_width:
+        if x_start + total_width >= max_width:
             x_start = 0
-            y_start += new_rows*box_height + 30
+            y_start += new_rows*box_height + vspacer
 
     if draw_row_labels:
         for i in range(rows):
