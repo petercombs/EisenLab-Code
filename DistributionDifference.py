@@ -102,7 +102,7 @@ def earth_mover_multi(points1, points2):
                             points2.select(startswith(emb))+1e-5)**2
         sums[0].append(points1.select(startswith(emb)).mean())
         sums[1].append(points2.select(startswith(emb)).mean())
-    dist += earth_mover(sums[0], sums[1])
+    dist += earth_mover(np.array(sums[0]), np.array(sums[1]))
     return dist**.5
 
 def mp_earth_mover(args):
@@ -178,7 +178,10 @@ def mp_pandas_pdist(X, metric, p=2, w=None, V=None, VI=None):
     dm = np.zeros((m * (m - 1) / 2,), dtype=np.double)
 
     pool = multiprocessing.Pool()
-    func = globals()["mp_"+metric.__name__+"_multi"]
+    if metric.__name__.endswith('multi'):
+        func = globals()["mp_"+metric.__name__]
+    else:
+        func = globals()["mp_"+metric.__name__+"_multi"]
 
     k = 0
     prog = pb.ProgressBar(widgets=['calculating distances', pb.Bar(),
@@ -189,6 +192,32 @@ def mp_pandas_pdist(X, metric, p=2, w=None, V=None, VI=None):
         dm[ks] = pool.map(func, inputs)
         k  = ks[-1] + 1
     return dm
+
+def pandas_pdist(X, metric, p=2, w=None, V=None, VI=None):
+    s = X.shape
+    if len(s) != 2:
+        raise ValueError('A 2-dimensional array must be passed.')
+
+    m, n = s
+    dm = np.zeros((m * (m - 1) / 2,), dtype=np.double)
+
+    if metric.__name__.endswith('multi'):
+        func = globals()["mp_"+metric.__name__]
+    else:
+        func = globals()["mp_"+metric.__name__+"_multi"]
+
+    k = 0
+    prog = pb.ProgressBar(widgets=['calculating distances', pb.Bar(),
+                                   pb.Percentage(), pb.ETA()])
+    for i in prog(range(0, m - 1)):
+        ks = np.arange(k, k + m - i - 1)
+        inputs = [(X.ix[i], X.ix[j]) for j in range(i+1, m)]
+        print(len(inputs))
+        print(ks)
+        dm[ks] = map(func, inputs)
+        k  = ks[-1] + 1
+    return dm
+
 
 if __name__ == "__main__":
     import pandas as pd
