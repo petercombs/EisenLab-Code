@@ -2,7 +2,9 @@ from __future__ import print_function
 import numpy as np
 import pandas as pd
 from scipy.cluster import hierarchy
+from Utils import sel_startswith, sel_contains
 import sys
+from glob import glob
 
 try:
     reload(sys)
@@ -11,7 +13,8 @@ except NameError:
 
 bad_cols = {'25u_emb4_sl10_FPKM', '25u_emb7_sl08_FPKM', '25u_emb7_sl09_FPKM'}
 
-fbgn_data = pd.read_table('prereqs/gene_map_table_fb_2013_04.tsv', index_col=0,
+gene_map = sorted(glob('prereqs/gene_map_table*.tsv'))[-1]
+fbgn_data = pd.read_table(gene_map, index_col=0,
                           na_values=['-', 'NaN', ''], keep_default_na=False,
                           skipfooter=3,
                             skiprows=5).dropna(how='all', axis=1)
@@ -97,38 +100,63 @@ def make_gtr_file(basename, clusters):
 if __name__ == "__main__":
     import DistributionDifference
     reload(DistributionDifference)
+    is_sparse = ''
     if '-sparse' in sys.argv:
+        is_sparse='sparse_'
         step = 10
     else:
         step = 1
-    wt = pd.read_table('prereqs/WT5.57.merged.tsv', index_col=0)[::step]
-    try:
-        wt.drop(bad_cols, axis=1)
-    except ValueError:
-        pass
-    sort_emb = 'cyc13'
-    sort_emb = wt.select(lambda x: x.startswith(sort_emb), axis=1)
-    wt = wt[sort_emb.max(axis=1) > 3]
-    sort_emb = sort_emb[sort_emb.max(axis=1) > 3]
-    wt_lognorm = np.log(wt+1).divide(np.log(sort_emb.mean( axis=1)+1), axis=0)
-    zld = pd.read_table('analysis/summary_merged.tsv', index_col=0).sort_index()
-    zld = zld.ix[wt_lognorm.index]
+
+    expr_min = 5
+    eps = 1
+    read_table_args = dict(index_col=0,
+                           keep_default_na=False,
+                           na_values=['---', ''])
+
+    if 'all_expr' not in locals():
+        all_expr = (pd.read_table('analysis/summary.tsv', **read_table_args)
+                    .sort_index())
+        top_expr = all_expr.max(axis=1)
+        all_expr = all_expr.ix[top_expr > expr_min]
+        all_expr = all_expr.ix[::step]
+        wt  = all_expr.select(**sel_startswith('WT'))
+        bcd = all_expr.select(**sel_startswith('bcd'))
+        zld = all_expr.select(**sel_startswith('zld'))
+        g20 = all_expr.select(**sel_startswith('G20'))
+        hb  = all_expr.select(**sel_startswith('hb'))
+
+        wts = bcds = zlds = g20s = hbs = 0
+        for sub_df_name in 'wt bcd zld g20 hb'.split():
+            sub_df = locals()[sub_df_name]
+            cycs = {col.split('_sl')[0].split('_',1)[1] for col in sub_df.columns}
+            cyc_embs = {}
+            for cyc in cycs:
+                cyc_embs[cyc] = sub_df.select(**sel_contains(cyc))
+            locals()[sub_df_name+'s'] = cyc_embs
+    print("Read expression in")
+
+    all_expr_lognorm = np.log(all_expr+1).divide(np.log(all_expr.max( axis=1)+1),
+                                                 axis=0)
+    wt_lognorm = np.log(wt+1).divide(np.log(all_expr.max( axis=1)+1), axis=0)
+    bcd_lognorm = np.log(bcd+1).divide(np.log(all_expr.max( axis=1)+1), axis=0)
+    g20_lognorm = np.log(g20+1).divide(np.log(all_expr.max( axis=1)+1), axis=0)
+    zld_lognorm = np.log(zld+1).divide(np.log(all_expr.max( axis=1)+1), axis=0)
+
     print("Precalculating distances")
-    #metric = DistributionDifference.tang_stat
-    #metric = DistributionDifference.diff_stat
-    metric = DistributionDifference.earth_mover
-    #metric = hierarchy.distance.euclidean
-    dist_mat = DistributionDifference.mp_pandas_pdist(wt, metric)
+    metric = DistributionDifference.earth_mover_multi
+    dist_mat = DistributionDifference.mp_pandas_pdist(all_expr, metric)
+
     Z = hierarchy.linkage(dist_mat, method='weighted')
 
-    make_treeview_files("analysis/results/wt_all_log_normed_"+metric.__name__, wt_lognorm, Z)
+    for mut in 'wt bcd g20 zld'.split():
+        make_treeview_files(
+            "analysis/results/"
+            + "{}{}_log_normed_{}".format(is_sparse, mut, metric.__name__),
+            locals()[mut+"_lognorm"],
+            Z
+        )
 
-    zld_lognorm = np.log(zld+1).divide(np.log(sort_emb.mean( axis=1)+1), axis=0)
-
-    make_treeview_files("analysis/results/zld_all_log_normed_"+metric.__name__,
-                        zld_lognorm, Z)
-
-
-
-
+    make_treeview_files("analysis/results/all_log_normed"+is_sparse+metric.__name__,
+                        all_expr,
+                        Z)
 
