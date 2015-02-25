@@ -179,8 +179,10 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
                 cmap=ISH, norm_rows_by=None, draw_row_labels=False,
                 col_sep='', box_height=None, total_width=None,
                 draw_box=False, draw_name=False, data_names=None,
+                progress_bar = False,
                 max_width=np.inf,
                 spacers=None,
+                cmap_by_prefix=None,
                 hatch_nan=True, hatch_size=20,
                 first_col='', last_col=''):
     """
@@ -277,8 +279,14 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
     x_start = 0
     y_start = 0
     y_diff = 0
-    for frame, c_cmap, name, normer, spacer in zip(data, cmap, data_names,
-                                                   norm_rows_by, spacers):
+    if progress_bar:
+        from progressbar import ProgressBar
+        iterator = ProgressBar()(list(zip(data, cmap, data_names,
+                                          norm_rows_by, spacers)))
+    else:
+        iterator = zip(data, cmap, data_names, norm_rows_by, spacers)
+
+    for frame, c_cmap, name, normer, spacer in iterator:
         if frame is None:
             if total_width is not None:
                 if spacer is None:
@@ -334,6 +342,8 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
 
         for i in range(rows):
             prefix = col_labels[0][:col_labels[0].find(col_sep)]
+            if cmap_by_prefix:
+                c_cmap = cmap_by_prefix(prefix)
             for j in range(new_cols):
                 g = dwg.g()
                 g.add(svg.base.Title("{}, {}: {:.2f}".format(row_labels[i],
