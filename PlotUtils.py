@@ -320,9 +320,9 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
         if normer is None:
             norm_data = frame.copy()
         elif normer is 'mean':
-            norm_data = frame.divide(frame.dropna(axis=1).mean(axis=1), axis=0)
+            norm_data = frame.divide(frame.dropna(axis=1).mean(axis=1)+10, axis=0)
         elif normer is 'max':
-            norm_data = frame.divide(frame.dropna(axis=1).max(axis=1), axis=0)
+            norm_data = frame.divide(frame.dropna(axis=1).max(axis=1)+10, axis=0)
         elif normer is 'center0':
             norm_data = (0.5 +
                          0.5 * frame.divide(frame.dropna(axis=1).abs().max(axis=1),
@@ -393,6 +393,8 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
                 col_base = col_labels[j][:col_labels[j].find(col_sep)]
                 if col_base != prefix:
                     prefix = col_base
+                    if cmap_by_prefix:
+                        c_cmap = cmap_by_prefix(prefix)
                     g.add(dwg.line((x_start + box_size * j,
                                     y_start + i * box_height),
                                    (x_start + box_size * j,
@@ -433,6 +435,8 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
     if draw_row_labels:
         for i in range(rows):
             dwg.add(dwg.text(row_labels[i],
-                             (x_start, y_start + i*box_height+box_height),))
+                             (x_start, y_start + i*box_height+box_height),
+                             style='font-size:{}'.format(box_height),
+                            ))
     pbar.finish()
     dwg.saveas(filename)
