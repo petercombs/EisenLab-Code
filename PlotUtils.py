@@ -187,6 +187,7 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
                 max_width=np.inf,
                 spacers=None,
                 cmap_by_prefix=None,
+                split_columns=False,
                 vspacer=30,
                 hatch_nan=True, hatch_size=20,
                 first_col='', last_col=''):
@@ -224,7 +225,14 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
     import svgwrite as svg
     import pandas as pd
 
-    if not isinstance(data, tuple):
+    if split_columns and isinstance(data, pd.DataFrame):
+        from Utils import sel_startswith
+        colnames = list(sorted(
+            {col.split(col_sep)[0] for col in data.columns}))
+        data = tuple(
+            data.select(**sel_startswith(colname)) for colname in colnames
+        )
+    elif not isinstance(data, tuple):
         data = (data,)
 
     rows, cols = np.shape(data[0])
