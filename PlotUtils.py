@@ -294,8 +294,9 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
     y_diff = 0
     if progress_bar:
         from progressbar import ProgressBar
-        iterator = ProgressBar()(list(zip(data, cmap, data_names,
-                                          norm_rows_by, spacers)))
+        iterator = zip(data, cmap, data_names, norm_rows_by, spacers)
+        pbar = ProgressBar(maxval=len(iterator)*rows).start()
+        pbar_val = 0
     else:
         iterator = zip(data, cmap, data_names, norm_rows_by, spacers)
 
@@ -354,6 +355,9 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
             box_size = total_width / float(new_cols)
 
         for i in range(rows):
+            if progress_bar:
+                pbar.update(pbar_val)
+                pbar_val += 1
             prefix = col_labels[0][:col_labels[0].find(col_sep)]
             if cmap_by_prefix:
                 c_cmap = cmap_by_prefix(prefix)
@@ -430,4 +434,5 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
         for i in range(rows):
             dwg.add(dwg.text(row_labels[i],
                              (x_start, y_start + i*box_height+box_height),))
+    pbar.finish()
     dwg.saveas(filename)
