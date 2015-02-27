@@ -6,8 +6,8 @@ STARCONFIG = Parameters/STAR_params.in
 ANALYSIS_DIR = analysis
 
 # Reference FASTA and GFF files from FlyBase and SGD
-MELRELEASE = r6.02_FB2014_05
-VIRRELEASE = r1.2_FB2012_01
+MELRELEASE = r6.03_FB2014_06
+VIRRELEASE = r1.2_FB2014_03
 MELMAJORVERSION = $(word 1, $(subst ., , $(MELRELEASE)))
 MELVERSION = $(word 1, $(subst _FB, ,$(MELRELEASE)))
 VIRVERSION = $(word 1, $(subst _FB, ,$(VIRRELEASE)))
@@ -26,6 +26,9 @@ ORTHOLOGS = $(PREREQDIR)/gene_orthologs_fb_$(MELDATE).tsv
 
 CERFASTA = $(PREREQDIR)/S288C_reference_sequence_R64-1-1_20110203.fsa
 CERFASTA2= $(REFDIR)/scer_prepend.fasta
+
+DELFASTA = prereqs/Tdelbrueckii_sequence.fsa
+DELFASTA2= $(REFDIR)/tdel_prepend.fasta
 
 MELGFF   = $(PREREQDIR)/dmel-all-$(MELVERSION).gff
 MELGTF   = $(REFDIR)/mel_good.gtf
@@ -62,14 +65,15 @@ $(ANALYSIS_DIR)/summary.tsv : MakeSummaryTable.py $(FPKMS) $(RUNCONFIG) Makefile
 	@echo '============================='
 	python MakeSummaryTable.py \
        --params $(RUNCONFIG) \
-	   --strip-low-reads 1000000 \
+	   --strip-low-reads 500000 \
 	   --strip-on-unique \
 	   --strip-as-nan \
 	   --mapped-bamfile assigned_dmelR.bam \
-	   --strip-low-map-rate 85 \
-		$(ANALYSIS_DIR)
+	   --strip-low-map-rate 70 \
+		$(ANALYSIS_DIR) \
+		| tee analysis/mst.log
 
-%/genes.fpkm_tracking : %/assigned_dmelR.bam $(MELGTF) $(MELFASTA2)
+%/genes.fpkm_tracking : %/assigned_dmelR.bam $(MELGTF) $(MELFASTA2) $(MELBADGTF)
 	@echo '============================='
 	@echo 'Calculating Abundances'
 	@echo '============================='
@@ -92,13 +96,23 @@ $(ANALYSIS_DIR)/summary.tsv : MakeSummaryTable.py $(FPKMS) $(RUNCONFIG) Makefile
 	samtools view -H $< \
 		| grep -Pv 'SN:(?!dmel)' \
 		> $(@D)/mel_only.header.sam
-	python AssignReads2.py $(@D)/accepted_hits.bam
-	samtools sort $(@D)/assigned_dmel.bam \
-		$(@D)/assigned_dmel_sorted
-	samtools view $(@D)/assigned_dmel_sorted.bam \
-		| cat $(@D)/mel_only.header.sam - \
-		| samtools view -bS -o $@ -
-	rm $(@D)/assigned_dmel_sorted.bam
+	samtools view -H $< \
+		| grep -oP 'SN:....' \
+		| cut -c 4- \
+		| sort -u \
+		> $(@D)/species_present
+	ns=`wc -l $(@D)/species_present | cut -f 1`
+	if [ `wc -l $(@D)/species_present | cut -d ' ' -f 1` -eq "1" ]; then \
+		samtools sort $< $(basename $@); \
+	else \
+		python AssignReads2.py $(@D)/accepted_hits.bam; \
+		samtools sort $(@D)/assigned_dmel.bam \
+			$(@D)/assigned_dmel_sorted; \
+		samtools view $(@D)/assigned_dmel_sorted.bam \
+			| cat $(@D)/mel_only.header.sam - \
+			| samtools view -bS -o $@ -; \
+		rm $(@D)/assigned_dmel_sorted.bam; \
+	fi
 	samtools index $@
 
 $(MELALLGTF): $(MELGFF) | $(REFDIR)
@@ -147,6 +161,17 @@ $(MELFASTA2): $(MELFASTA) $(REFDIR)/$(MELMAJORVERSION) | $(REFDIR)
 $(VIRFASTA2): $(VIRFASTA)| $(REFDIR)
 	perl -pe 's/>/>dvir_/' $(VIRFASTA) > $@
 
+$(DELFASTA): | $(REFDIR)
+	wget -O $@ http://ygob.ucd.ie/ygob/data/v7-Aug2012/Tdelbrueckii_sequence.fsa
+
+$(DELFASTA2): $(DELFASTA)| $(REFDIR)
+	perl -pe 's/>/>tdel_/' $(DELFASTA) > $@
+
+$(CERFASTA): | $(REFDIR) $(PREREQDIR)
+	wget -O $@.tgz http://downloads.yeastgenome.org/sequence/S288C_reference/genome_releases/S288C_reference_genome_R64-1-1_20110203.tgz
+	tar -xvzf $(CERFASTA).tgz --directory $(PREREQDIR)
+	mv $(PREREQDIR)/S288C_reference_genome_R64-1-1_20110203/S288C_reference_sequence_R64-1-1_20110203.fsa $(CERFASTA)
+
 $(CERFASTA2): $(CERFASTA)| $(REFDIR)
 	perl -pe 's/>/>scer_/' $(CERFASTA) > $@
 
@@ -159,6 +184,11 @@ $(REFDIR)/DmelScer/Genome :  $(MELFASTA2) $(CERFASTA2) | $(MELGTF) $(REFDIR)/Dme
 		--genomeFastaFiles $(MELFASTA2) $(CERFASTA2) \
 		--sjdbGTFfile $(MELGTF)
 
+$(REFDIR)/DmelTdel/Genome :  $(MELFASTA2) $(DELFASTA2) | $(MELGTF) $(REFDIR)/DmelTdel $(REFDIR)
+	STAR --runMode genomeGenerate --genomeDir $(REFDIR)/DmelTdel \
+		--genomeFastaFiles $(MELFASTA2) $(DELFASTA2) \
+		--sjdbGTFfile $(MELGTF)
+
 $(MELVIRGTF): $(MELGTF) $(VIRGTF) | $(REFDIR)
 	cat $^ > $@
 
@@ -166,6 +196,9 @@ $(MELVIRGTF_FILT): $(MELVIRGTF) | $(REFDIR)
 	grep 'gene_name' $< > $@
 
 $(REFDIR)/DmelScer: | $(REFDIR)
+	mkdir $@
+
+$(REFDIR)/DmelTdel: | $(REFDIR)
 	mkdir $@
 
 $(REFDIR)/DmelDvir/transcriptome : |  $(REFDIR)/DmelDvir
@@ -186,11 +219,15 @@ $(ORTHOLOGS) : | $(PREREQDIR)
 
 $(REFDIR) :
 	mkdir $@
+
 $(REFDIR)/DmelDvir:
+	mkdir $@
 	bowtie2-build --offrate 1 $(MELVIRFASTA) $@
 
-$(REFDIR)/DmelScer:
+$(REFDIR)/Dmel: $(MELFASTA2)
 	mkdir $@
+	bowtie2-build --offrate 1 $(MELFASTA2) $@
+
 $(PREREQDIR):
 	mkdir $@
 
@@ -198,19 +235,21 @@ Reference/DmelDper:
 	mkdir $@
 Reference/DmelDwil:
 	mkdir $@
-Reference/DmelDvir:
-	mkdir $@
 Reference/DmelDmoj:
 	mkdir $@
 
+$(REFDIR)/Dmel/Genome : $(REFDIR)/$(MELMAJORVERSION) | $(MELGTF)  $(REFDIR)/Dmel $(MELFASTA2) $(REFDIR)
+	STAR --runMode genomeGenerate --genomeDir $(REFDIR)/Dmel \
+		--genomeFastaFiles $(MELFASTA2) \
+		--sjdbGTFfile $(MELGTF)
 
 $(GENEMAPTABLE):
 	wget ftp://ftp.flybase.net/releases/FB$(MELDATE)/precomputed_files/genes/$(notdir $(GENEMAPTABLE)).gz \
 		-O $(GENEMAPTABLE).gz
 	gunzip --force $(GENEMAPTABLE).gz
 
-$(REFDIR)/$(MELVERSION):
+$(REFDIR)/$(MELVERSION): | $(REFDIR)
 	touch $@
 
-$(REFDIR)/$(MELMAJORVERSION):
+$(REFDIR)/$(MELMAJORVERSION): | $(REFDIR)
 	touch $@

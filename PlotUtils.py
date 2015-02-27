@@ -11,6 +11,47 @@ import urllib
 import time
 from os import path
 
+ISH_ROT_4 = hsv_to_rgb(array(
+    [[[(0.65+offset)%1, 0.00, 1.00],
+      [(0.65+offset)%1, 0.53, 1.00],
+      [(0.65+offset)%1, 0.53, 0.38],]
+     for offset in linspace(0, 1, 4, endpoint=False)
+    ]))
+ISH_ROT_5 = hsv_to_rgb(array(
+    [[[(0.65+offset)%1, 0.00, 1.00],
+      [(0.65+offset)%1, 0.53, 1.00],
+      [(0.65+offset)%1, 0.53, 0.38],]
+     for offset in linspace(0, 1, 5, endpoint=False)
+    ]))
+ISH_ROT_6 = hsv_to_rgb(array(
+    [[[(0.65+offset)%1, 0.00, 1.00],
+      [(0.65+offset)%1, 0.53, 1.00],
+      [(0.65+offset)%1, 0.53, 0.38],]
+     for offset in linspace(0, 1, 6, endpoint=False)
+    ]))
+
+ISH_CMS_4 = []
+ISH_CMS_5 = []
+ISH_CMS_6 = []
+
+for CMS, ROT in [(ISH_CMS_4, ISH_ROT_4),
+                 (ISH_CMS_5, ISH_ROT_5),
+                 (ISH_CMS_6, ISH_ROT_6)]:
+    for I, ARR in enumerate(ROT):
+        CMS.append(
+            LinearSegmentedColormap('ish{}'.format(I),
+                                    dict(red=((0.0, ARR[0, 0], ARR[0, 0]),
+                                              (0.7, ARR[1, 0], ARR[1, 0]),
+                                              (1.0, ARR[2, 0], ARR[2, 0])),
+                                         green=((0.0, ARR[0, 1], ARR[0, 1]),
+                                                (0.7, ARR[1, 1], ARR[1, 1]),
+                                                (1.0, ARR[2, 1], ARR[2, 1])),
+                                         blue=((0.0, ARR[0, 2], ARR[0, 2]),
+                                               (0.7, ARR[1, 2], ARR[1, 2]),
+                                               (1.0, ARR[2, 2], ARR[2, 2])),
+                                        )))
+
+
 ISH = LinearSegmentedColormap('ish',
                               dict(red=((0, 1, 1),
                                         (.7, 120/255, 120/255),
@@ -142,8 +183,12 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
                 cmap=ISH, norm_rows_by=None, draw_row_labels=False,
                 col_sep='', box_height=None, total_width=None,
                 draw_box=False, draw_name=False, data_names=None,
+                progress_bar = False,
                 max_width=np.inf,
                 spacers=None,
+                cmap_by_prefix=None,
+                split_columns=False,
+                vspacer=30,
                 hatch_nan=True, hatch_size=20,
                 first_col='', last_col=''):
     """
@@ -180,7 +225,14 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
     import svgwrite as svg
     import pandas as pd
 
-    if not isinstance(data, tuple):
+    if split_columns and isinstance(data, pd.DataFrame):
+        from Utils import sel_startswith
+        colnames = list(sorted(
+            {col.split(col_sep)[0] for col in data.columns}))
+        data = tuple(
+            data.select(**sel_startswith(colname)) for colname in colnames
+        )
+    elif not isinstance(data, tuple):
         data = (data,)
 
     rows, cols = np.shape(data[0])
@@ -191,14 +243,14 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
 
     if total_width is not None and max_width is not np.inf:
         dwg = svg.Drawing(filename,
-                          size=(max_width + 10,
+                          size=(max_width,
                                 np.ceil((len(data) * total_width)/max_width)
-                                * (box_height+30)))
+                                * (box_height+vspacer)))
     else:
         dwg = svg.Drawing(filename)
     dwg.add(svg.base.Title(path.basename(filename)))
 
-    pat = dwg.pattern(id='hatch', insert=(0, 0), size=(25, 25),
+    pat = dwg.pattern(id='hatch', insert=(0, 0), size=(hatch_size, hatch_size),
                       patternUnits='userSpaceOnUse')
     g = pat.add(dwg.g(style="fill:none; stroke:#B0B0B0; stroke-width:1"))
     g.add(dwg.path(('M0,0', 'l{hatch},{hatch}'.format(hatch=hatch_size))))
@@ -239,15 +291,38 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
 
     x_start = 0
     y_start = 0
-    for frame, c_cmap, name, normer, spacer in zip(data, cmap, data_names,
-                                                   norm_rows_by, spacers):
+    y_diff = 0
+    if progress_bar:
+        from progressbar import ProgressBar
+        iterator = zip(data, cmap, data_names, norm_rows_by, spacers)
+        pbar = ProgressBar(maxval=len(iterator)*rows).start()
+        pbar_val = 0
+    else:
+        iterator = zip(data, cmap, data_names, norm_rows_by, spacers)
+
+    for frame, c_cmap, name, normer, spacer in iterator:
+        if frame is None:
+            if total_width is not None:
+                if spacer is None:
+                    x_start += total_width * 1.1
+                else:
+                    x_start += total_width + spacer
+            else:
+                if spacer is None:
+                    x_start += box_size
+                else:
+                    x_start += spacer
+            if x_start > max_width:
+                x_start = 0
+                y_start += y_diff
+                continue
         frame = pd.DataFrame(frame)
         if normer is None:
             norm_data = frame.copy()
         elif normer is 'mean':
-            norm_data = frame.divide(frame.dropna(axis=1).mean(axis=1), axis=0)
+            norm_data = frame.divide(frame.dropna(axis=1).mean(axis=1)+10, axis=0)
         elif normer is 'max':
-            norm_data = frame.divide(frame.dropna(axis=1).max(axis=1), axis=0)
+            norm_data = frame.divide(frame.dropna(axis=1).max(axis=1)+10, axis=0)
         elif normer is 'center0':
             norm_data = (0.5 +
                          0.5 * frame.divide(frame.dropna(axis=1).abs().max(axis=1),
@@ -280,7 +355,12 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
             box_size = total_width / float(new_cols)
 
         for i in range(rows):
+            if progress_bar:
+                pbar.update(pbar_val)
+                pbar_val += 1
             prefix = col_labels[0][:col_labels[0].find(col_sep)]
+            if cmap_by_prefix:
+                c_cmap = cmap_by_prefix(prefix)
             for j in range(new_cols):
                 g = dwg.g()
                 g.add(svg.base.Title("{}, {}: {:.2f}".format(row_labels[i],
@@ -313,6 +393,8 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
                 col_base = col_labels[j][:col_labels[j].find(col_sep)]
                 if col_base != prefix:
                     prefix = col_base
+                    if cmap_by_prefix:
+                        c_cmap = cmap_by_prefix(prefix)
                     g.add(dwg.line((x_start + box_size * j,
                                     y_start + i * box_height),
                                    (x_start + box_size * j,
@@ -345,12 +427,16 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
             else:
                 x_start += new_cols * box_size + spacer
 
-        if x_start > max_width:
+        y_diff = new_rows * box_height + 30
+        if x_start + total_width >= max_width:
             x_start = 0
-            y_start += new_rows*box_height + 30
+            y_start += new_rows*box_height + vspacer
 
     if draw_row_labels:
         for i in range(rows):
             dwg.add(dwg.text(row_labels[i],
-                             (x_start, y_start + i*box_height+box_height),))
+                             (x_start, y_start + i*box_height+box_height),
+                             style='font-size:{}'.format(box_height),
+                            ))
+    pbar.finish()
     dwg.saveas(filename)
