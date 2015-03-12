@@ -315,7 +315,7 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
             if x_start > max_width:
                 x_start = 0
                 y_start += y_diff
-                continue
+            continue
         frame = pd.DataFrame(frame)
         if normer is None:
             norm_data = frame.copy()
@@ -438,5 +438,6 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
                              (x_start, y_start + i*box_height+box_height),
                              style='font-size:{}'.format(box_height),
                             ))
-    pbar.finish()
+    if progress_bar:
+        pbar.finish()
     dwg.saveas(filename)
