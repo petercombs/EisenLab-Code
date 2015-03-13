@@ -183,6 +183,7 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
                 cmap=ISH, norm_rows_by=None, draw_row_labels=False,
                 col_sep='', box_height=None, total_width=None,
                 draw_box=False, draw_name=False, data_names=None,
+                make_hyperlinks = False,
                 progress_bar = False,
                 max_width=np.inf,
                 spacers=None,
@@ -444,10 +445,19 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
 
     if draw_row_labels:
         for i in range(rows):
-            dwg.add(dwg.text(row_labels[i],
+            labeltext = (dwg.text(row_labels[i],
                              (x_start, y_start + i*box_height+box_height),
                              style='font-size:{}'.format(box_height),
                             ))
+            if make_hyperlinks:
+                link = dwg.a('http://insitu.fruitfly.org/cgi-bin/ex/report.pl?ftype=0&ftext={}'
+                             .format(row_labels[i]),
+                             target='_replace',
+                            )
+                link.add(labeltext)
+                dwg.add(link)
+            else:
+                dwg.add(labeltext)
     if progress_bar:
         pbar.finish()
     dwg.saveas(filename)
