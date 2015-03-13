@@ -1,11 +1,11 @@
 import pandas as pd
 import PlotUtils
 from progressbar import ProgressBar
-from matplotlib.cm import Greens, Reds
 import os
 from os.path import join
 from numpy import nan
-from Utils import sel_startswith, contains
+from Utils import sel_startswith, contains, sel_contains
+from JTreeToSVG import cmap_by_prefix
 
 startswith = lambda x: lambda y: y.startswith(x)
 
@@ -33,6 +33,12 @@ def make_comparison_file(gene, force=False):
             zld.select(contains('cyc13_rep1'),  axis=1).ix[[gene]],
             zld.select(contains('cyc14D'),      axis=1).ix[[gene]],
             zld.select(contains('cyc13_rep3'),  axis=1).ix[[gene]],
+            None,
+            None,
+            hb.select(**sel_contains('cyc14D_rep1')).ix[[gene]],
+            None,
+            hb.select(**sel_contains('cyc14D_rep2')).ix[[gene]],
+
            )
     max_13s = max(float(dp.max(axis=1))*1.1 +10 for dp in data[0::2] if dp is
                   not None)
@@ -52,37 +58,35 @@ def make_comparison_file(gene, force=False):
               zld.ix[gene].select(contains('cyc13' )).max() * 1.1 + 10,
               zld.ix[gene].select(contains('cyc14D')).max() * 1.1 + 10,
               zld.ix[gene].select(contains('cyc13' )).max() * 1.1 + 10,
+              zld.ix[gene].select(contains('cyc14D')).max() * 1.1 + 10,
+              hb.ix[gene].select(contains('cyc13'  )).max() * 1.1 + 10,
+              hb.ix[gene].select(contains('cyc14D' )).max() * 1.1 + 10,
+              hb.ix[gene].select(contains('cyc13'  )).max() * 1.1 + 10,
+              hb.ix[gene].select(contains('cyc14D' )).max() * 1.1 + 10,
              )
     names = [(stage + '- Max Expr {:.1f}'.format(float(dp.max(axis=1)))
               if dp is not None else '')
              for stage, dp in zip(('WT13 WT14D '
                                    'Bcd-13 Bcd-14D Bcd-13 Bcd-14D '
                                    'G20-13 G20-14D G20-13 G20-14D '
-                                   'Zld-13 Zld-14D Zld-13').split(),
+                                   'Zld-13 Zld-14D Zld-13 NONE '
+                                   'NONE Hb-14D NONE Hb-14D').split(),
                                   data)
             ]
-    cmaps = (PlotUtils.ISH, PlotUtils.ISH,
-             Greens, Greens,
-             Greens, Greens,
-             Reds, Reds,
-             Reds)
     # Use tuple multiplication for the correct number of each sample
-    cmaps = ((PlotUtils.ISH_CMS[0], ) * 2
-             + (PlotUtils.ISH_CMS[1], ) * 4
-             + (PlotUtils.ISH_CMS[2], ) * 4
-             + (PlotUtils.ISH_CMS[3], ) * 3
-            )
     PlotUtils.svg_heatmap(data,
                           filename=join(outdir,
                                         gene + '.svg'),
-                          cmap=cmaps,
+                          cmap_by_prefix=cmap_by_prefix,
                           norm_rows_by=normer,
                           draw_box=True,
                           draw_name=True,
                           data_names=names,
+                          spacers=10,
                           total_width=230,
                           box_height=130,
                           max_width=475,
+                          col_sep='_sl',
                          )
     return join(outdir, gene+'.svg')
 
