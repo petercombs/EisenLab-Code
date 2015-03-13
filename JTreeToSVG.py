@@ -96,13 +96,14 @@ if __name__ == "__main__":
             norm_rows_by='max',
             progress_bar=True,
             col_sep='_sl',
-            total_width=150,
-            box_height=30,
+            total_width=40,
+            box_height=10,
             split_columns=True,
             draw_box=True,
             draw_row_labels=True,
             draw_name=True,
             cmap_by_prefix=cmap_by_prefix,
+            make_hyperlinks=True,
         )
 
 
