@@ -71,24 +71,28 @@ if __name__ == "__main__":
     )
 
 
-    ranges = [
+    ranges = {
         #('CG12398', 'Capa'),
-        ('gcm', 'CG10264'),
-        ('Cad88C', 'erm'),
-        ('CG12986', 'tll'),
+        'ant1': ( 'gcm', 'CG10264'),
+        'AntInZld_2': ( 'Cad88C', 'erm'),
+        'both_poles': ( 'CG12986', 'tll'),
         #('CG17801', 'LysB'),
-        ('CG2930', 'cas'),
-        ('EfSec', 'modSP'),
+        'post1': ( 'CG2930', 'cas'),
+        'RNAi_up_2': ( 'EfSec', 'modSP'),
         #('Esp', 'CG30286'),
-        ('Esp', 'CG42808'),
-        ('GstE2', 'Trissin'),
+        'RNAi_up_3': ( 'Esp', 'CG42808'),
+        'tophalf': ( 'GstE2', 'Trissin'),
         #('CG12011', 'Obp49a'),
-        ('CG13712', 'bnb'),
-    ]
+        'AntInZld_1': ( 'CG13712', 'bnb'),
+    }
 
-    for gene1, gene2 in ranges:
+    for name, (gene1, gene2) in ranges.iteritems():
+        print(name)
         outname = path.join(path.dirname(argv[1]),
-                            'table_{}-{}.svg'.format(gene1, gene2))
+                            'table_{}.svg'.format(name))
+        with open(outname.replace('svg', 'txt'), 'w') as outfile:
+            outfile.write('\n'.join(all_expr.ix[cdt.index].ix[gene1:gene2].index))
+            outfile.write('\n')
 
         pu.svg_heatmap(
             data=all_expr.select(**sel_startswith(columns)).ix[cdt.index].ix[gene1:gene2],
