@@ -411,10 +411,20 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
                              style="stroke-width:1; "
                              "stroke:#000000; fill:none"))
         if draw_name:
-            dwg.add(dwg.text(name,
-                             (x_start + box_size * new_cols / 2.0,
+            if name == "" and split_columns:
+                name = col_base
+            xpos = x_start + box_size * new_cols / 2.0
+            text = dwg.text('',
+                             (xpos,
                               y_start + box_height * (rows) + 13),
-                             style="text-anchor: middle;"))
+                             style="text-anchor: middle;")
+            for line in name.split('_'):
+                text.add(dwg.tspan(line,
+                                   dy=["1.5em"],
+                                   x=[xpos],
+                                   style="text-anchor: middle;",
+                                   ))
+            dwg.add(text)
 
         if total_width is not None:
             if spacer is None:
