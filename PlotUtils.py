@@ -461,3 +461,17 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
     if progress_bar:
         pbar.finish()
     dwg.saveas(filename)
+
+
+def cmap_by_prefix(prefix):
+    cms = dict(
+        WT = ISH_CMS_5[0],
+        bcd = ISH_CMS_5[1],
+        zld = ISH_CMS_5[2],
+        G20 = ISH_CMS_5[3],
+        hb = ISH_CMS_5[4],
+    )
+    for p in cms:
+        if prefix.startswith(p):
+            return cms[p]
+    return ISH
