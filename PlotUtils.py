@@ -419,6 +419,7 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
                              (xpos,
                               y_start + box_height * (rows) + 13),
                              style="text-anchor: middle;")
+            text.add(dwg.tspan("", dy=["-1.5em"]))
             for line in name.split('_'):
                 text.add(dwg.tspan(line,
                                    dy=["1.5em"],
