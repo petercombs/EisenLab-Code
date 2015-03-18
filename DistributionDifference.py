@@ -4,6 +4,7 @@ from scipy import interpolate
 import collections
 import functools
 import emd
+import fractions
 
 class memoized(object):
    '''Decorator. Caches a function's return value each time it is called.
@@ -91,6 +92,23 @@ def earth_mover(points1, points2):
                    points1/np.sum(points1),
                    points2/np.sum(points2))
 
+def lcm(a,b):
+    return abs(a * b) / fractions.gcd(a,b) if a and b else 0
+
+def earth_mover_interp(points1, points2):
+    xs1 = np.linspace(0,1,len(points1),
+                      endpoint=True)[np.array(np.isfinite(points1))]
+    xs2 = np.linspace(0,1,len(points2),
+                      endpoint=True)[np.array(np.isfinite(points2))]
+    xs = np.linspace(0, 1, min(100, lcm(len(points1),len(points2))),
+                     endpoint=True)
+    points1 = np.interp(xs, xs1, points1[np.isfinite(points1)])
+    points2 = np.interp(xs, xs2, points2[np.isfinite(points2)])
+    return emd.emd(xs, xs,
+                   points1/np.sum(points1),
+                   points2/np.sum(points2))
+
+
 startswith = lambda x: lambda y: y.startswith(x)
 
 def earth_mover_multi(points1, points2):
@@ -98,8 +116,8 @@ def earth_mover_multi(points1, points2):
     embs = {col.split('sl')[0] for col in points1.index}
     sums = [[],[]]
     for emb in embs:
-        dist += earth_mover(points1.select(startswith(emb))+1e-5,
-                            points2.select(startswith(emb))+1e-5)**2
+        dist += earth_mover_interp(points1.select(startswith(emb))+1e-5,
+                                   points2.select(startswith(emb))+1e-5)**2
         sums[0].append(points1.select(startswith(emb)).mean())
         sums[1].append(points2.select(startswith(emb)).mean())
     dist += earth_mover(np.array(sums[0]), np.array(sums[1]))
