@@ -98,9 +98,9 @@ if __name__=="__main__":
         wt .select(**sel_contains('cyc14D')).ix[hi_genes],
         g20.select(**sel_contains('cyc14D_rep1')).ix[hi_genes],
         #g20.select(**sel_contains('cyc14D_rep2')).ix[hi_genes],
-        zld.select(**sel_contains('cyc14D')).ix[hi_genes],
-        hb.select(**sel_contains('cyc14D_rep1')).ix[hi_genes],
-        hb.select(**sel_contains('cyc14D_rep2')).ix[hi_genes],
+        #zld.select(**sel_contains('cyc14D')).ix[hi_genes],
+        #hb.select(**sel_contains('cyc14D_rep1')).ix[hi_genes],
+        #hb.select(**sel_contains('cyc14D_rep2')).ix[hi_genes],
     )
     #max_13s = max(float(dp.max(axis=1))*1.1 +10 for dp in data[0::2])
     #max_14s = max(float(dp.max(axis=1))*1.1 +10 for dp in data[1::2])
@@ -111,9 +111,9 @@ if __name__=="__main__":
         get_max(wt, hi_genes, 'cyc14D' ) * 1.1 + 10,
         get_max(g20, hi_genes, 'cyc14D') * 1.1 + 10,
         #get_max(g20, hi_genes, 'cyc14D') * 1.1 + 10,
-        get_max(zld, hi_genes, 'cyc14D') * 1.1 + 10,
-        get_max(hb, hi_genes, 'cyc14D') * 1.1 + 10,
-        get_max(hb, hi_genes, 'cyc14D') * 1.1 + 10,
+        #get_max(zld, hi_genes, 'cyc14D') * 1.1 + 10,
+        #get_max(hb, hi_genes, 'cyc14D') * 1.1 + 10,
+        #get_max(hb, hi_genes, 'cyc14D') * 1.1 + 10,
     )
     wt_pos = 2
     names = (
@@ -121,8 +121,8 @@ if __name__=="__main__":
         'WT14D '
         #'G20-14D G20-14D '
         'G20-14D '
-        'Zld-14D '
-        'Hb-14D Hb-14D '
+        #'Zld-14D '
+        #'Hb-14D Hb-14D '
     )
     #names = [stage + '- Max Expr {:.1f}'.format(float(dp.max(axis=1)))
              #for stage, dp in zip(names.split(),
@@ -130,6 +130,7 @@ if __name__=="__main__":
             #]
     kwargs = dict(
         cmap_by_prefix=pu.cmap_by_prefix,
+        col_sep='sl',
         draw_name=True,
         data_names=names.split(),
         total_width=150,
