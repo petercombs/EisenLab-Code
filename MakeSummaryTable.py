@@ -194,16 +194,16 @@ if __name__ == "__main__":
 
 
     import multiprocessing as mp
-    pool = mp.Pool()
+    pool = mp.Pool(30)
     res = pool.map(get_expr_values, fnames)
     if args.conf:
         names, cols, names_lo, cols_lo, names_hi, cols_hi = zip(*res)
-        df = pandas.DataFrame(dict(*zip(names, cols))
-                              +dict(*zip(names_lo, cols_lo))
-                              +dict(*zip(names_hi, cols_hi)))
+        df = pandas.DataFrame(dict(zip(names, cols))
+                              +dict(zip(names_lo, cols_lo))
+                              +dict(zip(names_hi, cols_hi)))
     else:
         names, cols = zip(*res)
-        df = pandas.DataFrame(dict(*zip(names, cols)))
+        df = pandas.DataFrame(dict(zip(names, cols)))
 
 
 df.sort_index(axis=1).to_csv(path.join(args.basedir,
