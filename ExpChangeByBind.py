@@ -63,7 +63,7 @@ if __name__ == "__main__":
             for cyc in cycs:
                 cyc_expr = mut.select(**sel_contains(cyc))
                 for gene in pb()(cyc_expr.index):
-                    all_dists.ix[gene] += dd.earth_mover(
+                    all_dists.ix[gene] += dd.earth_mover_interp(
                         wts[wt_st].ix[gene]+eps,
                         cyc_expr.ix[gene]+eps
                     )/len(cycs)
