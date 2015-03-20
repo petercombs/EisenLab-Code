@@ -1,7 +1,7 @@
 from __future__ import print_function, division
 import pandas as pd
 import matplotlib.pyplot as mpl
-from numpy import arange, array, histogram, abs, median
+from numpy import arange, array, histogram, abs, median, mean
 import DistributionDifference as DD
 from bisect import bisect
 from scipy.stats import scoreatpercentile, chi2_contingency, gaussian_kde
@@ -120,10 +120,12 @@ if __name__ == "__main__":
             locals()[sub_df_name+'s'] = cyc_embs
     print("Read expression in")
 
-    combos = combinations( ['wt', 'g20', 'bcd', 'zld', 'hb'], 3)
+    combos = combinations( ['wt', 'bcd', 'zld', 'g20', 'hb'], 3)
     all_d2s = {}
     for set1_name, set2_name, set3_name in combos:
+        print('-'*50)
         print(set1_name, set2_name, set3_name)
+        print('-'*50)
         set1 = locals()[set1_name].select(**sel_contains(cyc_of_interest))
         set2 = locals()[set2_name].select(**sel_contains(cyc_of_interest))
         set3 = locals()[set3_name].select(**sel_contains(cyc_of_interest))
@@ -143,8 +145,10 @@ if __name__ == "__main__":
         dist_13 = pd.Series(index=set1.index, data=0)
         dist_23 = pd.Series(index=set1.index, data=0)
 
-        from multiprocessing import Pool
-        p = Pool()
+        from multiprocessing import Pool, pool
+        p = locals().get('p', Pool())
+        if not isinstance(p, pool.Pool):
+            p = Pool()
         dists = p.map(get_dists, dist_12.index)
         for gene, dists_for_gene in zip(dist_12.index, dists):
             dist_12.ix[gene] += dists_for_gene[0]
@@ -202,9 +206,26 @@ if __name__ == "__main__":
         in_both = both_change.contains_points(zip(dist_12, dist_13))
         in_nochg =  no_change.contains_points(zip(dist_12, dist_13))
 
+        obs = array([[sum(in_set2), sum(in_both)],
+                             [sum(~(in_set2+in_set3+in_both)), sum(in_set3)]])
+        chi2, p, dof, exp = chi2_contingency(obs)
+        print(p)
+        print(obs)
+        print(exp)
+        print(obs-exp)
+        print()
+
         dist2 = dist_23 - abs(dist_12 - dist_13)
         dist2_sorted = dist2.copy()
         dist2_sorted.sort()
+
+        dist2_95 = scoreatpercentile(dist2[in_both], 95)
+        dist2_95 = .2
+        dist2_hi = dist2.index[dist2 > dist2_95]
+        dist2_95 = scoreatpercentile(dist2[in_both], 95)
+        print("mean D2: {:.05%} \n95th pct: {:.05%}"
+              .format(mean(dist2[in_both]), dist2_95))
+        print("{} genes: {}".format(len(dist2_hi), ", ".join(dist2_hi)))
 
         ##################################
         ###         PLOTTING           ###
@@ -320,9 +341,11 @@ if __name__ == "__main__":
                   k(arange(0, .5, 1e-4)),
                   label='{} 3-way distance'.format(trio),
                  )
+    max_y = max(fig1.gca().get_ylim()[1], fig2.gca().get_ylim()[1])
     for f in (fig1, fig2):
         f.gca().set_xlabel('D2 score (difference of distances)')
         f.gca().set_ylabel('Density')
+        f.gca().set_ylim(0, max_y)
         f.gca().legend()
     fig1.savefig('analysis/results/all_d2s.png', dpi=300)
     fig2.savefig('analysis/results/all_d2s_kde.png', dpi=300)
