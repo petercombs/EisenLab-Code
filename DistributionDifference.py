@@ -5,6 +5,7 @@ import collections
 import functools
 import emd
 import fractions
+from Utils import contains
 
 class memoized(object):
    '''Decorator. Caches a function's return value each time it is called.
@@ -110,6 +111,21 @@ def earth_mover_interp(points1, points2):
 
 
 startswith = lambda x: lambda y: y.startswith(x)
+
+def earth_mover_multi_rep(points1, points2, abs_expr=False):
+    dist = 0.0
+    reps1 = {col.split('sl')[0] for col in
+             points1.index
+            }
+    reps2 = {col.split('sl')[0] for col in
+             points2.index
+            }
+    for rep1 in reps1:
+        for rep2 in reps2:
+            dist += (earth_mover_interp(points1.select(contains(rep1)),
+                                        points2.select(contains(rep2)))**2
+                     / (len(reps1)*len(reps2)))
+    return dist**.5
 
 def earth_mover_multi(points1, points2):
     dist = 0.0
