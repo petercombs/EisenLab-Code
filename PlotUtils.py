@@ -321,9 +321,9 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
         if normer is None:
             norm_data = frame.copy()
         elif normer is 'mean':
-            norm_data = frame.divide(frame.dropna(axis=1).mean(axis=1)+10, axis=0)
+            norm_data = frame.divide(frame.dropna(axis=1, how='all').mean(axis=1)+10, axis=0)
         elif normer is 'max':
-            norm_data = frame.divide(frame.dropna(axis=1).max(axis=1)+10, axis=0)
+            norm_data = frame.divide(frame.dropna(axis=1, how='all').max(axis=1)+10, axis=0)
         elif normer is 'center0':
             norm_data = (0.5 +
                          0.5 * frame.divide(frame.dropna(axis=1).abs().max(axis=1),
