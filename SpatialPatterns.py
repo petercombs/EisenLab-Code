@@ -113,7 +113,10 @@ if __name__ == "__main__":
                      label='{} vs {}'.format(set1_name, set2_name))
             print(mean(dist_12), median(dist_12))
             print(scoreatpercentile(dist_12, [5, 25, 75, 95]))
-            print(sum(dist_12 > .15))
+            print('{}: {}'.format(sum(dist_12 > .15),
+                                  ', '.join(dist_12.index[dist_12 > .15])
+                                 )
+                 )
 
         mpl.xlabel('EMD')
         mpl.ylabel('Density')
