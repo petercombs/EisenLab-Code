@@ -103,11 +103,15 @@ if __name__ == "__main__":
     is_sparse = ''
     if '-sparse' in sys.argv:
         is_sparse='sparse_'
-        step = 10
+        try:
+            step = int(sys.argv[sys.argv.index('-sparse') + 1])
+        except:
+            step = 10
+        print('Sparse: {}'.format(step))
     else:
         step = 1
 
-    expr_min = 5
+    expr_min = 15
     eps = 1
     read_table_args = dict(index_col=0,
                            keep_default_na=False,
@@ -137,7 +141,7 @@ if __name__ == "__main__":
 
     all_expr_lognorm = np.log(all_expr+1).divide(np.log(all_expr.max( axis=1)+1),
                                                  axis=0)
-    wt_lognorm = np.log(wt+1).divide(np.log(all_expr.max( axis=1)+1), axis=0)
+    wt_lognorm  = np.log(wt+1) .divide(np.log(all_expr.max( axis=1)+1), axis=0)
     bcd_lognorm = np.log(bcd+1).divide(np.log(all_expr.max( axis=1)+1), axis=0)
     g20_lognorm = np.log(g20+1).divide(np.log(all_expr.max( axis=1)+1), axis=0)
     zld_lognorm = np.log(zld+1).divide(np.log(all_expr.max( axis=1)+1), axis=0)

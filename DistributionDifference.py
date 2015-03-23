@@ -103,6 +103,8 @@ def earth_mover_interp(points1, points2):
                       endpoint=True)[np.array(np.isfinite(points2))]
     xs = np.linspace(0, 1, min(100, lcm(len(points1),len(points2))),
                      endpoint=True)
+    if np.sum(np.isfinite(points1)) == 0:
+        return 0
     points1 = np.interp(xs, xs1, points1[np.isfinite(points1)])
     points2 = np.interp(xs, xs2, points2[np.isfinite(points2)])
     return emd.emd(xs, xs,
