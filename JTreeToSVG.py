@@ -1,3 +1,4 @@
+from __future__ import division
 import pandas as pd
 import PlotUtils as pu
 from Utils import sel_startswith, sel_contains
@@ -51,6 +52,8 @@ if __name__ == "__main__":
                         keep_default_na=False,
                         na_values=[''])
 
+    all_expr_cdt = all_expr.ix[cdt.index]
+
     columns = (
         'WT_cyc13',
         'WT_cyc14D',
@@ -91,11 +94,11 @@ if __name__ == "__main__":
         outname = path.join(path.dirname(argv[1]),
                             'table_{}.svg'.format(name))
         with open(outname.replace('svg', 'txt'), 'w') as outfile:
-            outfile.write('\n'.join(all_expr.ix[cdt.index].ix[gene1:gene2].index))
+            outfile.write('\n'.join(all_expr_cdt.ix[gene1:gene2].index))
             outfile.write('\n')
 
         pu.svg_heatmap(
-            data=all_expr.select(**sel_startswith(columns)).ix[cdt.index].ix[gene1:gene2],
+            data=all_expr_cdt.select(**sel_startswith(columns)).ix[gene1:gene2],
             filename=outname,
             norm_rows_by='max',
             progress_bar=True,
