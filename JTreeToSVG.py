@@ -89,6 +89,47 @@ if __name__ == "__main__":
         'AntInZld_1': ( 'CG13712', 'bnb'),
     }
 
+    if 'sparse' in argv[1]:
+        pu.svg_heatmap(
+            data=all_expr_cdt.select(**sel_startswith(columns)),
+            filename='analysis/results/all_sparse.svg',
+            norm_rows_by='max',
+            progress_bar=True,
+            col_sep='_sl',
+            total_width=40,
+            box_height=1,
+            split_columns=True,
+            draw_box=True,
+            draw_row_labels=False,
+            draw_name=True,
+            cmap_by_prefix=cmap_by_prefix,
+            make_hyperlinks=True,
+        )
+        from sys import exit
+        exit()
+    elif '--all' in argv:
+        max_height=8.5*300
+        sparsity = len(all_expr_cdt)//max_height
+        pu.svg_heatmap(
+            data=all_expr_cdt.select(**sel_startswith(columns))[::int(sparsity)],
+            filename='analysis/results/all_sparse_{:03}.svg'.format(sparsity),
+            norm_rows_by='max',
+            progress_bar=True,
+            col_sep='_sl',
+            total_width=80,
+            box_height=1,
+            split_columns=True,
+            draw_box=True,
+            draw_row_labels=False,
+            draw_name=True,
+            cmap_by_prefix=cmap_by_prefix,
+            make_hyperlinks=True,
+        )
+        #from sys import exit
+        #exit()
+
+
+
     for name, (gene1, gene2) in ranges.iteritems():
         print(name)
         outname = path.join(path.dirname(argv[1]),
