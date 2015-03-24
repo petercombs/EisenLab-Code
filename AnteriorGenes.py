@@ -25,6 +25,7 @@ if __name__ == "__main__":
     for sub_df_name in 'wt bcd zld g20 hb'.split():
         sub_df = locals()[sub_df_name]
         cycs = {col.split('_sl')[0].split('_',1)[1] for col in sub_df.columns}
+        cycs.update({col.split('_')[1] for col in sub_df.columns})
         cyc_embs = {}
         for cyc in cycs:
             cyc_embs[cyc] = sub_df.select(**sel_contains(cyc))
