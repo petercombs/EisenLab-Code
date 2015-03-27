@@ -371,10 +371,11 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
                 if hatch:
                     n = 0
                     norm_data.ix[i, j] = 0
-                    if j > 0:
+                    if j > 0 and isfinite(norm_data.ix[i,j-1]):
                         norm_data.ix[i, j] += norm_data.ix[i, j-1]
                         n += 1
-                    if j + 1 < len(norm_data.columns):
+                    if (j + 1 < len(norm_data.columns)
+                        and isfinite(norm_data.ix[i, j+1])):
                         norm_data.ix[i, j] += norm_data.ix[i, j+1]
                         n += 1
                     norm_data.ix[i, j] /= n
