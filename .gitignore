@@ -51,3 +51,4 @@ FlyExpressMaternal
 *.expr
 *.vpc
 FlyBase*
+.ipynb_checkpoints
