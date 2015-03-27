@@ -21,15 +21,17 @@ if __name__ == "__main__":
         g20 = all_expr.select(**sel_startswith('G20'))
         hb  = all_expr.select(**sel_startswith('hb'))
 
-    wts = bcds = zlds = g20s = hbs = 0
-    for sub_df_name in 'wt bcd zld g20 hb'.split():
-        sub_df = locals()[sub_df_name]
-        cycs = {col.split('_sl')[0].split('_',1)[1] for col in sub_df.columns}
-        cycs.update({col.split('_')[1] for col in sub_df.columns})
-        cyc_embs = {}
-        for cyc in cycs:
-            cyc_embs[cyc] = sub_df.select(**sel_contains(cyc))
-        locals()[sub_df_name+'s'] = cyc_embs
+        wts = bcds = zlds = g20s = hbs = 0
+        by_cycle = {}
+        for sub_df_name in 'wt bcd zld g20 hb'.split():
+            sub_df = locals()[sub_df_name]
+            cycs = {col.split('_sl')[0].split('_',1)[1] for col in sub_df.columns}
+            cycs.update({col.split('_')[1] for col in sub_df.columns})
+            cyc_embs = {}
+            by_cycle[sub_df_name] = cyc_embs
+            for cyc in cycs:
+                cyc_embs[cyc] = sub_df.select(**sel_contains(cyc))
+            locals()[sub_df_name+'s'] = cyc_embs
 
     wt_ants = has_anterior_peak(wts['cyc14D'], fold=2)
     wt_cents = has_central_peak(wts['cyc14D'], fold=2)
