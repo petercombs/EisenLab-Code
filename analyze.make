@@ -6,8 +6,8 @@ analysis/results/fpkm_sum: analysis/summary.tsv | analysis/results
 	@echo "All genes should have approximately the same sum of FPKMs"
 	python -c "import pandas as pd; print pd.read_table('analysis/summary.tsv',index_col=0).sum(axis=0)" \
 		| tee $@
-	
-analysis/results/complexity: analysis/summary.tsv | analysis/results 
+
+analysis/results/complexity: analysis/summary.tsv | analysis/results
 	python CheckCoverage.py \
 		Reference/mel_good.gtf \
 		analysis/*/accepted_hits_sorted.bam \
@@ -46,7 +46,8 @@ prereqs/current_bdtnp:
 
 
 Reference/bcd_peaks: prereqs/current_bdtnp
-	for TF in bcd cad da dl gt hb hkb kni kr mad med run shn slp1 sna tll twi z; do \
+	for TF in bcd cad D da dl gt hb hkb kni \
+				kr mad med run shn slp1 sna tll twi z; do \
 		cat prereqs/current_bdtnp/$${TF}_[1-3]_* \
 			| awk 'NR > 1 {print $$2":"$$6}' \
 			> /tmp/$${TF}_peaks; \
@@ -63,6 +64,26 @@ Reference/bcd_peaks: prereqs/current_bdtnp
 			| grep -v '?' \
 			>> Reference/$${TF}_peaks; \
 	done
+
+Reference/hannonpeaks:
+	for fname in bcd_insensitive_peaks bcd_sensitive_peaks steplike_peaks; do \
+		cat prereqs/$${fname} \
+			| awk 'NR > 1 {print substr($$2,5,length($$2)-5)":"sprintf("%d",($$3+$$4)/2)}' \
+			> /tmp/$${fname};\
+		echo 'OldPeak	NewPeak' > Reference/$${fname}; \
+		curl -L  'http://flybase.org/cgi-bin/coord_converter.html' \
+			-H 'Referer: http://flybase.org/static_pages/downloads/COORD.html' \
+			-F species=dmel \
+			-F inr=5\
+			-F outr=6\
+			-F saveas=File\
+			-F ids="" \
+			-F idfile="@/tmp/$${fname}" \
+			-F .submit=Go \
+			| grep -v '?' \
+			>> Reference/$${fname}; \
+	done
+	touch $@
 
 
 Reference/zld_peaks: prereqs/journal.pgen.1002266.s005.xls
