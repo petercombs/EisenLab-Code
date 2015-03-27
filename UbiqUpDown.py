@@ -7,6 +7,28 @@ import DistributionDifference as dd
 from matplotlib.pyplot import (violinplot, ylabel, savefig, xticks,
                                close)
 
+columns = (
+    'WT_cyc13',
+    'WT_cyc14A',
+    'WT_cyc14C',
+    'WT_cyc14D',
+    'WT_cyc14E',
+    'bcd_cyc13_rep1',
+    'bcd_cyc13_rep2',
+    'bcd_cyc14D_rep1',
+    'bcd_cyc14D_rep2',
+    'zld_cyc13_rep2',
+    'zld_cyc13_rep3',
+    'zld_cyc14D',
+    'zld_cyc14B',
+    'G20_cyc13_rep1',
+    'G20_cyc13_rep2',
+    'G20_cyc14D_rep1',
+    'hb_cyc13_rep1',
+    'hb_cyc14D_rep1',
+    'hb_cyc14D_rep2',
+)
+
 def get_dists_mp(args):
     gene, row = args
     temp = pd.Series(data=1, index=row.index)
@@ -20,10 +42,19 @@ if __name__ == "__main__":
                            keep_default_na=False,
                            na_values=['---', ''])
 
+    bad_cols = (
+        'bcd_cyc14D_rep2_sl06_FPKM',
+        'bcd_cyc14D_rep2_sl16_FPKM',
+        'bcd_cyc14D_rep1_sl14_FPKM',
+        'WT_cyc14D_sl15_FPKM',
+        'G20_cyc14D_rep1_sl08_FPKM',
+    )
+
     if 'all_expr' not in locals():
         all_expr = (pd.read_table('analysis/summary.tsv', **read_table_args)
                     .sort_index())
         top_expr = all_expr.max(axis=1)
+        all_expr.ix[:, bad_cols] = pd.np.nan
         all_expr = all_expr.ix[top_expr > expr_min]
         wt  = all_expr.select(**sel_startswith('WT'))
         bcd = all_expr.select(**sel_startswith('bcd'))
