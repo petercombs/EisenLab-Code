@@ -163,7 +163,15 @@ if __name__ == "__main__":
             Z
         )
 
-    make_treeview_files("analysis/results/all_log_normed"+is_sparse+metric.__name__,
+    make_treeview_files("analysis/results/all_log_normed_"+is_sparse+metric.__name__,
+                        all_expr_lognorm,
+                        Z)
+
+    make_treeview_files("analysis/results/all_"+is_sparse+metric.__name__,
                         all_expr,
+                        Z)
+
+    make_treeview_files("analysis/results/all_maxnorm_"+is_sparse+metric.__name__,
+                        all_expr.divide(all_expr.max(axis=1) + 1, axis=0),
                         Z)
 
