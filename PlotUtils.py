@@ -6,6 +6,7 @@ from scipy.stats import gaussian_kde
 from numpy import log, array, Inf, median, exp, argsort, linspace, isfinite
 from itertools import repeat
 import numpy as np
+import subprocess
 
 import urllib
 import time
@@ -187,6 +188,7 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
                 progress_bar = False,
                 max_width=np.inf,
                 spacers=None,
+                convert=False,
                 cmap_by_prefix=None,
                 split_columns=False,
                 vspacer=30,
@@ -463,6 +465,15 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
     if progress_bar:
         pbar.finish()
     dwg.saveas(filename)
+    if convert:
+        cmd = [
+            'convert',
+            filename,
+            '-density', '300',
+            filename.replace('svg', 'png'),
+        ]
+        subprocess.Popen(cmd)
+
 
 
 def cmap_by_prefix(prefix):
