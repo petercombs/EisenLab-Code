@@ -140,6 +140,7 @@ if __name__=="__main__":
         box_height=10,
         make_hyperlinks=True,
         draw_row_labels=True,
+        convert=True,
     )
     pu.svg_heatmap(data,
                    filename='analysis/results/chen.svg',

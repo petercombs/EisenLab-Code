@@ -99,7 +99,7 @@ if __name__ == "__main__":
             norm_rows_by='max',
             progress_bar=True,
             col_sep='_sl',
-            total_width=40,
+            total_width=120,
             box_height=1,
             split_columns=True,
             draw_box=True,
@@ -107,11 +107,13 @@ if __name__ == "__main__":
             draw_name=True,
             cmap_by_prefix=cmap_by_prefix,
             make_hyperlinks=True,
+            convert=True,
         )
         from sys import exit
         exit()
     elif '--all' in argv:
         max_height=8.5*300
+        max_width=7.25*300/18
         sparsity = len(all_expr_cdt)//max_height
         pu.svg_heatmap(
             data=all_expr_cdt.select(**sel_startswith(columns))[::int(sparsity)],
@@ -119,7 +121,7 @@ if __name__ == "__main__":
             norm_rows_by='max',
             progress_bar=True,
             col_sep='_sl',
-            total_width=80,
+            total_width=max_width,
             box_height=1,
             split_columns=True,
             draw_box=True,
@@ -127,6 +129,7 @@ if __name__ == "__main__":
             draw_name=True,
             cmap_by_prefix=cmap_by_prefix,
             make_hyperlinks=True,
+            convert=True,
         )
         #from sys import exit
         #exit()
@@ -155,6 +158,7 @@ if __name__ == "__main__":
             draw_name=True,
             cmap_by_prefix=cmap_by_prefix,
             make_hyperlinks=True,
+            convert=True,
         )
 
 
