@@ -52,6 +52,23 @@ def sel_startswith(string_or_iterable):
     return dict(crit=startswith(string_or_iterable), axis=1)
 
 def center_of_mass(data):
+    if 'columns' in dir(data) and 'rep' in data.columns[0]:
+        reps = {c.split('_sl')[0] for c in data.columns}
+        retval = 0
+        for rep in reps:
+            retval += center_of_mass_onerep(data.select(**sel_startswith(rep)))
+        return retval / len(reps)
+    elif 'index' in dir(data) and 'rep' in data.index[0]:
+        reps = {c.split('_sl')[0] for c in data.index}
+        retval = 0
+        for rep in reps:
+            retval += center_of_mass_onerep(data.select(startswith(rep)))
+        return retval / len(reps)
+
+    else:
+        return center_of_mass_onerep(data)
+
+def center_of_mass_onerep(data):
     dims = shape(data)
     cols = dims[-1]
     xs = linspace(0, 1, cols, endpoint=True)
