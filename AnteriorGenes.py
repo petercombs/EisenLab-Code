@@ -1,6 +1,4 @@
-import pandas as pd
-#import PlotUtils as pu
-from Utils import sel_startswith, sel_contains
+from Utils import load_to_locals
 from PeakFinder import has_anterior_peak, has_posterior_peak, has_central_peak
 from Utils import center_of_mass
 from matplotlib.pyplot import (plot, title, savefig, clf, xlim, ylim, xlabel)
@@ -13,25 +11,9 @@ if __name__ == "__main__":
                            keep_default_na=False,
                            na_values=['---', ''])
     if 'all_expr' not in locals():
-        all_expr = (pd.read_table('analysis/summary.tsv', **read_table_args)
-                    .sort_index())
-        wt  = all_expr.select(**sel_startswith('WT'))
-        bcd = all_expr.select(**sel_startswith('bcd'))
-        zld = all_expr.select(**sel_startswith('zld'))
-        g20 = all_expr.select(**sel_startswith('G20'))
-        hb  = all_expr.select(**sel_startswith('hb'))
-
-        wts = bcds = zlds = g20s = hbs = 0
-        by_cycle = {}
-        for sub_df_name in 'wt bcd zld g20 hb'.split():
-            sub_df = locals()[sub_df_name]
-            cycs = {col.split('_sl')[0].split('_',1)[1] for col in sub_df.columns}
-            cycs.update({col.split('_')[1] for col in sub_df.columns})
-            cyc_embs = {}
-            by_cycle[sub_df_name] = cyc_embs
-            for cyc in cycs:
-                cyc_embs[cyc] = sub_df.select(**sel_contains(cyc))
-            locals()[sub_df_name+'s'] = cyc_embs
+        expr_min = 15
+        all_expr, (wt, bcd, zld, g20, hb), (wts, bcds, zlds, g20s, hbs), by_cycle\
+        = load_to_locals(locals(), expr_min)
 
     wt_ants = has_anterior_peak(wts['cyc14D'], fold=2)
     wt_cents = has_central_peak(wts['cyc14D'], fold=2)

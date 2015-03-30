@@ -5,7 +5,7 @@ from numpy import arange, array, histogram, abs, median, mean
 import DistributionDifference as DD
 from scipy.stats import scoreatpercentile, chi2_contingency, gaussian_kde
 import setcolor
-from Utils import sel_startswith, sel_contains, contains
+from Utils import load_to_locals, sel_contains, contains
 from itertools import combinations
 from sys import argv
 
@@ -61,25 +61,8 @@ if __name__ == "__main__":
     eps = .1
 
     if 'all_expr' not in locals():
-        all_expr = (pd.read_table('analysis/summary.tsv', **read_table_args)
-                    .sort_index())
-        top_expr = all_expr.max(axis=1)
-        all_expr = all_expr.ix[top_expr > expr_min]
-        wt  = all_expr.select(**sel_startswith('WT'))
-        bcd = all_expr.select(**sel_startswith('bcd'))
-        zld = all_expr.select(**sel_startswith('zld'))
-        g20 = all_expr.select(**sel_startswith('G20'))
-        hb  = all_expr.select(**sel_startswith('hb'))
-
-        wts = bcds = zlds = g20s = hbs = 0
-        for sub_df_name in 'wt bcd zld g20 hb'.split():
-            sub_df = locals()[sub_df_name]
-            cycs = {col.split('_sl')[0].split('_',1)[1] for col in sub_df.columns}
-            cycs.update({col.split('_')[1] for col in sub_df.columns})
-            cyc_embs = {}
-            for cyc in cycs:
-                cyc_embs[cyc] = sub_df.select(**sel_contains(cyc))
-            locals()[sub_df_name+'s'] = cyc_embs
+        all_expr, (wt, bcd, zld, g20, hb), (wts, bcds, zlds, g20s, hbs), by_cycle\
+        = load_to_locals(locals(), expr_min)
     print("Read expression in")
 
     combos = combinations( ['wt', 'bcd', 'zld', 'g20', 'hb'], 3)

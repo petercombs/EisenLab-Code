@@ -2,7 +2,7 @@ from __future__ import print_function
 import numpy as np
 import pandas as pd
 from scipy.cluster import hierarchy
-from Utils import sel_startswith, sel_contains
+from Utils import load_to_locals
 import sys
 from glob import glob
 
@@ -118,28 +118,8 @@ if __name__ == "__main__":
                            na_values=['---', ''])
 
     if 'all_expr' not in locals():
-        all_expr = (pd.read_table('analysis/summary.tsv', **read_table_args)
-                    .sort_index())
-        top_expr = all_expr.max(axis=1)
-        all_expr = all_expr.ix[top_expr > expr_min]
-        all_expr = all_expr.ix[::step]
-        wt  = all_expr.select(**sel_startswith('WT'))
-        bcd = all_expr.select(**sel_startswith('bcd'))
-        zld = all_expr.select(**sel_startswith('zld'))
-        g20 = all_expr.select(**sel_startswith('G20'))
-        hb  = all_expr.select(**sel_startswith('hb'))
-
-        wts = bcds = zlds = g20s = hbs = 0
-        by_cycle = {}
-        for sub_df_name in 'wt bcd zld g20 hb'.split():
-            sub_df = locals()[sub_df_name]
-            cycs = {col.split('_sl')[0].split('_',1)[1] for col in sub_df.columns}
-            cycs.update({col.split('_')[1] for col in sub_df.columns})
-            cyc_embs = {}
-            by_cycle[sub_df_name] = cyc_embs
-            for cyc in cycs:
-                cyc_embs[cyc] = sub_df.select(**sel_contains(cyc))
-            locals()[sub_df_name+'s'] = cyc_embs
+        all_expr, (wt, bcd, zld, g20, hb), (wts, bcds, zlds, g20s, hbs), by_cycle\
+        = load_to_locals(locals(), expr_min)
     print("Read expression in")
 
     all_expr_lognorm = np.log(all_expr+1).divide(np.log(all_expr.max( axis=1)+1),

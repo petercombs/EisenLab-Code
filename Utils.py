@@ -1,5 +1,6 @@
 from os import path
 from numpy import shape, linspace, sum, isfinite, copy
+import pandas as pd
 
 
 def get_bam_length(samfile):
@@ -76,3 +77,55 @@ def center_of_mass_onerep(data):
     data_clean[~isfinite(data_clean)] = 0
     data_clean += 0.01
     return sum(data_clean * xs, axis=len(dims)-1)/sum(data_clean, axis=len(dims)-1)
+
+
+def load_to_locals(locals, expr_min=15):
+    read_table_args = dict(keep_default_na=False, na_values=['---', ''], index_col=0)
+
+    # These are manually, and empirically determined.
+    bad_cols = (
+        'bcd_cyc14D_rep2_sl06_FPKM',
+        'bcd_cyc14D_rep2_sl16_FPKM',
+        'bcd_cyc14D_rep1_sl14_FPKM',
+        'WT_cyc14D_sl15_FPKM',
+        'G20_cyc14D_rep1_sl08_FPKM',
+    )
+
+    all_expr = (pd.read_table('analysis/summary.tsv', **read_table_args)
+                .sort_index())
+    all_expr.ix[:, bad_cols] = pd.np.nan
+    top_expr = all_expr.max(axis=1)
+    all_expr = all_expr.ix[top_expr > expr_min]
+    wt  = all_expr.select(**sel_startswith('WT'))
+    bcd = all_expr.select(**sel_startswith('bcd'))
+    zld = all_expr.select(**sel_startswith('zld'))
+    g20 = all_expr.select(**sel_startswith('G20'))
+    hb  = all_expr.select(**sel_startswith('hb'))
+    locals['all_expr'] = all_expr
+    locals['wt'] = wt
+    locals['bcd'] = bcd
+    locals['g20'] = g20
+    locals['zld'] = zld
+    locals['hb'] = hb
+
+    wts = bcds = zlds = g20s = hbs = 0
+    by_cycle = {}
+    for sub_df_name in 'wt bcd zld g20 hb'.split():
+        sub_df = locals[sub_df_name]
+        cycs = {col.split('_sl')[0].split('_',1)[1] for col in sub_df.columns}
+        cycs.update({col.split('_')[1] for col in sub_df.columns})
+        cyc_embs = {}
+        by_cycle[sub_df_name] = cyc_embs
+        for cyc in cycs:
+            cyc_embs[cyc] = sub_df.select(**sel_contains(cyc))
+        locals[sub_df_name+'s'] = cyc_embs
+    locals['wts'] = wts
+    locals['bcds'] = bcds
+    locals['zlds'] = zlds
+    locals['hbs'] = hbs
+    locals['g20s'] = g20s
+    locals['by_cycle'] = by_cycle
+    return (all_expr,
+            [wt, bcd, zld, g20, hb],
+            [locals[i] for i in 'wts bcds zlds hbs g20s'.split()],
+            by_cycle)

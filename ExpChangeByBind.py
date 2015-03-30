@@ -3,7 +3,7 @@ import BindUtils as bu
 import pandas as pd
 import DistributionDifference as dd
 from scipy.stats import ks_2samp
-from Utils import sel_startswith, sel_contains
+from Utils import sel_contains, load_to_locals
 from collections import defaultdict
 from progressbar import ProgressBar as pb
 from matplotlib.pyplot import (hist, savefig, legend, clf,
@@ -29,27 +29,8 @@ if __name__ == "__main__":
                            na_values=['---', ''])
 
     if 'all_expr' not in locals():
-        all_expr = (pd.read_table('analysis/summary.tsv', **read_table_args)
-                    .sort_index())
-        top_expr = all_expr.max(axis=1)
-        all_expr = all_expr.ix[top_expr > expr_min]
-        wt  = all_expr.select(**sel_startswith('WT'))
-        bcd = all_expr.select(**sel_startswith('bcd'))
-        zld = all_expr.select(**sel_startswith('zld'))
-        g20 = all_expr.select(**sel_startswith('G20'))
-        hb  = all_expr.select(**sel_startswith('hb'))
-
-        wts = bcds = zlds = g20s = hbs = 0
-        by_cycle = {}
-        for sub_df_name in 'wt bcd zld g20 hb'.split():
-            sub_df = locals()[sub_df_name]
-            cycs = {col.split('_sl')[0].split('_',1)[1] for col in sub_df.columns}
-            cycs.update({col.split('_')[1] for col in sub_df.columns})
-            cyc_embs = {}
-            by_cycle[sub_df_name] = cyc_embs
-            for cyc in cycs:
-                cyc_embs[cyc] = sub_df.select(**sel_contains(cyc))
-            locals()[sub_df_name+'s'] = cyc_embs
+        all_expr, (wt, bcd, zld, g20, hb), (wts, bcds, zlds, g20s, hbs), by_cycle\
+        = load_to_locals(locals(), expr_min)
     print("Read expression in")
     if 'keep_old' not in locals():
         keep_old = False

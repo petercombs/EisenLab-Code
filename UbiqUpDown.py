@@ -1,7 +1,7 @@
 from __future__ import division
 import pandas as pd
 from numpy import log2
-from Utils import sel_startswith, sel_contains
+from Utils import sel_startswith, load_to_locals, center_of_mass
 from multiprocessing import Pool
 import DistributionDifference as dd
 from matplotlib.pyplot import (violinplot, ylabel, savefig, xticks,
@@ -42,37 +42,10 @@ if __name__ == "__main__":
                            keep_default_na=False,
                            na_values=['---', ''])
 
-    bad_cols = (
-        'bcd_cyc14D_rep2_sl06_FPKM',
-        'bcd_cyc14D_rep2_sl16_FPKM',
-        'bcd_cyc14D_rep1_sl14_FPKM',
-        'WT_cyc14D_sl15_FPKM',
-        'G20_cyc14D_rep1_sl08_FPKM',
-    )
 
     if 'all_expr' not in locals():
-        all_expr = (pd.read_table('analysis/summary.tsv', **read_table_args)
-                    .sort_index())
-        top_expr = all_expr.max(axis=1)
-        all_expr.ix[:, bad_cols] = pd.np.nan
-        all_expr = all_expr.ix[top_expr > expr_min]
-        wt  = all_expr.select(**sel_startswith('WT'))
-        bcd = all_expr.select(**sel_startswith('bcd'))
-        zld = all_expr.select(**sel_startswith('zld'))
-        g20 = all_expr.select(**sel_startswith('G20'))
-        hb  = all_expr.select(**sel_startswith('hb'))
-
-        wts = bcds = zlds = g20s = hbs = 0
-        by_cycle = {}
-        for sub_df_name in 'wt bcd zld g20 hb'.split():
-            sub_df = locals()[sub_df_name]
-            cycs = {col.split('_sl')[0].split('_',1)[1] for col in sub_df.columns}
-            cycs.update({col.split('_')[1] for col in sub_df.columns})
-            cyc_embs = {}
-            by_cycle[sub_df_name] = cyc_embs
-            for cyc in cycs:
-                cyc_embs[cyc] = sub_df.select(**sel_contains(cyc))
-            locals()[sub_df_name+'s'] = cyc_embs
+        all_expr, (wt, bcd, zld, g20, hb), (wts, bcds, zlds, g20s, hbs), by_cycle\
+        = load_to_locals(locals(), expr_min)
     print("Read expression in")
 
 
