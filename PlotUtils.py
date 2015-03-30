@@ -470,6 +470,7 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
             'convert',
             filename,
             '-density', '300',
+            '-background', 'none',
             filename.replace('svg', 'png'),
         ]
         subprocess.Popen(cmd)
