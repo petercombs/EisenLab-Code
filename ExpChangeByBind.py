@@ -9,6 +9,15 @@ from progressbar import ProgressBar as pb
 from matplotlib.pyplot import (hist, savefig, legend, clf,
                                title, xlabel)
 from numpy import arange
+from multiprocessing import Pool
+from itertools import repeat
+
+def get_dists_mp(args):
+    gene, wts, mut = args
+    return dd.earth_mover_multi_rep(
+        wts.ix[gene] + eps,
+        mut.ix[gene] + eps
+    )
 
 
 
@@ -60,16 +69,18 @@ if __name__ == "__main__":
     #mut_st, wt_st = cyc13, 'cyc13'
     mut_st, wt_st = cyc14, 'cyc14D'
 
+    p = Pool()
     if 'all_dists' not in locals() or not keep_old:
         all_dists = pd.Series(index=all_expr.index, data=0.0)
-        for mut, cycs in mut_st:
-            for cyc in cycs:
-                cyc_expr = mut.select(**sel_contains(cyc))
-                for gene in pb()(cyc_expr.index):
-                    all_dists.ix[gene] += dd.earth_mover_interp(
-                        wts[wt_st].ix[gene]+eps,
-                        cyc_expr.ix[gene]+eps
-                    )/len(cycs)
+        for mut, cycs in pb()(mut_st):
+            cyc_expr = mut.select(**sel_contains(cycs))
+            all_dists += p.map(get_dists_mp,
+                               zip(all_expr.index,
+                                   repeat(wt.select(**sel_contains(wt_st))),
+                                   repeat(cyc_expr),
+                                  )
+                              )
+
 
         keep_old=True
 
