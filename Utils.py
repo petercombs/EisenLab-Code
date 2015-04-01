@@ -108,7 +108,6 @@ def load_to_locals(locals, expr_min=15):
     locals['zld'] = zld
     locals['hb'] = hb
 
-    wts = bcds = zlds = g20s = hbs = 0
     by_cycle = {}
     for sub_df_name in 'wt bcd zld g20 hb'.split():
         sub_df = locals[sub_df_name]
@@ -119,12 +118,6 @@ def load_to_locals(locals, expr_min=15):
         for cyc in cycs:
             cyc_embs[cyc] = sub_df.select(**sel_contains(cyc))
         locals[sub_df_name+'s'] = cyc_embs
-    locals['wts'] = wts
-    locals['bcds'] = bcds
-    locals['zlds'] = zlds
-    locals['hbs'] = hbs
-    locals['g20s'] = g20s
-    locals['by_cycle'] = by_cycle
     return (all_expr,
             [wt, bcd, zld, g20, hb],
             [locals[i] for i in 'wts bcds zlds hbs g20s'.split()],

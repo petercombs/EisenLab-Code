@@ -320,6 +320,8 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
                 y_start += y_diff
             continue
         frame = pd.DataFrame(frame)
+        if index is not None:
+            frame = frame.ix[index]
         if normer is None:
             norm_data = frame.copy()
         elif normer is 'mean':

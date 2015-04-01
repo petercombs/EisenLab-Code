@@ -118,6 +118,7 @@ if __name__=="__main__":
         col_sep='sl',
         draw_name=True,
         data_names=names.split(),
+        draw_box=True,
         total_width=150,
         box_height=10,
         make_hyperlinks=True,

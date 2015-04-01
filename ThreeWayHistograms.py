@@ -1,20 +1,22 @@
 from __future__ import print_function, division
 import pandas as pd
 import matplotlib.pyplot as mpl
-from numpy import arange, array, histogram, abs, median, mean
+from numpy import arange, array, abs, median, mean
 import DistributionDifference as DD
 from scipy.stats import scoreatpercentile, chi2_contingency, gaussian_kde
 import setcolor
 from Utils import load_to_locals, sel_contains, contains
 from itertools import combinations
 from sys import argv
+from scipy.stats import linregress
+import BindUtils as bu
 
 cyc_of_interest = 'cyc14D'
 eps = .1
 
 read_table_args = dict(keep_default_na=False, na_values=['---', ''], index_col=0)
 
-bind_dist = 1000
+bind_dist = 1e4
 
 exp_cutoff = 5 + eps
 expr_diff_weight =.01
@@ -46,6 +48,8 @@ def earth_mover_multi(points1, points2, abs_expr=False):
 
 dist_func = earth_mover_multi
 
+#has_zld = bu.has_tfs['zld']
+#has_bcd = bu.has_tfs['bcd']
 
 def get_dists(gene):
     return (dist_func(set1.ix[gene], set2.ix[gene]),
@@ -67,6 +71,7 @@ if __name__ == "__main__":
 
     combos = combinations( ['wt', 'bcd', 'zld', 'g20', 'hb'], 3)
     all_d2s = {}
+    both_d2s = {}
     for set1_name, set2_name, set3_name in combos:
         print('-'*50)
         print(set1_name, set2_name, set3_name)
@@ -95,6 +100,7 @@ if __name__ == "__main__":
         if not isinstance(p, pool.Pool):
             p = Pool()
         dists = p.map(get_dists, dist_12.index)
+        del p
         for gene, dists_for_gene in zip(dist_12.index, dists):
             dist_12.ix[gene] += dists_for_gene[0]
             dist_13.ix[gene] += dists_for_gene[1]
@@ -194,7 +200,7 @@ if __name__ == "__main__":
         mpl.legend()
         if screen:
             setcolor.set_foregroundcolor(mpl.gca(), 'w')
-            setcolor.set_backgroundcolor(mpl.gca(), 'b')
+            setcolor.set_backgroundcolor(mpl.gca(), 'k')
         mpl.savefig('analysis/results/{}{}{}_Hist.png'.format(set1_name,
                                                               set2_name,
                                                               set3_name),
@@ -270,6 +276,116 @@ if __name__ == "__main__":
                          sep='\t',
                         )
         all_d2s['_'.join([set1_name, set2_name, set3_name])] = dist2
+        both_d2s['_'.join([set1_name, set2_name, set3_name])] = dist2.ix[in_both]
+
+
+        binds = (
+            bu.get_binding_matrix(dist2_sorted.index, dist=bind_dist)
+            .ix[:, bu.ap_early_zld]
+        )
+        n = 200
+        n_2 = 50
+        n_mid = sum(in_both)/2
+        hi_d2 = dist2_sorted.index[-50:]
+        mid_d2 = (dist2_sorted
+                  .ix[in_both]
+                  .ix[int(n_mid - n/2):int(n_mid+n/2)]
+                  .index)
+        enriched_bind = pd.DataFrame(columns=['odds ratio', 'base freq',
+                                              'p-value'])
+        for tf in binds.columns:
+            table = [
+                [sum(binds.ix[hi_d2, tf]),
+                 sum(1-binds.ix[hi_d2, tf])],
+                [sum(binds.ix[mid_d2, tf]),
+                 sum(1-binds.ix[mid_d2, tf])],
+            ]
+            try:
+                chi2, p, dof, expected = chi2_contingency(table)
+            except ValueError as e:
+                print(e)
+                print("Poor table for {}: {}".format(tf, table))
+            if p * len(binds.columns) < 0.05:
+                enriched_bind.ix[tf] = [
+                    (table[0][0]/table[0][1])/(table[1][0]/table[1][1]),
+                    sum(binds.ix[:, tf])/len(binds),
+                    p
+                ]
+            else:
+                print("Nonsig: {:>10}, {}, {}".format(tf, p, table))
+        enriched_bind.sort('odds ratio', inplace=True, ascending=False)
+
+        formatter = lambda x: lambda y: x.format(y)
+
+        print(enriched_bind.to_latex(formatters=
+                                     {
+                                         'odds ratio':formatter('{:.3}'),
+                                         'base freq':formatter('{:0.2%}'),
+                                         'p-value':formatter('{:0.3g}'),
+                                     }))
+        window_size = 50
+        print("Windows of {} genes".format(window_size))
+        windows = [slice(i, i+window_size)
+                   for i in range(0, len(dist2_sorted), window_size)]
+        mpl.clf()
+        for n in range(3, len(binds.columns)):
+            xs = array([mean(dist2_sorted.ix[w]) for w in windows])
+            ys = array([mean(binds.ix[w].sum(axis=1)>=n) for w in windows])
+            slope, intercept, r_value, p_value, std_err = linregress(xs,ys)
+            points, = mpl.plot(xs, ys, '.',
+                               label='$\\geq$ {} TFs bound'.format(n))
+            mpl.plot(xs * 15, slope * xs * 15 + intercept, color=points.get_color())
+        mpl.legend(numpoints=1,
+                   bbox_to_anchor=(1.1, 0),
+                   loc='lower right',
+                   borderaxespad=0.2)
+        mpl.xlim(0, max(xs)*1.1)
+        mpl.ylim(0, 1.1)
+        mpl.xlabel('$\\Delta D$')
+        mpl.ylabel('Fraction with level of binding')
+        #mpl.tight_layout()
+        if screen:
+            setcolor.set_foregroundcolor(mpl.gca(), 'w')
+            setcolor.set_backgroundcolor(mpl.gca(), 'k')
+        mpl.savefig('analysis/results/{}{}{}-D2vsBind'.format(set1_name,
+                                                              set2_name,
+                                                              set3_name),
+                   transparent=True, dpi=300)
+
+
+
+
+
 
     mpl.clf()
+    for name, d2s in (('both', both_d2s), ('all', all_d2s)):
+        fig1 = mpl.figure()
+        fig2 = mpl.figure()
+        for trio in d2s:
+            if not trio.startswith('wt'): continue
+            k = gaussian_kde(d2s[trio])
+            fig1.gca().hist(d2s[trio],
+                     bins=arange(0, .5, .0033),
+                     normed=True,
+                     label='{} 3-way distance'.format(trio),
+                     histtype='step'
+                    )
+            fig2.gca().plot(arange(0, .5, 1e-4),
+                      k(arange(0, .5, 1e-4)),
+                      label='{} 3-way distance'.format(trio),
+                     )
+        max_y = max(fig1.gca().get_ylim()[1], fig2.gca().get_ylim()[1])
+        for f in (fig1, fig2):
+            f.gca().set_xlabel('D2 score (difference of distances)')
+            f.gca().set_ylabel('Density')
+            f.gca().set_ylim(0, max_y)
+            f.gca().legend()
+        if screen:
+            setcolor.set_foregroundcolor(fig1.gca(), 'w')
+            setcolor.set_foregroundcolor(fig2.gca(), 'w')
+            setcolor.set_backgroundcolor(fig1.gca(), 'k')
+            setcolor.set_backgroundcolor(fig2.gca(), 'k')
+        fig1.savefig('analysis/results/{}_d2s.png'.format(name), dpi=300)
+        fig2.savefig('analysis/results/{}_d2s_kde.png'.format(name), dpi=300)
+        #mpl.close('all')
 

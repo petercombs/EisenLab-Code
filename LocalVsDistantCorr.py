@@ -2,8 +2,11 @@ from __future__ import division
 from Utils import load_to_locals
 from scipy.stats import spearmanr
 from matplotlib import pyplot as mpl
+import setcolor
+from sys import argv
 
 if __name__ == "__main__":
+    screen = '--screen' in argv
     expr_min = 5
     eps = 1
     sep = 1/3.
@@ -49,6 +52,9 @@ if __name__ == "__main__":
                rotation=0,
               )
     mpl.tight_layout()
+    if screen:
+        setcolor.set_foregroundcolor(mpl.gca(), 'w')
+        setcolor.set_backgroundcolor(mpl.gca(), 'b')
     mpl.savefig('analysis/results/close_vs_far.png')
 
 

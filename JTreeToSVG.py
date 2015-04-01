@@ -1,7 +1,7 @@
 from __future__ import division
 import pandas as pd
 import PlotUtils as pu
-from Utils import load_to_locals
+from Utils import load_to_locals, sel_startswith
 from sys import argv
 from os import path
 
@@ -38,11 +38,6 @@ if __name__ == "__main__":
 
     all_expr_cdt = all_expr.ix[cdt.index]
 
-    bad_cols = (
-        'bcd_cyc14D_rep2_sl06_FPKM',
-        'bcd_cyc14D_rep2_sl16_FPKM',
-        'bcd_cyc14D_rep1_sl14_FPKM',
-    )
     columns = (
         'WT_cyc13',
         'WT_cyc14D',
@@ -61,9 +56,6 @@ if __name__ == "__main__":
         'hb_cyc14D_rep1',
         'hb_cyc14D_rep2',
     )
-
-    all_expr_cdt.ix[:, bad_cols] = pd.np.nan
-
 
     ranges = {
         #('CG12398', 'Capa'),
