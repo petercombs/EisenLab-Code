@@ -207,6 +207,11 @@ $(REFDIR)/DmelDvir/transcriptome : |  $(REFDIR)/DmelDvir
 		$(REFDIR)/DmelDvir
 	touch $@
 
+$(REFDIR)/Dmel/transcriptome : $(MELGTF) |  $(REFDIR)/Dmel
+	tophat --GTF $(MELGTF) \
+		--transcriptome-index $@ \
+		$(REFDIR)/Dmel
+	touch $@
 
 $(REFDIR)/DmelDvir/Genome : $(MELVIRGTF) |  $(REFDIR)/DmelDvir $(MELFASTA2) $(VIRFASTA2)  $(REFDIR)
 	STAR --runMode genomeGenerate --genomeDir $(REFDIR)/DmelDvir \
