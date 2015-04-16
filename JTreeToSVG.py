@@ -60,16 +60,14 @@ if __name__ == "__main__":
 
     ranges = {
         #('CG12398', 'Capa'),
-        'ant1': ( 'gcm', 'CG10264'),
-        'AntInZld_2': ( 'Cad88C', 'erm'),
+        'ant1': ('CG34254', 'CG18530'),
+        #'AntInZld_2': ( 'Cad88C', 'erm'),
         'both_poles': ( 'CG12986', 'tll'),
         #('CG17801', 'LysB'),
-        'post1': ( 'CG2930', 'cas'),
-        'RNAi_up_2': ( 'EfSec', 'modSP'),
-        #('Esp', 'CG30286'),
-        'RNAi_up_3': ( 'Esp', 'CG42808'),
-        'tophalf': ( 'GstE2', 'Trissin'),
-        #('CG12011', 'Obp49a'),
+        'post1': ('NAAT1', 'scb'),
+        'RNAi_up_2': ('CG18327', 'ptc'),
+        'RNAi_up_3': ('CG11883', 'Mipp1'),
+        'tophalf': ('CG2444', 'CG34334'),
         'AntInZld_1': ( 'CG13712', 'bnb'),
     }
 
