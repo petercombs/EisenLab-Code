@@ -51,3 +51,13 @@ def set_backgroundcolor(ax, color):
     lh = ax.get_legend()
     if lh is not None:
         lh.legendPatch.set_facecolor(color)
+
+def set_screen(fig):
+    for ax in fig.axes:
+        set_foregroundcolor(ax, 'w')
+        set_backgroundcolor(ax, 'k')
+
+def set_print(fig):
+    for ax in fig.axes:
+        set_foregroundcolor(ax, 'k')
+        set_backgroundcolor(ax, 'w')

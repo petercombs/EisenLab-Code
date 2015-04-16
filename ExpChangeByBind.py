@@ -8,7 +8,7 @@ from Utils import sel_contains, load_to_locals, center_of_mass
 from collections import defaultdict
 from progressbar import ProgressBar as pb
 from matplotlib.pyplot import (hist, savefig, legend, clf,
-                               title, xlabel, gca)
+                               title, xlabel, gcf)
 from numpy import arange
 from multiprocessing import Pool
 from itertools import repeat
@@ -117,8 +117,7 @@ if __name__ == "__main__":
             xlabel('Summed distance')
             title('{} genes'.format(len(cdt.select(cluster.__contains__))))
             if screen:
-                setcolor.set_foregroundcolor(gca(), 'w')
-                setcolor.set_backgroundcolor(gca(), 'k')
+                setcolor.set_screen(gcf())
             savefig('analysis/results/bindpats/binds-'+'-'.join(binds)+'.png',
                    transparent=True, dpi=300)
             pu.svg_heatmap(

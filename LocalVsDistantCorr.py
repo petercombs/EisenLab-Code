@@ -53,8 +53,7 @@ if __name__ == "__main__":
               )
     mpl.tight_layout()
     if screen:
-        setcolor.set_foregroundcolor(mpl.gca(), 'w')
-        setcolor.set_backgroundcolor(mpl.gca(), 'b')
-    mpl.savefig('analysis/results/close_vs_far.png')
+        setcolor.set_screen(mpl.gcf())
+    mpl.savefig('analysis/results/close_vs_far.png', transparent=True)
 
 

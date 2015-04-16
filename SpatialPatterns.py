@@ -106,9 +106,9 @@ if __name__ == "__main__":
         mpl.ylabel('Density')
         mpl.legend()
         if screen:
-            setcolor.set_foregroundcolor(mpl.gca(), 'w')
-            setcolor.set_backgroundcolor(mpl.gca(), 'b')
-        mpl.savefig('analysis/results/pattern_dists_{}.png'.format(cyc), dpi=300)
+            setcolor.set_screen(mpl.gcf())
+        mpl.savefig('analysis/results/pattern_dists_{}.png'.format(cyc),
+                    dpi=300, transparent=True)
 
         mpl.clf()
         dist_list = [all_dists[n1 + '-' + n2]
@@ -129,6 +129,9 @@ if __name__ == "__main__":
                    rotation=90)
         mpl.ylim(0, 0.2)
         mpl.tight_layout()
-        mpl.savefig('analysis/results/violin{}'.format(cyc), dpi=300)
+        if screen:
+            setcolor.set_screen(mpl.gcf())
+        mpl.savefig('analysis/results/violin{}'.format(cyc), dpi=300,
+                    transparent=True)
 
 

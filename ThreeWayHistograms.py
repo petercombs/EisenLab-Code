@@ -199,8 +199,7 @@ if __name__ == "__main__":
                  label='{} vs {}'.format(set2_name, set3_name))
         mpl.legend()
         if screen:
-            setcolor.set_foregroundcolor(mpl.gca(), 'w')
-            setcolor.set_backgroundcolor(mpl.gca(), 'k')
+            setcolor.set_screen(mpl.gcf())
         mpl.savefig('analysis/results/{}{}{}_Hist.png'.format(set1_name,
                                                               set2_name,
                                                               set3_name),
@@ -234,8 +233,7 @@ if __name__ == "__main__":
         ax.set_aspect(1)
         mpl.colorbar()
         if screen:
-            setcolor.set_foregroundcolor(mpl.gca(), 'w')
-            setcolor.set_backgroundcolor(mpl.gca(), 'b')
+            setcolor.set_screen(mpl.gcf())
         mpl.savefig('analysis/results/{}{}{}_3way.png'.format(set1_name,
                                                               set2_name,
                                                               set3_name),
@@ -245,8 +243,7 @@ if __name__ == "__main__":
         mpl.clf()
         mpl.hist(dist2.ix[in_both], bins=bins, )
         if screen:
-            setcolor.set_foregroundcolor(mpl.gca(), 'w')
-            setcolor.set_backgroundcolor(mpl.gca(), 'b')
+            setcolor.set_screen(mpl.gcf())
         mpl.savefig('analysis/results/{}{}{}_D2hist.png'.format(set1_name,
                                                                 set2_name,
                                                                 set3_name),
@@ -345,8 +342,7 @@ if __name__ == "__main__":
         mpl.ylabel('Fraction with level of binding')
         #mpl.tight_layout()
         if screen:
-            setcolor.set_foregroundcolor(mpl.gca(), 'w')
-            setcolor.set_backgroundcolor(mpl.gca(), 'k')
+            setcolor.set_screen(mpl.gcf())
         mpl.savefig('analysis/results/{}{}{}-D2vsBind'.format(set1_name,
                                                               set2_name,
                                                               set3_name),
@@ -381,11 +377,11 @@ if __name__ == "__main__":
             f.gca().set_ylim(0, max_y)
             f.gca().legend()
         if screen:
-            setcolor.set_foregroundcolor(fig1.gca(), 'w')
-            setcolor.set_foregroundcolor(fig2.gca(), 'w')
-            setcolor.set_backgroundcolor(fig1.gca(), 'k')
-            setcolor.set_backgroundcolor(fig2.gca(), 'k')
-        fig1.savefig('analysis/results/{}_d2s.png'.format(name), dpi=300)
-        fig2.savefig('analysis/results/{}_d2s_kde.png'.format(name), dpi=300)
+            setcolor.set_screen(fig1)
+            setcolor.set_screen(fig2)
+        fig1.savefig('analysis/results/{}_d2s.png'.format(name),
+                     dpi=300,transparent=True)
+        fig2.savefig('analysis/results/{}_d2s_kde.png'.format(name),
+                     dpi=300,transparent=True)
         #mpl.close('all')
 
