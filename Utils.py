@@ -1,5 +1,5 @@
 from os import path
-from numpy import shape, linspace, sum, isfinite, copy
+from numpy import shape, linspace, sum, isfinite
 import pandas as pd
 
 

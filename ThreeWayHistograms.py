@@ -3,7 +3,8 @@ import pandas as pd
 import matplotlib.pyplot as mpl
 from numpy import arange, array, abs, median, mean
 import DistributionDifference as DD
-from scipy.stats import scoreatpercentile, chi2_contingency, gaussian_kde
+from scipy.stats import (scoreatpercentile, chi2_contingency, gaussian_kde,
+                         spearmanr, pearsonr)
 import setcolor
 from Utils import load_to_locals, sel_contains, contains
 from itertools import combinations
@@ -249,6 +250,31 @@ if __name__ == "__main__":
                                                                 set3_name),
                     dpi=600,
                     transparent=True)
+
+
+        mpl.clf()
+        x = dist2.ix[in_both]
+        y = wts['cyc14D'].max(axis=1).ix[in_both]
+        mpl.semilogy( x, y, '.')
+        mpl.xlabel('$\\Delta D$')
+        mpl.ylabel('Max FPKM')
+        arr = pearsonr(x, y)
+        rho = spearmanr(x, y)
+        mpl.title('$r = {:0.4}{} ;\\ \\  \\rho={:0.4}{}$'
+              .format(arr[0],
+                      '^{*}' if arr[1]<0.05 else '',
+                      rho[0],
+                      '^{*}' if rho[1]<0.05 else '',
+                     )
+                 )
+        if screen:
+            setcolor.set_screen(mpl.gcf())
+        mpl.savefig('analysis/results/{}{}{}_D2exprcorr.png'.format(set1_name,
+                                                                set2_name,
+                                                                set3_name),
+                    dpi=600,
+                    transparent=True)
+
 
         ##################################
         ###        OUTPUT FILE         ###
