@@ -4,6 +4,7 @@ import PlotUtils as pu
 from Utils import sel_startswith, sel_contains, load_to_locals
 from numpy import mean, linspace, nan
 from progressbar import ProgressBar
+from Literature import staller_2015
 
 def get_chrom(coord_spec):
     return coord_spec.split(':')[0]
@@ -123,6 +124,7 @@ if __name__=="__main__":
         box_height=10,
         make_hyperlinks=True,
         draw_row_labels=True,
+        color_row_labels=staller_2015,
         convert=True,
     )
     pu.svg_heatmap(data,

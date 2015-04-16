@@ -182,6 +182,7 @@ def plot_likelihoods(likelihoods, starts, column_headers):
 def svg_heatmap(data, filename, row_labels=None, box_size=4,
                 index=None,
                 cmap=ISH, norm_rows_by=None, draw_row_labels=False,
+                color_row_labels=False,
                 col_sep='', box_height=None, total_width=None,
                 draw_box=False, draw_name=False, data_names=None,
                 make_hyperlinks = False,
@@ -451,9 +452,16 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
 
     if draw_row_labels:
         for i in range(rows):
+            if color_row_labels:
+                style = "font-size: {size}; fill: {color};".format(
+                    size=box_height,
+                    color='red' if row_labels[i] in color_row_labels else 'black',
+                )
+            else:
+                style = "font-size: {}".format(box_height)
             labeltext = (dwg.text(row_labels[i],
                              (x_start, y_start + i*box_height+box_height),
-                             style='font-size:{}'.format(box_height),
+                             style=style,
                             ))
             if make_hyperlinks:
                 link = dwg.a('http://insitu.fruitfly.org/cgi-bin/ex/report.pl?ftype=0&ftext={}'

@@ -11,6 +11,7 @@ from matplotlib.pyplot import (violinplot, ylabel, savefig, xticks,
 from sys import argv
 from scipy.stats import chi2_contingency
 from progressbar import ProgressBar as pb
+from Literature import all_hits
 
 columns = (
     'WT_cyc13',
@@ -210,6 +211,7 @@ if __name__ == "__main__":
                 split_columns=True,
                 draw_box=True,
                 draw_row_labels=True,
+                color_row_labels=all_hits,
                 draw_name=True,
                 cmap_by_prefix=pu.cmap_by_prefix,
                 make_hyperlinks=True,

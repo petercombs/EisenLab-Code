@@ -2,6 +2,7 @@ from __future__ import division
 import pandas as pd
 import PlotUtils as pu
 from Utils import load_to_locals, sel_startswith
+from Literature import all_hits
 from sys import argv
 from os import path
 
@@ -135,6 +136,7 @@ if __name__ == "__main__":
             split_columns=True,
             draw_box=True,
             draw_row_labels=True,
+            color_row_labels=all_hits,
             draw_name=True,
             cmap_by_prefix=cmap_by_prefix,
             make_hyperlinks=True,
