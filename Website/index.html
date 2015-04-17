@@ -42,45 +42,7 @@
 
 		</ul>
 		</p>
-		<h3>Query Genes from the database</h3>
-		<form action="query.py" method="post">
-			<p />Format:
-				<input type="radio" name="format" value="svg" checked>SVG (hover for more detail)</input>
-				<input type="radio" name="format" value="png"> PNG (smaller, easily saved) </input>
-			<p />Orientation:
-				<input type="radio" name="orientation" value="GeneRow" checked>Genes as Rows (Good for patterning differences across <em>genes</em>) </input>
-				<input type="radio" name="orientation" value="GeneCol">Genes as Columns (Good for patterning differences across <em>mutations</em>)</input>
-			<p /><table border=1>
-				<tr><td>cycle</td><th>Wild Type (Canton-S)</th> <th>2.4x bicoid </th> <th> 0x bicoid RNAi </th> <th> 0x hunchback RNAi </th> <th> 0x zelda GLC </th></tr>
-				<tr><th>13</th>
-					<td><input type="checkbox" checked name="samples"  value="WT_cyc13">Replicate 1</td>
-					<td><input type="checkbox" checked name="samples"  value="G20_cyc13_rep1">Replicate 1
-						<br><input type="checkbox" checked name="samples"  value="G20_cyc13_rep2">Replicate2</td>
-					<td><input type="checkbox" checked name="samples"  value="bcd_cyc13_rep1">Replicate 1
-						<br><input type="checkbox" checked name="samples"  value="bcd_cyc13_rep2">Replicate 2</td>
-					<td><input type="checkbox" checked name="samples"  value="hb_cyc13_rep1">Replicate 1</td>
-					<td><input type="checkbox" checked name="samples"  value="zld_cyc13_rep2">Replicate 2
-						<br><input type="checkbox" checked name="samples"  value="zld_cyc13_rep3">Replicate3</td>
-				</tr>
-				<tr><th>14</th>
-					<td><input type="checkbox" checked name="samples"  value="WT_cyc14C">Replicate 1 (Cyc 14C)
-						<br><input type="checkbox" checked name="samples"  value="WT_cyc14D">Replicate 1 (Cyc 14D)</td>
-					<td><input type="checkbox" checked name="samples"  value="G20_cyc14D_rep1">Replicate 1 </td>
-					<td><input type="checkbox" checked name="samples"  value="bcd_cyc14D_rep1">Replicate 1
-						<br><input type="checkbox" checked name="samples"  value="bcd_cyc14D_rep2">Replicate2</td>
-					<td><input type="checkbox" checked name="samples"  value="hb_cyc14D_rep1">Replicate 1
-						<br><input type="checkbox" checked name="samples"  value="hb_cyc14D_rep2">Replicate2</td>
-					<td><input type="checkbox" checked name="samples"  value="zld_cyc14B">Replicate 1 (Cyc 14B)
-						<br><input type="checkbox" checked name="samples"  value="zld_cyc14D">Replicate 1 (Cyc 14D)</td>
-			</table>
-			<br>
-			<textarea name="genes" rows=15 cols=30 autofocus>hb
-gt
-eve
-FBgn0000251
-</textarea><br>
-			<input type="submit">
-		</form>
+		<!--#include virtual="form.html"-->
 	</body>
 </html>
 

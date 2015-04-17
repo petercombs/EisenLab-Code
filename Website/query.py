@@ -156,6 +156,8 @@ outfh.write('\n')
 outfh.close()
 '''
 
+print open('form.html').read()
+
 tock = time()
 print "<hr>"
 print "<p />Used {:.1f} ms".format((tock-tick)*1000)
