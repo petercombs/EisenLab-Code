@@ -113,3 +113,13 @@ Reference/tss: $(MELGTF)
 
 prereqs/journal.pgen.1002266.s005.xls:
 	wget -O $@ http://journals.plos.org/plosgenetics/article/asset\?unique\&id\=info\:doi/10.1371/journal.pgen.1002266.s005
+
+Website: analysis/summary.tsv Website/query.py
+	cp analysis/summary.tsv Website/genes.cuff
+	echo `basename $(MELGFF)` > Website/versions.txt
+	echo `basename $(MELFASTA)` >> Website/versions.txt
+	echo `basename $(GENEMAPTABLE)` >> Website/versions.txt
+	echo 'Made on' >> Website/versions.txt
+	date >> Website/versions.txt
+	cut -f -2 $(GENEMAPTABLE) > Website/gene_table.tsv
+	#python Website/draw_to_gene.py -W 750 -w 100 -H 50 -u _ Website/genes.cuff
