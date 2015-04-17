@@ -21,11 +21,14 @@ __pycache__
 *.cfg
 *.make
 *.mk
+*.db
+*.cuff
 
 prereqs*
 analysis*
 *[Ss]equence*
-Website/img/*
+Website/imgs/*
+Website/PlotUtils.py
 MemeOutput
 MemeOutput2
 Reference/*
@@ -50,5 +53,7 @@ FlyExpressMaternal
 *.txt
 *.expr
 *.vpc
+*.svg
 FlyBase*
 .ipynb_checkpoints
+
