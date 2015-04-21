@@ -1,16 +1,16 @@
 <h3>Query Genes from the database</h3>
 <form action="query.py" method="post">
-	<textarea name="genes" rows=15 cols=30 autofocus>hb
+	<textarea name="genes" id="genes" rows=15 cols=30 autofocus>hb
 gt
 eve
 FBgn0000251
 	</textarea>
 	<p />Format:
-	<label><input type="radio" name="format" value="svg" checked>SVG (hover for more detail)</label>
-	<label><input type="radio" name="format" value="png"> PNG (smaller, easily saved) </label>
+	<label><input type="radio" name="format" id="svg" value="svg" checked>SVG (hover for more detail)</label>
+	<label><input type="radio" name="format" id="png" value="png"> PNG (smaller, easily saved) </label>
 	<p />Orientation:
-	<label><input type="radio" name="orientation" value="GeneRow" checked>Genes as Rows (Good for patterning differences across <em>genes</em>) </label>
-	<label><input type="radio" name="orientation" value="GeneCol">Genes as Columns (Good for patterning differences across <em>mutations</em>)</label>
+	<label><input type="radio" name="orientation" id="GeneRow" value="GeneRow" checked>Genes as Rows (Good for patterning differences across <em>genes</em>) </label>
+	<label><input type="radio" name="orientation" id="GeneCol" value="GeneCol">Genes as Columns (Good for patterning differences across <em>mutations</em>)</label>
 	<p /><table border=1>
 		<tr><td>cycle</td><th>Wild Type (Canton-S)</th> <th>2.4x bicoid </th> <th> 0x bicoid RNAi </th> <th> 0x hunchback RNAi </th> <th> 0x zelda GLC </th></tr>
 		<tr><th>13</th>
@@ -34,6 +34,24 @@ FBgn0000251
 			<td><label><input type="checkbox" checked name="samples"  value="zld_cyc14B">Replicate 1 (Cyc 14B)</label>
 				<br><label><input type="checkbox" checked name="samples"  value="zld_cyc14D">Replicate 1 (Cyc 14D)</label></td>
 		</table>
+		<label>Normalize by: <select name="norm_by" id="norm_by">
+				<option value="max" checked>Maximum value per embryo</option>
+				<option value="max_all">Maximum value in datasets used</option>
+				<optgroup label="Cycle 13">
+					<option value="WT_cyc13">Wild type Cycle 13</option>
+					<option value="G20_cyc13">2.4x bicoid Cycle 13</option>
+					<option value="bcd_cyc13">0x bicoid Cycle 13</option>
+					<option value="hb_cyc13">0x hunchback Cycle 13</option>
+					<option value="zld_cyc13">0x zelda Cycle 13</option>
+				<optgroup label="Cycle 14D">
+					<option value="WT_cyc14D">Wild type Cycle 14D</option>
+					<option value="G20_cyc14D">2.4x bicoid Cycle 14D</option>
+					<option value="bcd_cyc14D">0x bicoid Cycle 14D</option>
+					<option value="hb_cyc14D">0x hunchback Cycle 14D</option>
+					<option value="zld_cyc14D">0x zelda Cycle 14D</option>
+
+			</select>
+		</label>
 		<br>
 		<br>
 		<input type="submit">
