@@ -191,6 +191,7 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
                 spacers=None,
                 convert=False,
                 cmap_by_prefix=None,
+                draw_average=False,
                 split_columns=False,
                 vspacer=30,
                 hatch_nan=True, hatch_size=20,
@@ -417,6 +418,24 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
                              (new_cols*box_size, rows*box_height),
                              style="stroke-width:1; "
                              "stroke:#000000; fill:none"))
+        if draw_average:
+            avg_frame = norm_data.mean(axis=0)
+            for j in range(new_cols):
+                g = dwg.g()
+                g.add(svg.base.Title("Average, {}: {:.2f}".format(col_labels[j],
+                                                                  avg_frame.ix[j])))
+                g.add(dwg.rect((x_start + box_size*j, y_start + (i+1)*box_height),
+                               (box_size, box_height),
+                               style="fill:#{:02x}{:02x}{:02x}"
+                               .format(*[int(255*x) for x in
+                                         c_cmap(avg_frame.ix[j])])))
+                dwg.add(g)
+            dwg.add(dwg.rect((x_start, y_start + (i+1)*box_height),
+                             (new_cols*box_size, 1*box_height),
+                             style="stroke-width:1; stroke:#000000; fill:none"
+                            ))
+
+
         if draw_name:
             if name == "" and split_columns:
                 name = col_base

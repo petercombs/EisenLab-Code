@@ -118,6 +118,7 @@ if genes:
             kwargs['draw_name'] = True
             kwargs['data_names'] = colnames
             kwargs['draw_row_labels'] = True
+            kwargs['draw_average'] = True
             pu.svg_heatmap(data2, filename=outname+'.svg', **kwargs)
             if is_svg:
                 print '<embed src="{}" width="{}" height="{}">'.format(
