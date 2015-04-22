@@ -83,16 +83,21 @@ if genes:
         data = pd.read_sql_query('SELECT * FROM all_expr WHERE ("index" in ("{}"))'
                                  .format('", "'.join(good_genes)),
                                  con, index_col='index')
-        if norm_by == 'max_all':
-            norm_by = ''
-
-        if norm_by != 'max':
-            norm_by = data.select(**sel_startswith(norm_by)).max(axis=1) + 10
-
         data = (data
                 .ix[good_genes]
                 .fillna(value=pd.np.nan)
                )
+
+        if norm_by == 'max_all':
+            norm_by = columns
+
+        if norm_by != 'max':
+            norm_by = data.select(**sel_startswith(norm_by)).max(axis=1) + 10
+        else:
+            # Something weird is going on with the type?
+            norm_by = 'max'
+
+
 
         data2 = tuple(data.select(**sel_startswith(column))
                       for column in columns)
