@@ -119,6 +119,6 @@ def load_to_locals(locals, expr_min=15):
             cyc_embs[cyc] = sub_df.select(**sel_contains(cyc))
         locals[sub_df_name+'s'] = cyc_embs
     return (all_expr,
-            [wt, bcd, zld, g20, hb],
-            [locals[i] for i in 'wts bcds zlds hbs g20s'.split()],
+            [wt, bcd, zld, g20, hb, ],
+            [locals[i] for i in 'wts bcds zlds g20s hbs'.split()],
             by_cycle)
