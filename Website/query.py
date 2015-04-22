@@ -63,7 +63,7 @@ if genes:
 
 
     if no_imgs:
-        print "<p />Could not find: {}".format(','.join(no_imgs))
+        print "<p />Could not find: {}".format(', '.join(no_imgs))
 
     if good_genes:
         columns = tuple(form.getlist("samples"))
@@ -193,7 +193,7 @@ tock = time()
 print "<hr>"
 print """<script type="text/javascript">
 var inputs={};
-document.getElementById("genes").setRangeText(inputs.genes, 0, 1000);
+document.getElementById("genes").setRangeText(inputs.genes, 0, 1000000);
 document.getElementById(inputs.format).checked=true;
 document.getElementById(inputs.orientation).checked=true;
 document.getElementById("norm_by").value=inputs.norm_by;
