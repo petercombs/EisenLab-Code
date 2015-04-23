@@ -93,7 +93,11 @@ def load_to_locals(locals, expr_min=15):
 
     all_expr = (pd.read_table('analysis/summary.tsv', **read_table_args)
                 .sort_index())
-    all_expr.ix[:, bad_cols] = pd.np.nan
+    for col in bad_cols:
+        if col in all_expr.columns:
+            all_expr.ix[:, col] = pd.np.nan
+        else:
+            print("Column {} is missing")
     top_expr = all_expr.max(axis=1)
     all_expr = all_expr.ix[top_expr > expr_min]
     wt  = all_expr.select(**sel_startswith('WT'))
