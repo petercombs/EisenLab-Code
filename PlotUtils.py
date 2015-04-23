@@ -192,6 +192,8 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
                 convert=False,
                 cmap_by_prefix=None,
                 draw_average=False,
+                draw_average_only=False,
+                average_scale=1,
                 split_columns=False,
                 vspacer=30,
                 hatch_nan=True, hatch_size=20,
@@ -361,76 +363,106 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
         if total_width is not None:
             box_size = total_width / float(new_cols)
 
-        for i in range(rows):
-            if progress_bar:
-                pbar.update(pbar_val)
-                pbar_val += 1
-            prefix = col_labels[0][:col_labels[0].find(col_sep)]
-            if cmap_by_prefix:
-                c_cmap = cmap_by_prefix(prefix)
+        i = 0
+        if not draw_average_only:
+            for i in range(rows):
+                if progress_bar:
+                    pbar.update(pbar_val)
+                    pbar_val += 1
+                prefix = col_labels[0][:col_labels[0].find(col_sep)]
+                if cmap_by_prefix:
+                    c_cmap = cmap_by_prefix(prefix)
+                for j in range(new_cols):
+                    g = dwg.g()
+                    g.add(svg.base.Title("{}, {}: {:.2f}".format(row_labels[i],
+                                                                 col_labels[j],
+                                                                 frame.ix[i, j])))
+                    hatch = not isfinite(norm_data.ix[i, j])
+                    if hatch:
+                        n = 0
+                        norm_data.ix[i, j] = 0
+                        if j > 0 and isfinite(norm_data.ix[i,j-1]):
+                            norm_data.ix[i, j] += norm_data.ix[i, j-1]
+                            n += 1
+                        if (j + 1 < len(norm_data.columns)
+                            and isfinite(norm_data.ix[i, j+1])):
+                            norm_data.ix[i, j] += norm_data.ix[i, j+1]
+                            n += 1
+                        norm_data.ix[i, j] /= n
+                    g.add(dwg.rect((x_start + box_size*j, y_start + i*box_height),
+                                   (box_size, box_height),
+                                   style="fill:#{:02x}{:02x}{:02x}"
+                                   .format(*[int(255*x) for x in
+                                             c_cmap(norm_data.ix[i, j])])))
+                    dwg.add(g)
+                    if hatch_nan and hatch:
+                        g.add(dwg.rect((x_start + box_size*j,
+                                        y_start + i*box_height),
+                                       (box_size, box_height),
+                                       style="fill:url(#hatch)"
+                                      )
+                             )
+                    col_base = col_labels[j][:col_labels[j].find(col_sep)]
+                    if col_base != prefix:
+                        prefix = col_base
+                        if cmap_by_prefix:
+                            c_cmap = cmap_by_prefix(prefix)
+                        g.add(dwg.line((x_start + box_size * j,
+                                        y_start + i * box_height),
+                                       (x_start + box_size * j,
+                                        y_start + (i + 1) * box_height),
+                                       style="stroke-width:{}; stroke:#000000"
+                                       .format(.1 * box_size)))
+        else:
             for j in range(new_cols):
-                g = dwg.g()
-                g.add(svg.base.Title("{}, {}: {:.2f}".format(row_labels[i],
-                                                             col_labels[j],
-                                                             frame.ix[i, j])))
-                hatch = not isfinite(norm_data.ix[i, j])
+                hatch = not isfinite(norm_data.ix[0, j])
                 if hatch:
                     n = 0
-                    norm_data.ix[i, j] = 0
-                    if j > 0 and isfinite(norm_data.ix[i,j-1]):
-                        norm_data.ix[i, j] += norm_data.ix[i, j-1]
+                    norm_data.ix[:, j] = 0
+                    if j > 0 and isfinite(norm_data.ix[0,j-1]):
+                        norm_data.ix[:, j] += norm_data.ix[:, j-1]
                         n += 1
                     if (j + 1 < len(norm_data.columns)
-                        and isfinite(norm_data.ix[i, j+1])):
-                        norm_data.ix[i, j] += norm_data.ix[i, j+1]
+                        and isfinite(norm_data.ix[0, j+1])):
+                        norm_data.ix[:, j] += norm_data.ix[:, j+1]
                         n += 1
-                    norm_data.ix[i, j] /= n
-                g.add(dwg.rect((x_start + box_size*j, y_start + i*box_height),
-                               (box_size, box_height),
-                               style="fill:#{:02x}{:02x}{:02x}"
-                               .format(*[int(255*x) for x in
-                                         c_cmap(norm_data.ix[i, j])])))
-                dwg.add(g)
-                if hatch_nan and hatch:
-                    g.add(dwg.rect((x_start + box_size*j,
-                                    y_start + i*box_height),
-                                   (box_size, box_height),
-                                   style="fill:url(#hatch)"
-                                  )
-                         )
-                col_base = col_labels[j][:col_labels[j].find(col_sep)]
-                if col_base != prefix:
-                    prefix = col_base
-                    if cmap_by_prefix:
-                        c_cmap = cmap_by_prefix(prefix)
-                    g.add(dwg.line((x_start + box_size * j,
-                                    y_start + i * box_height),
-                                   (x_start + box_size * j,
-                                    y_start + (i + 1) * box_height),
-                                   style="stroke-width:{}; stroke:#000000"
-                                   .format(.1 * box_size)))
+                    norm_data.ix[:, j] /= n
         dwg.add(dwg.text(first_col, (x_start,
                                      y_start + (i + 1) * box_height)))
         dwg.add(dwg.text(last_col, (x_start + (new_cols - 1) * box_size,
                                     y_start + (i + 1) * box_height)))
-        if draw_box:
+        if draw_box and not draw_average_only:
             dwg.add(dwg.rect((x_start, y_start + 0),
                              (new_cols*box_size, rows*box_height),
                              style="stroke-width:1; "
                              "stroke:#000000; fill:none"))
-        if draw_average:
+        if draw_average or draw_average_only:
             avg_frame = norm_data.mean(axis=0)
             for j in range(new_cols):
+                col_base = col_labels[j][:col_labels[j].find(col_sep)]
+                prefix = col_base
+                if cmap_by_prefix:
+                    c_cmap = cmap_by_prefix(prefix)
                 g = dwg.g()
                 g.add(svg.base.Title("Average, {}: {:.2f}".format(col_labels[j],
                                                                   avg_frame.ix[j])))
-                g.add(dwg.rect((x_start + box_size*j, y_start + (i+1)*box_height),
+                g.add(dwg.rect((x_start + box_size*j,
+                                y_start + (i+(not draw_average_only))*box_height),
                                (box_size, box_height),
                                style="fill:#{:02x}{:02x}{:02x}"
                                .format(*[int(255*x) for x in
-                                         c_cmap(avg_frame.ix[j])])))
+                                         c_cmap(average_scale*avg_frame.ix[j])])))
+                if not isfinite(frame.ix[0, j]) and hatch_nan:
+                    g.add(dwg.rect((x_start + box_size*j,
+                                    y_start + (i+(not draw_average_only))*box_height),
+                                   (box_size, box_height),
+                                   style="fill:url(#hatch)"
+                                  )
+                         )
+
                 dwg.add(g)
-            dwg.add(dwg.rect((x_start, y_start + (i+1)*box_height),
+            dwg.add(dwg.rect((x_start,
+                              y_start + (i+(not draw_average_only))*box_height),
                              (new_cols*box_size, 1*box_height),
                              style="stroke-width:1; stroke:#000000; fill:none"
                             ))
@@ -442,7 +474,10 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
             xpos = x_start + box_size * new_cols / 2.0
             text = dwg.text('',
                              (xpos,
-                              y_start + box_height * (rows) + 13),
+                              y_start
+                              + box_height * (rows) * (1-draw_average_only)
+                              + box_height * (draw_average or draw_average_only)
+                              + 13),
                              style="text-anchor: middle;")
             text.add(dwg.tspan("", dy=["-1.5em"]))
             for line in name.split('_'):
@@ -467,9 +502,10 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
         y_diff = new_rows * box_height + 30
         if x_start + total_width >= max_width:
             x_start = 0
-            y_start += new_rows*box_height + vspacer
+            y_start += new_rows*box_height*(not draw_average_only) + vspacer
+            y_start += box_height*(draw_average_only or draw_average)
 
-    if draw_row_labels:
+    if draw_row_labels and not draw_average_only:
         for i in range(rows):
             if color_row_labels:
                 style = "font-size: {size}; fill: {color};".format(
