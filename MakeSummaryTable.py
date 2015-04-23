@@ -188,7 +188,7 @@ if __name__ == "__main__":
                                     converters={'Label': str},
                                     #keep_default_na=False, na_values='---',
                                    )
-                  .drop_duplicates(cols=['Label']))
+                  .drop_duplicates(subset=['Label']))
         params.set_index('Label', inplace=True)
         params = params.dropna(how='any')
 
