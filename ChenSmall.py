@@ -158,14 +158,25 @@ if __name__=="__main__":
                       )
 
 '''
-convert -background none -gravity center \( chen.png \) \( -mattecolor none
--size 10x10 xc:none \) \
+convert -background none -gravity center \( chen.png \) \
+        \( -mattecolor none -size 10x10 xc:none \) \
              -bordercolor none -background none -mattecolor black -frame 0 \
-             \( -gravity SouthEast -frame 2 -splice 10x10
+             \( -gravity SouthEast -frame 2 -splice 10x10 \
 chen/pngs/{noc,bowl,slp2,slp1}.png +append \) \
-             \( -gravity SouthEast -frame 2 -splice 10x10
+             \( -gravity SouthEast -frame 2 -splice 10x10 \
 chen/pngs/{CG16813,prd,h,kni}.png +append \) \
-             \( -gravity SouthEast -frame 2 -splice 10x10
+             \( -gravity SouthEast -frame 2 -splice 10x10 \
 chen/pngs/{CG16815,CG13713,Bsg25D}.png +append \) \
           -gravity Center -append chenfig.png
+
+convert -background none -gravity center \( chen_wtnorm.png \) \
+        \( -mattecolor none -size 10x10 xc:none \) \
+             -bordercolor none -background none -mattecolor black -frame 0 \
+             \( -gravity SouthEast -frame 2 -splice 10x10 \
+chen_wtnorm/pngs/{noc,bowl,slp2,slp1}.png +append \) \
+             \( -gravity SouthEast -frame 2 -splice 10x10 \
+chen_wtnorm/pngs/{CG16813,prd,h,kni}.png +append \) \
+             \( -gravity SouthEast -frame 2 -splice 10x10 \
+chen_wtnorm/pngs/{CG16815,CG13713,Bsg25D}.png +append \) \
+          -gravity Center -append chenfig_wtnorm.png
 '''
