@@ -10,7 +10,6 @@ from __future__ import division, print_function
 import pandas
 from os import path
 from glob import glob
-from sys import argv
 from pysam import Samfile
 import gzip
 
@@ -182,8 +181,7 @@ if __name__ == "__main__":
     else:
         fnames = glob(path.join(args.basedir, '*', args.filename))
     if args.has_params:
-        has_params = argv[2]
-        params = (pandas.read_table(has_params,
+        params = (pandas.read_table(args.has_params,
                                     comment='#',
                                     converters={'Label': str},
                                     #keep_default_na=False, na_values='---',
