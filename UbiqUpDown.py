@@ -64,6 +64,7 @@ if __name__ == "__main__":
             index=all_expr.index
         )
 
+    p.close()
     ubiq_all = ((diff_from_ubiq['wt'] < max_diff)
                 & (diff_from_ubiq['bcd'] < max_diff)
                 & (diff_from_ubiq['g20'] < max_diff))

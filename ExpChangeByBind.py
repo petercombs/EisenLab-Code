@@ -69,6 +69,7 @@ if __name__ == "__main__":
 
         keep_old=True
 
+    p.close()
     del p
 
 

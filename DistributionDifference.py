@@ -201,6 +201,7 @@ def mp_pdist(X, metric, p=2, w=None, V=None, VI=None):
         inputs = [(X[i], X[j]) for j in range(i+1, m)]
         dm[ks] = pool.map(func, inputs)
         k  = ks[-1] + 1
+    pool.close()
     return dm
 
 def mp_pandas_pdist(X, metric, p=2, w=None, V=None, VI=None):
@@ -227,6 +228,7 @@ def mp_pandas_pdist(X, metric, p=2, w=None, V=None, VI=None):
         inputs = [(X.ix[i], X.ix[j]) for j in range(i+1, m)]
         dm[ks] = pool.map(func, inputs)
         k  = ks[-1] + 1
+    pool.close()
     return dm
 
 def pandas_pdist(X, metric, p=2, w=None, V=None, VI=None):

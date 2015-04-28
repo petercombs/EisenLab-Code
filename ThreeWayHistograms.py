@@ -101,6 +101,7 @@ if __name__ == "__main__":
         if not isinstance(p, pool.Pool):
             p = Pool()
         dists = p.map(get_dists, dist_12.index)
+        p.close()
         del p
         for gene, dists_for_gene in zip(dist_12.index, dists):
             dist_12.ix[gene] += dists_for_gene[0]
