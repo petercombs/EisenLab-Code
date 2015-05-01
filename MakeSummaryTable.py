@@ -61,6 +61,8 @@ def parse_args():
                         help='The base of the output filename to which'
                         ' modifiers may be appended depending on options'
                         '(defaults to "summary")')
+    parser.add_argument('--map-stats', default=None,
+                        help="File containing mapping statistics.")
     parser.add_argument('basedir',
                         help='The directory containing directories, which '
                         'contain genes.fpkm_tracking files')
@@ -74,6 +76,12 @@ def parse_args():
         args.key = int(args.key)
     except ValueError:
         pass
+    if args.map_stats:
+        try:
+            args.map_stats = pandas.read_table(args.map_stats, index_col=0)
+        except:
+            args.map_stats = None
+
     if args.strip_low_map_rate:
         args.strip_on_unique = True
         args.strip_low_reads = max(args.strip_low_reads, 1)
@@ -122,17 +130,23 @@ def get_expr_values(fname):
 
     skip = False
     if args.strip_low_reads:
-        sf = Samfile(path.join(alldir, args.mapped_bamfile))
-        if args.strip_on_unique:
-            reads = 0
-            for read in sf:
-                reads += not read.is_secondary
-                if ((reads > args.strip_low_reads)
-                    and not args.strip_low_map_rate):
-                    break
-            skip = reads < args.strip_low_reads
+        if not (args.map_stats is None) and dirname in args.map_stats.index:
+            col = 'UniqueMapped' if args.strip_on_unique else 'AllMapped'
+            reads = args.map_stats.ix[dirname, col]
         else:
-            skip = sf.mapped < args.strip_low_reads
+            if not (args.map_stats is None):
+                print("Missing {} in mapping stats".format(dirname))
+            sf = Samfile(path.join(alldir, args.mapped_bamfile))
+            if args.strip_on_unique:
+                reads = 0
+                for read in sf:
+                    reads += not read.is_secondary
+                    if ((reads > args.strip_low_reads)
+                        and not args.strip_low_map_rate):
+                        break
+            else:
+                reads = sf.mapped
+        skip = reads < args.strip_low_reads
     if (args.strip_low_map_rate
         and not skip
         and not (args.has_params
@@ -140,14 +154,18 @@ def get_expr_values(fname):
                  and params.ix[old_dirname, 'CarrierSpecies'] != '---')
        ):
 
-        rfs = [entry for entry in
-               sf.header['PG'][0]['CL'].split()
-              if entry.endswith('.gz') or entry.endswith('.fastq')][0]
-        rfs = sorted(rfs.split(','))
-        total_reads = 4e6 * (len(rfs) - 1)
-        for i, line in enumerate(gzip.open(rfs[-1])):
-            pass
-        total_reads += i//4
+        if (not (args.map_stats is None) and (dirname in args.map_stats.index)
+            and (args.map_stats.ix[dirname, 'RawReads'] > 0)):
+            total_reads = args.map_stats.ix[dirname, 'RawReads']
+        else:
+            rfs = [entry for entry in
+                   sf.header['PG'][0]['CL'].split()
+                   if entry.endswith('.gz') or entry.endswith('.fastq')][0]
+            rfs = sorted(rfs.split(','))
+            total_reads = 4e6 * (len(rfs) - 1)
+            for i, line in enumerate(gzip.open(rfs[-1])):
+                pass
+            total_reads += i//4
         skip += (reads / total_reads) < (args.strip_low_map_rate / 100)
         if skip:
             print(reads, total_reads, reads/total_reads,

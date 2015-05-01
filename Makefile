@@ -70,6 +70,7 @@ $(ANALYSIS_DIR)/summary.tsv : MakeSummaryTable.py $(FPKMS) $(RUNCONFIG) Makefile
 	   --strip-as-nan \
 	   --mapped-bamfile assigned_dmelR.bam \
 	   --strip-low-map-rate 70 \
+	   --map-stats analysis/map_stats.tsv \
 		$(ANALYSIS_DIR) \
 		| tee analysis/mst.log
 
