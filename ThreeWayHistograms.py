@@ -6,11 +6,28 @@ import DistributionDifference as DD
 from scipy.stats import (scoreatpercentile, chi2_contingency, gaussian_kde,
                          spearmanr, pearsonr)
 import setcolor
-from Utils import load_to_locals, sel_contains, contains
+from Utils import load_to_locals, sel_contains, contains, sel_startswith
 from itertools import combinations
 from sys import argv
 from scipy.stats import linregress
 import BindUtils as bu
+import PlotUtils as pu
+import os
+
+pu_args = dict(
+    cmap_by_prefix=pu.cmap_by_prefix,
+    norm_rows_by='max',
+    col_sep='sl',
+    draw_name=False,
+    draw_box=False,
+    total_width=150,
+    max_width=150,
+    box_height=20,
+    make_hyperlinks=True,
+    draw_row_labels=True,
+    convert=True,
+    vspacer=0,
+)
 
 cyc_of_interest = 'cyc14D'
 eps = .1
@@ -96,10 +113,8 @@ if __name__ == "__main__":
         dist_13 = pd.Series(index=set1.index, data=0)
         dist_23 = pd.Series(index=set1.index, data=0)
 
-        from multiprocessing import Pool, pool
-        p = locals().get('p', Pool())
-        if not isinstance(p, pool.Pool):
-            p = Pool()
+        from multiprocessing import Pool
+        p = Pool()
         dists = p.map(get_dists, dist_12.index)
         p.close()
         del p
@@ -179,6 +194,28 @@ if __name__ == "__main__":
         print("mean D2: {:.05%} \n95th pct: {:.05%}"
               .format(mean(dist2[in_both]), dist2_95))
         print("{} genes: {}".format(len(dist2_hi), ", ".join(dist2_hi)))
+
+        try:
+            os.makedirs('analysis/results/{}{}{}'.format(
+                set1_name, set2_name, set3_name))
+        except:
+            pass
+        for gene in dist2_hi:
+            data = tuple(d.ix[[gene]].select(**sel_startswith(rep))
+                         for d in (set1, set2, set3)
+                         for rep in {col.split('_sl')[0] for col in d.columns}
+                        )
+            pu.svg_heatmap(data,
+                           filename='analysis/results/{}{}{}/{:0.5}-{}.svg'
+                           .format(set1_name,
+                                   set2_name,
+                                   set3_name,
+                                   dist2.ix[gene],
+                                   gene),
+                           **pu_args
+                          )
+
+
 
         ##################################
         ###         PLOTTING           ###
@@ -275,6 +312,7 @@ if __name__ == "__main__":
                                                                 set3_name),
                     dpi=600,
                     transparent=True)
+
 
 
         ##################################
