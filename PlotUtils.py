@@ -251,7 +251,8 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
     if total_width is not None and max_width is not np.inf:
         dwg = svg.Drawing(filename,
                           size=(max_width,
-                                np.ceil((len(data) * total_width)/max_width)
+                                np.ceil((len(data) * total_width)/max_width +
+                                        (draw_average or draw_average_only))
                                 * (box_height+vspacer)))
     else:
         dwg = svg.Drawing(filename)
