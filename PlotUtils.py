@@ -296,6 +296,9 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
     if not isinstance(norm_rows_by, tuple):
         norm_rows_by = repeat(norm_rows_by)
 
+    if 'center0all' in norm_rows_by:
+        all_data = pd.concat(data, axis=1)
+
     x_start = 0
     y_start = 0
     y_diff = 0
@@ -335,6 +338,12 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
         elif normer is 'center0':
             norm_data = (0.5 +
                          0.5 * frame.divide(frame.dropna(axis=1).abs().max(axis=1),
+                                      axis=0)
+                        )
+        elif normer is 'center0all':
+            norm_data = (0.5 +
+                         0.5 *
+                         frame.divide(all_data.dropna(how='all', axis=1).abs().max(axis=1),
                                       axis=0)
                         )
         elif index is not None and hasattr(normer, "ix"):
