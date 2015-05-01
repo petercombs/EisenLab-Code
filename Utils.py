@@ -79,7 +79,7 @@ def center_of_mass_onerep(data):
     return sum(data_clean * xs, axis=len(dims)-1)/sum(data_clean, axis=len(dims)-1)
 
 
-def load_to_locals(locals, expr_min=15):
+def load_to_locals(locals, expr_min=15, fname='analysis/summary.tsv'):
     read_table_args = dict(keep_default_na=False, na_values=['---', ''], index_col=0)
 
     # These are manually, and empirically determined.
@@ -87,11 +87,11 @@ def load_to_locals(locals, expr_min=15):
         'bcd_cyc14D_rep2_sl06_FPKM',
         'bcd_cyc14D_rep2_sl16_FPKM',
         'bcd_cyc14D_rep1_sl14_FPKM',
-        'WT_cyc14D_sl15_FPKM',
+        #'WT_cyc14D_sl15_FPKM',
         'G20_cyc14D_rep1_sl08_FPKM',
     )
 
-    all_expr = (pd.read_table('analysis/summary.tsv', **read_table_args)
+    all_expr = (pd.read_table(fname, **read_table_args)
                 .sort_index())
     for col in bad_cols:
         if col in all_expr.columns:
