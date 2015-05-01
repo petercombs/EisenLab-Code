@@ -27,6 +27,7 @@ for genotype in ['bcd', 'zld', 'hb', 'G20']:
                     bcds['cyc14D_rep1'],
                     bcds['cyc14D_rep2'],
                     g20s['cyc14D_rep1'],
+                    g20s['cyc14D_rep2'],
                     hbs['cyc14D_rep1'],
                     hbs['cyc14D_rep2'],
                     zlds['cyc14A'],
