@@ -297,7 +297,10 @@ def svg_heatmap(data, filename, row_labels=None, box_size=4,
     if not isinstance(norm_rows_by, tuple):
         norm_rows_by = repeat(norm_rows_by)
 
-    if 'center0all' in norm_rows_by:
+    if ((isinstance(norm_rows_by, repeat)
+         and norm_rows_by.next() == 'center0all')
+        or (not isinstance(norm_rows_by, repeat)
+            and 'center0all' in norm_rows_by)):
         all_data = pd.concat(data, axis=1)
 
     x_start = 0
