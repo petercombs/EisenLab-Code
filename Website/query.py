@@ -12,6 +12,15 @@ import json
 
 warnings.filterwarnings("ignore", message=".*tempnam.*")
 
+print """Content-Type: text/html
+
+<html><head>
+<meta charset=utf-8>
+<TITLE>Gene expression in Drosophila Mutants</TITLE>
+</head><body>
+"""
+sys.stdout.flush()
+
 tick = time()
 
 startswith = lambda y: lambda x: x.startswith(y)
@@ -27,27 +36,27 @@ fbgns = {line.split()[1]: line.split()[0]
          if (not line.startswith('#')) and (line.strip())}
 procs = []
 
-print """Content-Type: text/html
 
-<html><head>
-<meta charset=utf-8>
-<TITLE>Gene expression in Drosophila Mutants</TITLE>
-</head><body>
-"""
-
-#print "<hr> Used {:0.1f} ms<hr>".format(1000*(time() - tick))
 
 form = cgi.FieldStorage()
 
-input = dict(genes=form.getfirst('genes'),
-             norm_by=form.getfirst('norm_by'),
+input = dict(genes=form.getfirst('genes', "eve\nhb"),
+             norm_by=form.getfirst('norm_by', "max"),
              columns=form.getlist('samples'),
-             format=form.getfirst("format"),
-             orientation=form.getfirst('orientation'),
+             format=form.getfirst("format", "svg"),
+             orientation=form.getfirst('orientation', "GeneRow"),
             )
 
+if not input['columns']:
+    input['columns'] = ['WT_cyc13']
 
-genes = form.getfirst('genes')
+try:
+    input['avg_norm'] = float(form.getfirst('avg_norm'))
+except TypeError:
+    input['avg_norm'] = 1.0
+
+
+genes = input['genes']
 if genes:
     genes = [gene.strip() for gene in genes.split()
              if gene.strip()]
@@ -66,8 +75,8 @@ if genes:
         print "<p />Could not find: {}".format(', '.join(no_imgs))
 
     if good_genes:
-        columns = tuple(form.getlist("samples"))
-        norm_by = form.getfirst('norm_by') or 'max'
+        columns = tuple(input['columns'])
+        norm_by = input['norm_by'] or 'max'
         colnames = []
         for column in columns:
             column = (column
@@ -104,8 +113,8 @@ if genes:
 
 
 
-        is_svg = form.getfirst("format").lower() != 'png'
-        by_row = form.getfirst("orientation").lower() != 'genecol'
+        is_svg = input["format"].lower() != 'png'
+        by_row = input["orientation"].lower() != 'genecol'
 
         kwargs = dict(
             cmap_by_prefix=pu.cmap_by_prefix,
@@ -124,6 +133,7 @@ if genes:
             kwargs['data_names'] = colnames
             kwargs['draw_row_labels'] = True
             kwargs['draw_average'] = True
+            kwargs['average_scale'] = input['avg_norm']
             pu.svg_heatmap(data2, filename=outname+'.svg', **kwargs)
             if is_svg:
                 print '<embed src="{}" width="{}" height="{}">'.format(
@@ -197,6 +207,7 @@ document.getElementById("genes").setRangeText(inputs.genes, 0, 1000000);
 document.getElementById(inputs.format).checked=true;
 document.getElementById(inputs.orientation).checked=true;
 document.getElementById("norm_by").value=inputs.norm_by;
+document.getElementById("avg_norm").value=inputs.avg_norm;
 var samps = document.getElementsByName("samples")
 //samps is not iterable???
 for (var i=0; i < samps.length; i++){{
