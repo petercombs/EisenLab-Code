@@ -130,23 +130,27 @@ def get_expr_values(fname):
 
     skip = False
     if args.strip_low_reads:
-        if not (args.map_stats is None) and dirname in args.map_stats.index:
+        if (args.map_stats is not None) and dirname in args.map_stats.index:
             col = 'UniqueMapped' if args.strip_on_unique else 'AllMapped'
             reads = args.map_stats.ix[dirname, col]
         else:
-            if not (args.map_stats is None):
+            if (args.map_stats is not None):
                 print("Missing {} in mapping stats".format(dirname))
-            sf = Samfile(path.join(alldir, args.mapped_bamfile))
-            if args.strip_on_unique:
+            try:
+                sf = Samfile(path.join(alldir, args.mapped_bamfile))
+                if args.strip_on_unique:
+                    reads = 0
+                    for read in sf:
+                        reads += not read.is_secondary
+                        if ((reads > args.strip_low_reads)
+                            and not args.strip_low_map_rate):
+                            break
+                else:
+                    reads = sf.mapped
+                skip = reads < args.strip_low_reads
+            except IOError:
                 reads = 0
-                for read in sf:
-                    reads += not read.is_secondary
-                    if ((reads > args.strip_low_reads)
-                        and not args.strip_low_map_rate):
-                        break
-            else:
-                reads = sf.mapped
-        skip = reads < args.strip_low_reads
+                skip = True
     if (args.strip_low_map_rate
         and not skip
         and not (args.has_params
