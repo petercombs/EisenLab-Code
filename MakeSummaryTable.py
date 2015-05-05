@@ -41,7 +41,7 @@ def parse_args():
                         help='When stripping a sample, replace all data with'
                         ' NaN')
     parser.add_argument('--strip-low-map-rate', '-m', default=0, type=float,
-                        help='Remove samples with less than X% of reads '
+                        help='Remove samples with less than X%% of reads '
                         "mapping (off by default)")
     parser.add_argument('--mapped-bamfile', '-b', default='assigned_dmelR.bam',
                         help='The bam file to look in for mapped reads')
