@@ -16,6 +16,7 @@ MELDATE = $(word 2, $(subst _FB, ,$(MELRELEASE)))
 PREREQDIR = prereqs
 MELFASTA = $(PREREQDIR)/dmel-all-chromosome-$(MELVERSION).fasta
 VIRFASTA = $(PREREQDIR)/dvir-all-chromosome-$(VIRVERSION).fasta
+MELTRANSCRIPTS = $(PREREQDIR)/dmel-all-transcript-$(MELVERSION).fasta
 
 REFDIR = Reference
 
@@ -25,6 +26,7 @@ VIRFASTA2= $(REFDIR)/dvir_prepend.fasta
 ORTHOLOGS = $(PREREQDIR)/gene_orthologs_fb_$(MELDATE).tsv
 
 CERFASTA = $(PREREQDIR)/S288C_reference_sequence_R64-1-1_20110203.fsa
+CERTRANSCRIPT = $(PREREQDIR)/S288C_transcribed_sequence_R64-1-1_20110203.fsa
 CERFASTA2= $(REFDIR)/scer_prepend.fasta
 
 DELFASTA = prereqs/Tdelbrueckii_sequence.fsa
@@ -124,25 +126,30 @@ $(MELALLGTF): $(MELGFF) | $(REFDIR)
 $(VIRGTF): $(VIRGFF) $(ORTHOLOGS) | $(REFDIR)
 	gffread $< -E -T -o- \
 		| awk '{print "dvir_"$$0}' \
-		| grep -vP '(snoRNA|CR[0-9]{4}|Rp[ILS]|mir-|tRNA|unsRNA|snRNA|snmRNA|scaRNA|rRNA|RNA:|mt:)' \
+		| grep -vP '(snoRNA|CR[0-9]{4}|Rp[ILS]|mir-|tRNA|unsRNA|snRNA|snmRNA|scaRNA|rRNA|RNA:|mt:|His.*:)' \
 		| grep 'FBgn' \
 		| python FilterOrthologs.py $(ORTHOLOGS) \
 		> $@
 
 $(MELGTF): $(MELALLGTF) | $(REFDIR)
 	cat $< \
-		| grep -vP '(snoRNA|CR[0-9]{4}|Rp[ILS]|mir-|tRNA|unsRNA|snRNA|snmRNA|scaRNA|rRNA|RNA:|mt:)' \
+		| grep -vP '(snoRNA|CR[0-9]{4}|Rp[ILS]|mir-|tRNA|unsRNA|snRNA|snmRNA|scaRNA|rRNA|RNA:|mt:|His.*:)' \
 		> $@
 
 $(MELBADGTF): $(MELALLGTF) | $(REFDIR)
 	cat $< \
-		| grep -P '(snoRNA|CR[0-9]{4}|Rp[ILS]|mir-|tRNA|unsRNA|snRNA|snmRNA|scaRNA|rRNA|RNA:|mt:)' \
+		| grep -P '(snoRNA|CR[0-9]{4}|Rp[ILS]|mir-|tRNA|unsRNA|snRNA|snmRNA|scaRNA|rRNA|RNA:|mt:|His.*:)' \
 		> $@
 
 
 $(MELFASTA): $(REFDIR)/$(MELMAJORVERSION) | $(REFDIR) $(PREREQDIR)
 	wget -O $@.gz ftp://ftp.flybase.net/genomes/Drosophila_melanogaster/dmel_$(MELRELEASE)/fasta/dmel-all-chromosome-$(MELVERSION).fasta.gz
 	gunzip --force $@.gz
+
+$(MELTRANSCRIPTS) : $(REFDIR)/$(MELVERSION) | $(REFDIR) $(PREREQDIR)
+	wget -O $@.gz ftp://ftp.flybase.net/genomes/Drosophila_melanogaster/dmel_$(MELRELEASE)/fasta/dmel-all-transcript-$(MELVERSION).fasta.gz
+	gunzip --force $@.gz
+
 
 $(MELGFF): $(REFDIR)/$(MELVERSION) | $(REFDIR) $(PREREQDIR)
 	wget -O $@.gz ftp://ftp.flybase.net/genomes/Drosophila_melanogaster/dmel_$(MELRELEASE)/gff/dmel-all-$(MELVERSION).gff.gz
@@ -172,6 +179,9 @@ $(CERFASTA): | $(REFDIR) $(PREREQDIR)
 	wget -O $@.tgz http://downloads.yeastgenome.org/sequence/S288C_reference/genome_releases/S288C_reference_genome_R64-1-1_20110203.tgz
 	tar -xvzf $(CERFASTA).tgz --directory $(PREREQDIR)
 	mv $(PREREQDIR)/S288C_reference_genome_R64-1-1_20110203/S288C_reference_sequence_R64-1-1_20110203.fsa $(CERFASTA)
+
+$(CERTRANSCRIPT): $(CERFASTA) | $(REFDIR) $(PREREQDIR)
+	mv $(PREREQDIR)/S288C_reference_genome_R64-1-1_20110203/orf_trans_all_R64-1-1_20110203.fsa $(CERTRANSCRIPT)
 
 $(CERFASTA2): $(CERFASTA)| $(REFDIR)
 	perl -pe 's/>/>scer_/' $(CERFASTA) > $@
@@ -213,6 +223,15 @@ $(REFDIR)/Dmel/transcriptome : $(MELGTF) |  $(REFDIR)/Dmel
 		--transcriptome-index $@ \
 		$(REFDIR)/Dmel
 	touch $@
+
+$(REFDIR)/Dmel_kallisto : $(MELTRANSCRIPTS) | $(REFDIR)
+	kallisto index -i $@ $<
+
+$(REFDIR)/DmelScer_kallisto : $(MELTRANSCRIPTS) | $(REFDIR)
+	kallisto index -i $@ $<
+
+$(REFDIR)/DmelTdel_kallisto : $(MELTRANSCRIPTS) | $(REFDIR)
+	kallisto index -i $@ $<
 
 $(REFDIR)/DmelDvir/Genome : $(MELVIRGTF) |  $(REFDIR)/DmelDvir $(MELFASTA2) $(VIRFASTA2)  $(REFDIR)
 	STAR --runMode genomeGenerate --genomeDir $(REFDIR)/DmelDvir \

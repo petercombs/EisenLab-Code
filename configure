@@ -36,7 +36,22 @@ star_str = ('$(ANALYSIS_DIR)/{label}/accepted_hits.bam: '
             ' $(ANALYSIS_DIR)/{label}/Aligned.out.sam\n'
             '\trm $(ANALYSIS_DIR)/{label}/Aligned.out.sam\n')
 
-mappers = {'star': star_str, 'tophat' : tophat_str}
+kallisto_str = ('$(ANALYSIS_DIR)/{label}/abundance.txt: '
+                ' {rfs} '
+                ' Reference/{genome}_kallisto '
+                ' | $(ANALYSIS_DIR)/{label} \n'
+                '\t mkfifo $(@D)/reads.fq \n'
+                '\t zcat {reads1} > $(@D)/reads.fq & \n'
+                '\t kallisto quant '
+                ' -i Reference/{genome}_kallisto '
+                ' -o $(@D) '
+                ' -l 400 '
+                ' --plaintext'
+                ' $(@D)/reads.fq \n'
+                '\t rm $(@D)/reads.fq\n'
+               '\n')
+
+mappers = {'star': star_str, 'tophat' : tophat_str, 'kallisto': kallisto_str}
 
 glob_specs = [
     '{seqdir}{genotype}*/Sample_MBE??_{id}?_index{index}/*_{{read}}_*.fastq*',
@@ -131,7 +146,9 @@ config_file = pd.read_table(args.parameters,
 out = open('config.make', 'w')
 targets = ' '.join(path.join('$(ANALYSIS_DIR)',
                              label,
-                             'genes.fpkm_tracking')
+                             ('abundance.txt'
+                              if 'kallisto' in args.mapper.lower() else
+                             'genes.fpkm_tracking'))
                    for label in config_file['Label'])
 
 targets_all = ' '.join(path.join('$(ANALYSIS_DIR)',
@@ -194,6 +211,8 @@ for label in reads:
     out.write( args.mapper_str
              .format(rf1=','.join(reads1),
                      rf2=','.join(reads2),
+                     reads1=' '.join(reads1),
+                     reads2=' '.join(reads2),
                      rfs=' '.join(reads1 + reads2),
                      label=label,
                      genome=(sample_species.get(label, 'Dmel')
