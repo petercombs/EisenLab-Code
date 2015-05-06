@@ -52,6 +52,11 @@ kallisto_str = ('$(ANALYSIS_DIR)/{label}/abundance.txt: '
                '\n')
 
 mappers = {'star': star_str, 'tophat' : tophat_str, 'kallisto': kallisto_str}
+mapper_version_cmd = {
+    'star': 'echo "RNA STAR"',
+    'tophat': 'tophat --version',
+    'kallisto': 'kallisto version',
+}
 
 glob_specs = [
     '{seqdir}{genotype}*/Sample_MBE??_{id}?_index{index}/*_{{read}}_*.fastq*',
@@ -155,6 +160,17 @@ targets_all = ' '.join(path.join('$(ANALYSIS_DIR)',
                              label, 'all',
                              'genes.fpkm_tracking')
                    for label in config_file['Label'])
+
+
+out.write('MAPPER_VERSION = {}\n'.format(mapper_version_cmd[args.mapper]))
+if 'kallisto' in args.mapper.lower():
+    out.write('QUANT_FNAME = abundance.txt \n')
+    out.write('QUANT_KEY = target_id \n')
+    out.write('QUANT_COL = tpm \n')
+else:
+    out.write('QUANT_FNAME = genes.fpkm_tracking \n')
+    out.write('QUANT_KEY = gene_short_name \n')
+    out.write('QUANT_COL = fpkm \n')
 
 out.write("FPKMS = {}  \n".format(targets))
 

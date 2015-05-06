@@ -73,6 +73,9 @@ $(ANALYSIS_DIR)/summary.tsv : MakeSummaryTable.py $(FPKMS) $(RUNCONFIG) Makefile
 	   --mapped-bamfile assigned_dmelR.bam \
 	   --strip-low-map-rate 70 \
 	   --map-stats analysis/map_stats.tsv \
+	   --filename $(QUANT_FNAME) \
+	   --key $(QUANT_KEY) \
+	   --column $(QUANT_COL) \
 		$(ANALYSIS_DIR) \
 		| tee analysis/mst.log
 

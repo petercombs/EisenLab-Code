@@ -115,7 +115,12 @@ prereqs/journal.pgen.1002266.s005.xls:
 	wget -O $@ http://journals.plos.org/plosgenetics/article/asset\?unique\&id\=info\:doi/10.1371/journal.pgen.1002266.s005
 
 analysis/summary.db: analysis/summary.tsv
-	python MakeDB.py $<
+	if [ "$(QUANT_FNAME)" = "abundance.txt " ]; then \
+		python TranscriptsToGenesSummary.py $<; \
+		python MakeDB.py analysis/summary_fbtrsum.tsv; \
+	else \
+		python MakeDB.py $<; \
+	fi
 
 Website: analysis/summary.tsv analysis/summary.db Website/query.py
 	cp analysis/summary.tsv Website/genes.cuff
@@ -124,6 +129,7 @@ Website: analysis/summary.tsv analysis/summary.db Website/query.py
 	echo `basename $(MELGFF)` > Website/versions.txt
 	echo `basename $(MELFASTA)` >> Website/versions.txt
 	echo `basename $(GENEMAPTABLE)` >> Website/versions.txt
+	echo `$(MAPPER_VERSION)` >> Website/versions.txt
 	echo 'Made on' >> Website/versions.txt
 	date >> Website/versions.txt
 	cut -f -2 $(GENEMAPTABLE) > Website/gene_table.tsv
