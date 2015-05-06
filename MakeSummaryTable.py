@@ -147,10 +147,10 @@ def get_expr_values(fname):
                             break
                 else:
                     reads = sf.mapped
-                skip = reads < args.strip_low_reads
             except IOError:
+                print("Error reading", path.join(alldir, args.mapped_bamfile))
                 reads = 0
-                skip = True
+        skip += reads < args.strip_low_reads
     if (args.strip_low_map_rate
         and not skip
         and not (args.has_params
