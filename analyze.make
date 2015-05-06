@@ -115,7 +115,7 @@ prereqs/journal.pgen.1002266.s005.xls:
 	wget -O $@ http://journals.plos.org/plosgenetics/article/asset\?unique\&id\=info\:doi/10.1371/journal.pgen.1002266.s005
 
 analysis/summary.db: analysis/summary.tsv
-	python MakeDB.py
+	python MakeDB.py $<
 
 Website: analysis/summary.tsv analysis/summary.db Website/query.py
 	cp analysis/summary.tsv Website/genes.cuff
