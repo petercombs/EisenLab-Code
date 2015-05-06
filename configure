@@ -125,6 +125,9 @@ def parse_arguments():
                    ' reads')
     p.add_argument('--mapper', type=str, default='star',
                    help='Mapper to use. Options: [star], tophat')
+    p.add_argument('--num-servers', type=int, default=4,
+                   help='Number of boxes to run cufflinks on. Crude attempt at'
+                   ' load balancing')
     args =  p.parse_args()
     if args.mapper.lower() in mappers:
         args.mapper_str = mappers[args.mapper.lower()]
@@ -149,12 +152,14 @@ config_file = pd.read_table(args.parameters,
                             comment='#').dropna(how='all')
 
 out = open('config.make', 'w')
-targets = ' '.join(path.join('$(ANALYSIS_DIR)',
+targets_list = [path.join('$(ANALYSIS_DIR)',
                              label,
                              ('abundance.txt'
                               if 'kallisto' in args.mapper.lower() else
                              'genes.fpkm_tracking'))
-                   for label in config_file['Label'])
+                   for label in config_file['Label']]
+
+targets = ' '.join(targets_list)
 
 targets_all = ' '.join(path.join('$(ANALYSIS_DIR)',
                              label, 'all',
@@ -173,6 +178,11 @@ else:
     out.write('QUANT_COL = fpkm \n')
 
 out.write("FPKMS = {}  \n".format(targets))
+for i in range(args.num_servers):
+    frac = len(targets_list) // args.num_servers
+    out.write('FPKMS{} : {}\n\n'
+              .format(i+1,
+                      ' '.join(targets_list[i*frac:(i+1)*frac])))
 
 reads = defaultdict(lambda : ([], []))
 carriers = defaultdict(list)
