@@ -82,7 +82,6 @@ if __name__ == "__main__":
 
             #dists = map(get_dists, set1.index)
             dists = p.map(get_dists_mp, zip(repeat(set1), repeat(set2), set1.index))
-            p.close()
             dist_12 = pd.Series(index=set1.index, data=dists)
             all_dists[set1_name + '-' + set2_name] = dist_12
 
@@ -136,3 +135,4 @@ if __name__ == "__main__":
                     transparent=True)
 
 
+    p.close()
