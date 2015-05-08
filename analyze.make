@@ -4,7 +4,7 @@ current-analysis: analysis/results/fpkm_sum \
 
 analysis/results/fpkm_sum: analysis/summary.tsv | analysis/results
 	@echo "All genes should have approximately the same sum of FPKMs"
-	python -c "import pandas as pd; print pd.read_table('analysis/summary.tsv',index_col=0).sum(axis=0)" \
+	python -c "import pandas as pd; import sys; print pd.read_table('analysis/summary.tsv',index_col=0, na_values=['---']).dropna(how='all', axis=1).sum(axis=0).to_csv(sys.stdout)" \
 		| tee $@
 
 analysis/results/complexity: analysis/summary.tsv | analysis/results
