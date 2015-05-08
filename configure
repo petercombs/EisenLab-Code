@@ -179,10 +179,9 @@ else:
 
 out.write("FPKMS = {}  \n".format(targets))
 for i in range(args.num_servers):
-    frac = len(targets_list) // args.num_servers
     out.write('FPKMS{} : {}\n\n'
               .format(i+1,
-                      ' '.join(targets_list[i*frac:(i+1)*frac])))
+                      ' '.join(targets_list[i::args.num_servers])))
 
 reads = defaultdict(lambda : ([], []))
 carriers = defaultdict(list)
