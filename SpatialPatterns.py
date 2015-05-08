@@ -128,6 +128,7 @@ if __name__ == "__main__":
                    ['\n'.join(k) for k in combos],
                    rotation=90)
         mpl.ylim(0, 0.2)
+        mpl.ylabel('Earth Mover Distance')
         mpl.tight_layout()
         if screen:
             setcolor.set_screen(mpl.gcf())
