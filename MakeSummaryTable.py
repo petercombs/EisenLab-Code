@@ -100,9 +100,13 @@ def get_stagenum(name, series, dir):
 
 
 def get_expr_values(fname):
-    table = pandas.read_table(fname, na_values='-', converters={args.key: str},
+    try:
+        table = pandas.read_table(fname, na_values='-', converters={args.key: str},
                               keep_default_na=False,
                               header=None if not args.header else 0)
+    except Exception as err:
+        print(fname)
+        raise err
     alldir, fname = path.split(fname)
     if args.in_subdirectory:
         alldir = (alldir.replace(args.in_subdirectory, '')

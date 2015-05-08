@@ -175,7 +175,7 @@ if 'kallisto' in args.mapper.lower():
 else:
     out.write('QUANT_FNAME = genes.fpkm_tracking \n')
     out.write('QUANT_KEY = gene_short_name \n')
-    out.write('QUANT_COL = fpkm \n')
+    out.write('QUANT_COL = FPKM\n')
 
 out.write("FPKMS = {}  \n".format(targets))
 for i in range(args.num_servers):
