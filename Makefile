@@ -184,7 +184,7 @@ $(CERFASTA): | $(REFDIR) $(PREREQDIR)
 	mv $(PREREQDIR)/S288C_reference_genome_R64-1-1_20110203/S288C_reference_sequence_R64-1-1_20110203.fsa $(CERFASTA)
 
 $(CERTRANSCRIPT): $(CERFASTA) | $(REFDIR) $(PREREQDIR)
-	mv $(PREREQDIR)/S288C_reference_genome_R64-1-1_20110203/orf_trans_all_R64-1-1_20110203.fsa $(CERTRANSCRIPT)
+	cp $(PREREQDIR)/S288C_reference_genome_R64-1-1_20110203/orf_coding_all_R64-1-1_20110203.fasta $(CERTRANSCRIPT)
 
 $(CERFASTA2): $(CERFASTA)| $(REFDIR)
 	perl -pe 's/>/>scer_/' $(CERFASTA) > $@
@@ -230,8 +230,9 @@ $(REFDIR)/Dmel/transcriptome : $(MELGTF) |  $(REFDIR)/Dmel
 $(REFDIR)/Dmel_kallisto : $(MELTRANSCRIPTS) | $(REFDIR)
 	kallisto index -i $@ $<
 
-$(REFDIR)/DmelScer_kallisto : $(MELTRANSCRIPTS) | $(REFDIR)
-	kallisto index -i $@ $<
+$(REFDIR)/DmelScer_kallisto : $(MELTRANSCRIPTS) $(CERTRANSCRIPT) | $(REFDIR)
+	cat $(MELTRANSCRIPTS) $(CERTRANSCRIPT) > $(REFDIR)/DmelScer_transcripts.fa
+	kallisto index -i $@ $(MELTRANSCRIPTS)
 
 $(REFDIR)/DmelTdel_kallisto : $(MELTRANSCRIPTS) | $(REFDIR)
 	kallisto index -i $@ $<
