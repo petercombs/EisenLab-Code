@@ -230,11 +230,27 @@ if __name__ == "__main__":
         df = pandas.DataFrame(dict(zip(names, cols)))
 
 
-df.sort_index(axis=1).to_csv(path.join(args.basedir,
-                                       args.basefile
-                                       + ('_in_{}'.format(args.in_subdirectory)
-                                          * bool(args.in_subdirectory))
-                                       + ('_with_conf' * args.conf)
-                                       + '.tsv'),
-                             float_format='%8.2f',
-                             sep='\t', na_rep='---')
+    df.sort_index(axis=1).to_csv(path.join(args.basedir,
+                                           args.basefile
+                                           + ('_in_{}'.format(args.in_subdirectory)
+                                              * bool(args.in_subdirectory))
+                                           + ('_with_conf' * args.conf)
+                                           + '.tsv'),
+                                 float_format='%8.2f',
+                                 sep='\t', na_rep='---')
+
+    if not path.exists(path.join(args.basedir, 'geo')):
+        import os
+        os.makedirs(path.join(args.basedir, 'geo'))
+
+    commands = open(path.join(args.basedir, 'geo.make'), 'w')
+    commands.write('all: {} \n'.format(' '.join('geo/'+
+                                                f.replace('_FPKM',
+                                                           '_R1.fastq.gz.md5')
+                                                 for f in names)))
+    commands.write('%.md5 : % \n\tmd5sum $< > $@\n\n\n')
+    for bamname, fname  in zip(fnames, names):
+        bamname = bamname.replace(args.filename, args.mapped_bamfile)
+        commands.write(('geo/{fname}_R1.fastq.gz: {bamname}\n'
+                        '\tpython CompileForGEO.py {bamname} geo/{fname}\n\n')
+                       .format(fname=fname.replace('_FPKM', ''), bamname=bamname))
