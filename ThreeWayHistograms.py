@@ -252,8 +252,8 @@ if __name__ == "__main__":
                     y=dist_13.ix[dist2_sorted.index],
                     c=dist2.ix[dist2_sorted.index],
                     edgecolors=(0., 0., 0., 0.))
-        mpl.xlabel('{} vs {}'.format(set1_name, set2_name))
-        mpl.ylabel('{} vs {}'.format(set1_name, set3_name))
+        mpl.xlabel('{} vs {}\nEarth Mover Distance'.format(set1_name, set2_name))
+        mpl.ylabel('{} vs {}\nEarth Mover Distance'.format(set1_name, set3_name))
         ax = mpl.gca()
         ax.add_patch(mpatches.PathPatch(set2_only,
                                         facecolor=(0., 0., 1., 0.1),
