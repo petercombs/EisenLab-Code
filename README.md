@@ -8,9 +8,9 @@ pooling a carrier RNA with the total RNA from each of the slices, then
 computationally un-pooling the resulting RNA-seq reads. 
 
 I make no claims to suitability for any purpose, and all code (unless otherwise
-noted) is released under the CRAPL v0 license.  Please contact me direclty
-(peter.combs@berkeley.edu) for any data I've generated, as it's most likely too
-large to fit on github anyways.
+noted) is released under the CRAPL v0 license.  Please contact me directly
+(peter.combs@stanford.edu as of August 3, 2015) for any data I've generated, as
+it's most likely too large to fit on github anyways.
 
 I'm attempting to use a makefile as much as possible (See, for example, [this
 blog
