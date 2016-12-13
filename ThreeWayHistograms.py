@@ -244,6 +244,10 @@ if __name__ == "__main__":
                                                               set3_name),
                     dpi=300, transparent=True)
 
+        mpl.savefig('analysis/results/{}{}{}_Hist.eps'.format(set1_name,
+                                                              set2_name,
+                                                              set3_name),
+                    dpi=300, transparent=True)
 
 
 
@@ -278,12 +282,22 @@ if __name__ == "__main__":
                                                               set3_name),
                     dpi=600,
                     transparent=True)
+        mpl.savefig('analysis/results/{}{}{}_3way.eps'.format(set1_name,
+                                                              set2_name,
+                                                              set3_name),
+                    dpi=600,
+                    transparent=True)
 
         mpl.clf()
         mpl.hist(dist2.ix[in_both], bins=bins, )
         if screen:
             setcolor.set_screen(mpl.gcf())
         mpl.savefig('analysis/results/{}{}{}_D2hist.png'.format(set1_name,
+                                                                set2_name,
+                                                                set3_name),
+                    dpi=600,
+                    transparent=True)
+        mpl.savefig('analysis/results/{}{}{}_D2hist.eps'.format(set1_name,
                                                                 set2_name,
                                                                 set3_name),
                     dpi=600,
@@ -308,6 +322,11 @@ if __name__ == "__main__":
         if screen:
             setcolor.set_screen(mpl.gcf())
         mpl.savefig('analysis/results/{}{}{}_D2exprcorr.png'.format(set1_name,
+                                                                set2_name,
+                                                                set3_name),
+                    dpi=600,
+                    transparent=True)
+        mpl.savefig('analysis/results/{}{}{}_D2exprcorr.eps'.format(set1_name,
                                                                 set2_name,
                                                                 set3_name),
                     dpi=600,
@@ -446,7 +465,11 @@ if __name__ == "__main__":
             setcolor.set_screen(fig2)
         fig1.savefig('analysis/results/{}_d2s.png'.format(name),
                      dpi=300,transparent=True)
+        fig1.savefig('analysis/results/{}_d2s.eps'.format(name),
+                     dpi=300,transparent=True)
         fig2.savefig('analysis/results/{}_d2s_kde.png'.format(name),
+                     dpi=300,transparent=True)
+        fig2.savefig('analysis/results/{}_d2s_kde.eps'.format(name),
                      dpi=300,transparent=True)
         #mpl.close('all')
 

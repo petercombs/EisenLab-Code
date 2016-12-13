@@ -109,6 +109,8 @@ if __name__ == "__main__":
             setcolor.set_screen(mpl.gcf())
         mpl.savefig('analysis/results/pattern_dists_{}.png'.format(cyc),
                     dpi=300, transparent=True)
+        mpl.savefig('analysis/results/pattern_dists_{}.eps'.format(cyc),
+                    dpi=300, transparent=True)
 
         mpl.clf()
         dist_list = [all_dists[n1 + '-' + n2]
@@ -123,16 +125,22 @@ if __name__ == "__main__":
                 body.set_color('b')
             elif 'WT' in n2:
                 body.set_color('g')
+        mpl.boxplot(dist_list,
+                    whis=[5, 95],
+                    widths=0.6,
+                    showfliers=False)
 
         mpl.xticks(range(1, len(result['bodies'])+1),
                    ['\n'.join(k) for k in combos],
                    rotation=90)
-        mpl.ylim(0, 0.2)
+        mpl.ylim(0, max([scoreatpercentile(l, 97) for l in dist_list]))
         mpl.ylabel('Earth Mover Distance')
         mpl.tight_layout()
         if screen:
             setcolor.set_screen(mpl.gcf())
         mpl.savefig('analysis/results/violin{}'.format(cyc), dpi=300,
+                    transparent=True)
+        mpl.savefig('analysis/results/violin{}.eps'.format(cyc), dpi=300,
                     transparent=True)
 
 

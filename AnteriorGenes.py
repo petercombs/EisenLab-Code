@@ -42,6 +42,8 @@ if __name__ == "__main__":
             xlabel('BCD dosage')
             savefig('analysis/results/coms/{}/{}.png'.format(pos, gene),
                     dpi=300)
+            savefig('analysis/results/coms/{}/{}.eps'.format(pos, gene),
+                    dpi=300)
             clf()
 
             if (has_anterior_peak(wts['cyc14D'].ix[gene], fold=2)

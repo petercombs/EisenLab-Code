@@ -14,8 +14,10 @@ from progressbar import ProgressBar as pb
 from Literature import all_hits
 
 columns = (
+    'WT_cyc11',
     'WT_cyc13',
     'WT_cyc14A',
+    'WT_cyc14B',
     'WT_cyc14C',
     'WT_cyc14D',
     'WT_cyc14E',
@@ -41,9 +43,9 @@ def get_dists_mp(args):
     return dd.earth_mover_multi_rep(row+eps, temp)
 
 if __name__ == "__main__":
-    expr_min = 15
+    expr_min = 5
     eps = 1
-    max_diff = .04
+    max_diff = .08
     read_table_args = dict(index_col=0,
                            keep_default_na=False,
                            na_values=['---', ''])
@@ -64,7 +66,6 @@ if __name__ == "__main__":
             index=all_expr.index
         )
 
-    p.close()
     ubiq_all = ((diff_from_ubiq['wt'] < max_diff)
                 & (diff_from_ubiq['bcd'] < max_diff)
                 & (diff_from_ubiq['g20'] < max_diff))
@@ -77,6 +78,30 @@ if __name__ == "__main__":
     set_lose_pattern = {}
     gain_pattern = {}
     set_gain_pattern={}
+
+    ubiq_expr_df = pd.DataFrame(index=all_expr.index)
+
+    for embryo in pb()(columns):
+        embryo_expr = all_expr.select(**sel_startswith(embryo))
+        is_expr = pd.Series(
+            index=ubiq_expr_df.index,
+            data=embryo_expr.max(axis=1) > expr_min
+        )
+        is_ubiq = pd.Series(
+            index=ubiq_expr_df.index,
+            data=p.map(get_dists_mp,
+                       embryo_expr.iterrows())
+        )
+
+        is_ubiq_b = (is_ubiq < max_diff) & is_expr
+        ubiq_expr_df[embryo+'_expr'] = is_expr
+        ubiq_expr_df[embryo+'_ubiq'] = is_ubiq_b
+        ubiq_expr_df[embryo+'_emd'] = is_ubiq
+
+    ubiq_expr_df.to_csv('analysis/results/ubiq_expr.tsv',
+                        sep='\t')
+    p.close()
+
     for genotype in 'bcd g20 zld hb'.split():
         become_ubiq[genotype] = (
             (diff_from_ubiq['wt'] > 2*max_diff)
@@ -159,6 +184,7 @@ if __name__ == "__main__":
     xticks([1, 2], ['Up in both', 'Down in both'])
     ylabel('$\\log_2 bcd^-/bcd^{+++}$')
     savefig('analysis/results/updownboth_log2')
+    savefig('analysis/results/updownboth_log2.eps')
 
     binds = bu.get_binding_matrix(all_expr.index)
     # Ignore the Hannon&Wieschaus Bicoid Dosage ChIPseq data

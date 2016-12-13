@@ -82,7 +82,7 @@ def tang_stat(points1, points2):
 #
 #    return np.sqrt(stat)
 
-def earth_mover(points1, points2):
+def earth_mover(points1, points2, return_flows=False):
     xs1 = np.linspace(0,1,len(points1),
                       endpoint=True)[np.array(np.isfinite(points1))]
     xs2 = np.linspace(0,1,len(points2),
@@ -91,7 +91,8 @@ def earth_mover(points1, points2):
     points2 = points2[np.isfinite(points2)]
     return emd.emd(xs1, xs2,
                    points1/np.sum(points1),
-                   points2/np.sum(points2))
+                   points2/np.sum(points2),
+                   return_flows)
 
 def lcm(a,b):
     return abs(a * b) / fractions.gcd(a,b) if a and b else 0
